@@ -1,0 +1,8 @@
+{
+  "name": "dysprime",
+  "description": "AI-based Art/Design College Admission Mentoring App",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
