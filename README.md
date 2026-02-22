@@ -9,7 +9,7 @@
 
 **AI Art Mentor** — 미대 입시 준비생을 위한 AI 작품 평가 & 1:1 멘토링 플랫폼
 
-[기능 소개](#-주요-기능) · [시작하기](#-시작하기) · [기술 스택](#-기술-스택) · [프로젝트 구조](#-프로젝트-구조)
+[기능 소개](#-주요-기능) · [시작하기](#-시작하기) · [배포](#-배포) · [기술 스택](#-기술-스택) · [프로젝트 구조](#-프로젝트-구조)
 
 </div>
 
@@ -26,6 +26,7 @@
 | **AI 작품 분석** | 이미지 업로드 → 8초 내 5축(밀도, 형태, 완성도, 연관성, 사고력) 분석 및 등급(A~F) 제공 |
 | **합격 확률 예측** | 실제 합격작 데이터 기반 TOP/HIGH/MID/LOW/CRITICAL 티어별 대학·전공 추천 |
 | **AI 멘토 채팅** | Ask / Plan / Critic / Inference / Image Edit 등 5가지 모델로 1:1 코칭 |
+| **커뮤니티** | 홈 피드, Q&A/일반 게시글, 좋아요·댓글, 소셜 로그인(카카오/구글) |
 | **아카이브** | 분석 이력 관리, 학교별·등급별 필터링 |
 | **크레딧 시스템** | 플랜별 크레딧 제한 (free/basic/premium) |
 
@@ -42,8 +43,8 @@
 
 1. **저장소 클론**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/miri-art.git
-   cd miri-art
+   git clone https://github.com/Siegfriex/MiriArt.git
+   cd MiriArt
    ```
 
 2. **의존성 설치**
@@ -53,27 +54,61 @@
 
 3. **환경 변수 설정**
    
-   `.env.local` 파일을 생성하고 다음 변수를 설정합니다.
+   `.env.local` 파일을 프로젝트 루트에 생성합니다.
    ```env
    VITE_API_BASE_URL=http://localhost:8080
    ```
-   
-   > AI API 호출은 Cloud Run 프록시 서버를 통해 처리됩니다. 로컬 개발 시 백엔드 서버 URL을 지정하세요. API 키는 프론트엔드에 저장되지 않습니다.
+   > AI·인증·커뮤니티 API는 백엔드(Spring Boot)를 통해 처리됩니다. 로컬 개발 시 BE 서버 URL을 지정하세요. API 키는 프론트엔드에 저장되지 않습니다.
 
 4. **개발 서버 실행**
    ```bash
    npm run dev
    ```
-
-5. 브라우저에서 `http://localhost:5173` 접속
+   브라우저에서 `http://localhost:3000` 접속 (Vite 기본 포트는 5173, 본 프로젝트는 3000 사용)
 
 ### 빌드
 
 ```bash
 npm run build
 ```
-
 빌드 결과물은 `dist/` 디렉터리에 생성됩니다.
+
+---
+
+## 📦 배포
+
+### 전체 순서
+
+1. **배포 전 준비 (로컬)** — `vercel.json` 확인, `vite.config.ts` define 정리
+2. **GitHub Push** — `deploy` 브랜치 푸시
+3. **Vercel 연결** — GitHub 연동, 환경 변수 설정
+4. **배포 완료** — FE URL 획득
+5. **OAuth Redirect URI 등록** — 카카오/구글 개발자 콘솔에 `https://<Vercel URL>/auth/callback` 등록
+6. **BE 설정** — `FRONTEND_OAUTH_SUCCESS_URL`을 Vercel URL 기준으로 업데이트
+
+### Vercel (프론트엔드)
+
+- **프로젝트**: GitHub `Siegfriex/MiriArt` → **Root Directory**: `./` (루트), **Branch**: `deploy`
+- **Framework Preset**: Vite
+- **Build**: `npm run build` / **Output**: `dist`
+- **환경 변수**:
+  | Key | Value | 비고 |
+  |-----|--------|------|
+  | `VITE_API_BASE_URL` | `https://<BE Cloud Run URL>` | BE 배포 후 실제 URL로 설정 |
+  | `GEMINI_API_KEY` | (빈 값 가능) | FE 미사용, 빌드 오류 방지용 |
+
+SPA 라우팅을 위해 루트의 `vercel.json`에 `rewrites`로 모든 경로를 `index.html`로 fallback합니다.
+
+### 레포 구조 (모노레포)
+
+| 경로 | 설명 |
+|------|------|
+| **루트** | FE (React + Vite), `package.json` 기준 |
+| `miriart-be/` | Spring Boot API (인증, 커뮤니티, AI 프록시) |
+| `miriart-ai/` | FastAPI AI 서비스 (Gemini) |
+| `docs/` | PRD, ERD, 인프라 명세 등 |
+
+BE/AI 배포는 GCP Cloud Run 등 별도 파이프라인을 사용합니다. 자세한 인프라 명세는 [docs/MiriArt_GCP_INFRA.md](docs/MiriArt_GCP_INFRA.md)를 참조하세요.
 
 ---
 
@@ -87,22 +122,23 @@ npm run build
 | **상태 관리** | Zustand |
 | **라우팅** | React Router 6 |
 | **애니메이션** | Framer Motion |
-| **AI** | Google Gemini API (Cloud Run 프록시 경유) |
+| **백엔드** | Spring Boot (miriart-be), FastAPI (miriart-ai) |
+| **AI** | Google Gemini API (BE/AI 서비스 경유) |
 | **아이콘** | Lucide React |
 
 ---
 
-## 📁 프로젝트 구조
+## 📁 프로젝트 구조 (FE)
 
 Feature-Sliced Design(FSD) 아키텍처를 따릅니다.
 
 ```
 src/
 ├── app/           # 앱 초기화, 라우터, 레이아웃, 프로바이더
-├── pages/         # 라우트별 페이지 (auth, home, archive, chat-room, profile, result-detail)
-├── widgets/       # 복합 UI 블록 (layout, chat, artifact, artwork, home, profile, result)
-├── features/      # 비즈니스 기능 (chat, upload, grade, subscription)
-├── entities/      # 도메인 엔티티 (session, artwork)
+├── pages/         # 라우트별 페이지 (auth, home, archive, chat-room, profile, result-detail, posts)
+├── widgets/       # 복합 UI (layout, chat, artifact, artwork, home, profile, result, community)
+├── features/      # 비즈니스 기능 (chat, upload, grade, subscription, community)
+├── entities/      # 도메인 엔티티 (session, artwork, community)
 └── shared/        # 공유 리소스 (api, config, model, ui)
 ```
 
@@ -115,15 +151,15 @@ src/
 - [x] AI 멘토 채팅 (다중 모델)
 - [x] 아카이브 & 필터링
 - [x] 크레딧 & 구독 시트
-- [ ] 실제 백엔드 API 연동
-- [ ] 인증(로그인/회원가입) 연동
+- [x] 백엔드 API 연동 (miriartApi, 인증·커뮤니티)
+- [x] 소셜 로그인 (카카오/구글) + AuthCallback
+- [x] 커뮤니티 홈 탭 (피드, 게시글, 좋아요)
+- [ ] Vercel FE 배포 + OAuth Redirect URI 연동
 - [ ] PWA 지원
 
 ---
 
 ## 🤝 기여하기
-
-기여를 환영합니다!
 
 1. 저장소 Fork
 2. 기능 브랜치 생성 (`git checkout -b feature/AmazingFeature`)
@@ -141,7 +177,7 @@ src/
 
 ## 📬 연락처
 
-프로젝트 링크: [https://github.com/YOUR_USERNAME/miri-art](https://github.com/YOUR_USERNAME/miri-art)
+프로젝트 링크: [https://github.com/Siegfriex/MiriArt](https://github.com/Siegfriex/MiriArt)
 
 ---
 

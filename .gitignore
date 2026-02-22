@@ -20,6 +20,8 @@ miriart-be/.gradle/
 miriart-ai/.venv/
 miriart-ai/.env
 miriart-ai/__pycache__/
+**/__pycache__/
+*.pyc
 service-account-dev.json
 
 # Editor directories and files
