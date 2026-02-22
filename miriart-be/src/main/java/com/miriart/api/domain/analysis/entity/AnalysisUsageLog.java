@@ -13,8 +13,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 분석 사용량 로그 (ERD_v2 analysis_usage_logs 테이블)
- * 플랜 기반 월별 크레딧 카운트용
+ * 분석 사용량 로그 엔티티. analysis_usage_logs 테이블. 플랜 기반 월별 크레딧 카운트용.
+ *
+ * <p>연계: {@link AnalysisService#startAnalysis}에서 분석 완료 시 create(user, analysisId)로 저장.
+ * {@link AnalysisUsageLogRepository#countByUserIdAndBillingYearMonth}로 해당 월 사용 횟수 조회 → 플랜 한도 체크.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

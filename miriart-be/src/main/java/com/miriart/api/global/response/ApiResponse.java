@@ -6,7 +6,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 공통 API 응답 래퍼
+ * 공통 API 성공/실패 응답 래퍼. success, data, code, message 필드.
+ *
+ * <p>연계: 컨트롤러에서 ApiResponse.success(data) 또는 ApiResponse.error(ErrorCode)로
+ * 일관된 JSON 구조 반환. FE는 success로 분기 후 data 또는 code/message 사용.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)

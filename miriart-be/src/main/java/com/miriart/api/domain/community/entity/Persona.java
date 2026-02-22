@@ -9,9 +9,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 가명 시스템 엔티티 (ERD_v2 personas 테이블)
- * 동일 (user_id, board_scope) 조합은 항상 같은 가명 반환
- * Phase C1 구현 예정
+ * 가명(페르소나) 엔티티. personas 테이블. (user_id, board_scope) 유일 — 동일 스코프면 같은 가명 반환.
+ *
+ * <p>연계: {@link PersonaRepository#findByUserIdAndBoardScope}. Post·Answer·Comment에서 persona_id로 표시명 사용. Phase C1 구현 예정.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

@@ -16,12 +16,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Spring Security 설정 (OAuth2 + JWT Stateless)
- * Cariv SecurityConfig 수정 복사:
- * - SessionCreationPolicy.STATELESS (Cariv는 IF_REQUIRED)
- * - Google OAuth2 provider 추가
- * - JwtAuthenticationFilter 추가
- * - MiriArt 경로 규칙 적용 (BE_SETUP_GUIDE §4.2)
+ * Spring Security 설정 (OAuth2 + JWT Stateless).
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>OAuth2 로그인: {@link CustomOAuth2UserService}, {@link OAuth2LoginSuccessHandler}로 Kakao/Google 로그인 후 JWT 발급</li>
+ *   <li>API 인증: {@link JwtAuthenticationFilter}가 Authorization Bearer 토큰 검증 후 SecurityContext 주입</li>
+ *   <li>공개 경로: /api/auth/**, /oauth2/**, GET /api/posts/**, GET /api/answers/**, swagger, actuator/health</li>
+ *   <li>그 외 요청은 인증 필요 (FE는 JWT로 /api/* 호출)</li>
+ * </ul>
+ *
+ * <p>Cariv SecurityConfig 수정 복사: SessionCreationPolicy.STATELESS, Google OAuth2, JwtAuthenticationFilter, MiriArt 경로 규칙 (BE_SETUP_GUIDE §4.2)</p>
+ *
+ * @author MiriArt Team
  */
 @Configuration
 @EnableWebSecurity

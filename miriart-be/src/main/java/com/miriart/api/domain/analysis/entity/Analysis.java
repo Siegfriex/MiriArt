@@ -11,7 +11,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 작품 분석 결과 엔티티 (ERD_v2 analyses 테이블 기반)
+ * 작품 분석 결과 엔티티. analyses 테이블 매핑.
+ *
+ * <p>연계: {@link AnalysisService}가 PENDING으로 저장 후 FastAPI 응답으로 complete/fail 호출.
+ * {@link AnalysisRepository}로 사용자별 조회·페이지 조회. scores·universityPredictions는 JSON 문자열 저장.</p>
+ *
+ * <p>ERD_v2 analyses 테이블 기반.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

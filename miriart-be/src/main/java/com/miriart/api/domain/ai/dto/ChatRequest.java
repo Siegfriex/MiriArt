@@ -8,7 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * POST /api/chat 요청 DTO (FE → BE)
+ * POST /api/chat 요청 DTO (FE → BE). AI 멘토에게 보낼 메시지·모델·세션·히스토리·이미지.
+ *
+ * <p>연계: FE에서 전달 → {@link com.miriart.api.domain.ai.controller.AiChatController}가 {@link com.miriart.api.domain.ai.service.AiProxyService#chat}에 전달 →
+ * {@link InternalChatRequest}로 변환 후 FastAPI /internal/ai/chat body로 전송.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @NoArgsConstructor

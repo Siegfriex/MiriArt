@@ -7,7 +7,11 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 /**
- * GET /api/analyses/{id} 응답 DTO
+ * GET /api/analyses/{id} 응답 DTO. 분석 결과 상세 (이미지 URL, 등급, 점수, 코멘트 등).
+ *
+ * <p>연계: {@link AnalysisService#getAnalysis}, {@link AnalysisService#getMyAnalyses}에서 {@link Analysis} 엔티티를 from(analysis)로 변환해 반환.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Builder

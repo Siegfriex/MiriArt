@@ -1,3 +1,9 @@
+"""
+이미지 편집 서비스. Gemini 2.0 Flash로 이미지+프롬프트 기반 편집 후 GCS 업로드.
+
+- 연계: routers/ai.edit_image → 이 모듈 edit_image; gemini_client.upload_to_gcs로 결과 저장.
+- Java BE에서 이미지 편집 API 호출 시 /internal/ai/edit-image 사용.
+"""
 import asyncio
 import base64
 import uuid
@@ -10,7 +16,7 @@ from app.schemas.image_edit import InternalImageEditRequest, InternalImageEditRe
 
 
 async def edit_image(request: InternalImageEditRequest) -> InternalImageEditResponse:
-    """base64 이미지 → Gemini 편집 → 결과 이미지 GCS 저장 → URL 반환."""
+    """base64 이미지와 프롬프트로 Gemini 2.0 Flash 호출 → 편집 결과 이미지 GCS edited/ 경로에 업로드 → 공개 URL 반환."""
     try:
         image_bytes = base64.b64decode(request.image_base64)
     except Exception as e:

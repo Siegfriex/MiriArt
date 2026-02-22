@@ -15,8 +15,18 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 /**
- * OAuth2 인가 코드 → JWT 교환 서비스
- * Cariv OAuth2TokenExchangeService 이식 + Refresh Token httpOnly Cookie 발급 추가
+ * OAuth2 인가 코드 → JWT 교환 서비스. Redis 1회용 코드 조회 후 Access·Refresh 발급, Refresh는 httpOnly 쿠키로 설정.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>FE가 /auth/callback?code=UUID 로 전달한 code → {@link com.miriart.api.global.redis.RedisService#getAndDeleteOAuth2Code}</li>
+ *   <li>{@link OAuth2AuthCodePayload}로 userId·provider 복원 → User 조회 → {@link JwtUtil}로 JWT 발급</li>
+ *   <li>Refresh 토큰 Redis 저장(7일) + Set-Cookie로 FE에 전달. {@link AuthController} POST /api/auth/token에서 호출</li>
+ * </ul>
+ *
+ * <p>Cariv 이식 + Refresh Token httpOnly Cookie 발급 추가.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

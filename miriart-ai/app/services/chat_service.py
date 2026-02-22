@@ -1,3 +1,9 @@
+"""
+AI 멘토 채팅 서비스. Gemini 멀티모델로 대화 생성 및 퀵리플라이 생성.
+
+- 연계: routers/ai.chat → 이 모듈 chat; Java AiProxyService가 /internal/ai/chat 호출, Redis에 히스토리 저장.
+- sticky_context(등급·점수·fix_scope)로 시스템 프롬프트 분기.
+"""
 import asyncio
 import base64
 import json
@@ -30,7 +36,7 @@ QUICK_REPLY_PROMPT = """
 
 
 def build_system_prompt(sticky_context: StickyContext) -> str:
-    """fix_scope에 따라 시스템 프롬프트를 분기한다."""
+    """등급·점수·fix_scope(StructureRebuild/DetailTuning)에 따라 멘토 시스템 프롬프트 분기."""
     base = f"당신은 미대 입시 전문 AI 멘토입니다. 현재 학생의 작품 등급은 {sticky_context.grade}이며 점수는 {sticky_context.score}점입니다.\n\n"
     if sticky_context.fix_scope == "StructureRebuild":
         return (
@@ -48,7 +54,7 @@ def build_system_prompt(sticky_context: StickyContext) -> str:
 
 
 def convert_history(history: Optional[List[HistoryItem]]):
-    """FE HistoryItem 리스트를 Vertex AI Content 형식으로 변환한다."""
+    """Java BE에서 전달한 히스토리(Redis 기반)를 Vertex AI Chat Content 목록으로 변환."""
     from vertexai.generative_models import Content, Part
 
     if not history:
@@ -62,7 +68,7 @@ def convert_history(history: Optional[List[HistoryItem]]):
 
 
 async def generate_quick_replies(response_text: str) -> List[str]:
-    """응답 텍스트 기반으로 3개 퀵리플라이를 생성한다. 실패 시 빈 리스트 반환."""
+    """AI 응답 텍스트로 후속 질문 3개 생성(gemini-2.5-flash-lite). 파싱 실패 시 빈 리스트."""
     try:
         model = get_generative_model("gemini-2.5-flash-lite")
         prompt = QUICK_REPLY_PROMPT.format(response_text=response_text[:500])
@@ -83,7 +89,7 @@ async def generate_quick_replies(response_text: str) -> List[str]:
 
 
 async def chat(request: InternalChatRequest) -> InternalChatResponse:
-    """모델 선택 → 채팅 세션 시작 → 메시지 전송 → 퀵리플라이 생성."""
+    """MODEL_MAP으로 모델 선택 → sticky_context로 시스템 프롬프트 설정 → 히스토리+메시지(이미지可选) 전송 → 퀵리플라이 생성 후 응답 반환."""
     model_name = MODEL_MAP.get(request.model_type, "gemini-2.5-pro-preview")
 
     system_prompt = build_system_prompt(request.sticky_context) if request.sticky_context else None

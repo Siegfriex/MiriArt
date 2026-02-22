@@ -16,7 +16,16 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 사용자 서비스
+ * 사용자 프로필·플랜 조회/수정 서비스.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link UserRepository}로 사용자 조회. 프로필 수정 시 닉네임 중복 검사 후 {@link User#completeProfile}</li>
+ *   <li>플랜 정보: {@link User#getPlanType} monthlyLimit과 외부 전달된 usedThisMonth로 remaining 계산 → UserPlanResponse</li>
+ *   <li>{@link UserController}에서 인증된 userId로 호출</li>
+ * </ul>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

@@ -1,3 +1,9 @@
+"""
+작품 이미지 분석 서비스. Gemini Vision으로 5축(밀도·형태·완성도·정합성·사고력) 채점.
+
+- 연계: routers/ai.analyze → 이 모듈 analyze_artwork; gemini_client로 GCS 다운로드·GenerativeModel 사용.
+- Java BE AnalysisService가 /internal/ai/analyze 호출 후 결과를 DB에 저장.
+"""
 import asyncio
 import json
 import re
@@ -50,10 +56,12 @@ WEIGHTS = {"density": 0.20, "form": 0.25, "completion": 0.20, "relevance": 0.20,
 
 
 def calculate_total_score(scores: dict) -> float:
+    """5축 점수와 가중치로 총점 계산. WEIGHTS(density 20%, form 25% 등) 적용."""
     return sum(scores[k] * w for k, w in WEIGHTS.items())
 
 
 def calculate_grade(total_score: float) -> str:
+    """총점을 등급(A/B/C/D/F)으로 변환. Java AnalysisGrade enum과 대응."""
     if total_score >= 90:
         return "A"
     if total_score >= 80:
@@ -66,12 +74,13 @@ def calculate_grade(total_score: float) -> str:
 
 
 def calculate_fix_scope(scores: dict) -> str:
+    """밀도·형태·정합성으로 구조 점수 산출 후 FixScope(DetailTuning / StructureRebuild) 반환. Java FixScope enum과 대응."""
     structure_score = scores["density"] * 0.3 + scores["form"] * 0.4 + scores["relevance"] * 0.3
     return "DetailTuning" if structure_score >= 70 else "StructureRebuild"
 
 
 def parse_analysis_json(text: str) -> dict:
-    """Gemini 응답 텍스트에서 JSON을 추출한다. ```json 코드블록 포함 처리."""
+    """Gemini 응답 텍스트에서 JSON 추출. ```json 코드블록 또는 첫 { } 블록 지원. SCORE_FIELDS·comment 필수."""
     json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if json_match:
         raw = json_match.group(1)
@@ -95,7 +104,7 @@ def parse_analysis_json(text: str) -> dict:
 
 
 async def analyze_artwork(request: InternalAnalyzeRequest) -> InternalAnalyzeResponse:
-    """GCS 이미지 → Gemini Vision 분석 → 5축 채점 결과 반환."""
+    """GCS URI 이미지 다운로드 → Gemini Vision(gemini-2.5-pro-preview) 호출 → JSON 파싱·총점·등급·fix_scope·radar_data 반환."""
     try:
         bucket_name, blob_path = parse_gcs_uri(request.gcs_uri)
     except ValueError as e:

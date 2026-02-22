@@ -9,8 +9,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 댓글 엔티티 (ERD_v2 comments 테이블)
- * Phase C1 구현 예정
+ * 댓글 엔티티. comments 테이블 매핑. parentType+parentId로 게시글 또는 답변에 소속.
+ *
+ * <p>연계: {@link CommentParentType} POST/ANSWER, {@link CommentRepository#findByParentTypeAndParentIdOrderByCreatedAtAsc}. Phase C1 구현 예정.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

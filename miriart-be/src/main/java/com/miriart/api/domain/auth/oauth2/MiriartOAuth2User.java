@@ -11,8 +11,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * OAuth2 로그인 성공 후 SecurityContext에 저장되는 사용자 Principal
- * Cariv CarivOAuth2User 이식 (클래스명, 필드 변경)
+ * OAuth2 로그인 성공 후 SecurityContext에 저장되는 Principal. User 엔티티 기반 래퍼.
+ *
+ * <p>연계: {@link CustomOAuth2UserService#loadUser} 반환 타입. {@link OAuth2LoginSuccessHandler}에서 getUserId 등으로 Redis 페이로드 생성.</p>
+ *
+ * <p>Cariv CarivOAuth2User 이식 (클래스명·필드 변경).</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 public class MiriartOAuth2User implements OAuth2User {

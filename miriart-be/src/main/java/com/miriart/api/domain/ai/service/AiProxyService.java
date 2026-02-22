@@ -21,10 +21,18 @@ import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
- * FastAPI AI 서비스 WebClient 프록시
- * Bug #4 Fix: Redis 세션에 text만 저장하던 것을 전체 메시지 JSON으로 변경
- * Phase 1 전략: FE가 매 요청마다 history를 포함해 보내는 stateless 방식 지원 +
- *              BE Redis에서 세션 히스토리 보완 저장 (72h TTL)
+ * FastAPI AI 서비스와의 내부 통신을 담당하는 프록시 서비스.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link com.miriart.api.global.config.WebClientConfig}에서 주입된 WebClient로 {@code /internal/ai/analyze}, {@code /internal/ai/chat} 호출</li>
+ *   <li>{@link com.miriart.api.global.redis.RedisService}를 통해 사용자별 채팅 세션 이력(72시간 TTL) JSON 저장·갱신</li>
+ *   <li>{@link AiChatController}에서 chat 호출, {@link com.miriart.api.domain.analysis.service.AnalysisService}에서 analyze 호출</li>
+ * </ul>
+ *
+ * <p>Bug #4: Redis 세션에 전체 메시지 JSON 저장. Phase 1: FE history 전달 + BE Redis 보완 저장.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

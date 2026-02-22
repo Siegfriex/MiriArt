@@ -7,7 +7,11 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 /**
- * GET /api/users/me 응답 DTO
+ * GET /api/users/me 응답 DTO. 프로필 정보(닉네임·학년·도메인·역할·평판·needsProfile 등).
+ *
+ * <p>연계: {@link UserService#getProfile}, {@link UserService#updateProfile} 반환 타입. User 엔티티에서 from(user)로 생성.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Builder

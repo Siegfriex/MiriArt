@@ -12,8 +12,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 좋아요 엔티티 (ERD_v2 likes 테이블)
- * Phase C1 구현 예정
+ * 좋아요 엔티티. likes 테이블. user+targetType+targetId 유일 제약(중복 좋아요 방지).
+ *
+ * <p>연계: {@link LikeTargetType} POST/ANSWER/COMMENT, {@link LikeRepository} 존재 여부·개수 조회. Phase C1 구현 예정.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

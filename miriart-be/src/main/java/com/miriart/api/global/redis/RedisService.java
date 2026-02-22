@@ -7,8 +7,18 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Redis 서비스
- * Cariv RedisService 이식 + MiriArt 도메인별 key prefix 메서드 추가
+ * Redis 키-값 서비스. OAuth2 코드·리프레시 토큰·채팅 세션·플랜 캐시 등 도메인별 key prefix 메서드 제공.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>OAuth2: 인가 코드 60초 TTL 저장/조회·삭제. 리프레시 토큰 7일, 블랙리스트(로그아웃)</li>
+ *   <li>AI 채팅: {@link com.miriart.api.domain.ai.service.AiProxyService}에서 saveChatSession/getChatSession (72시간 TTL)로 히스토리 저장</li>
+ *   <li>플랜: user:plan 캐시 1시간 (선택)</li>
+ * </ul>
+ *
+ * <p>Cariv RedisService 이식 + MiriArt 도메인별 key prefix 메서드 추가.</p>
+ *
+ * @author MiriArt Team
  */
 @Service
 @RequiredArgsConstructor

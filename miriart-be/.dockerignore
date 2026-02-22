@@ -1,0 +1,9 @@
+.env
+*.json
+.gradle/
+build/
+build2/
+.git/
+.gitignore
+**/*.md
+src/test/
