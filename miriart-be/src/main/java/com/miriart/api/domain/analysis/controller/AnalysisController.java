@@ -20,10 +20,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 /**
- * 작품 분석 API 컨트롤러
- * POST /api/analyses       — 작품 업로드 + 분석 시작
- * GET  /api/analyses       — 내 분석 목록 (Archive)
- * GET  /api/analyses/{id}  — 분석 결과 단건 조회
+ * 작품 분석 API 컨트롤러. POST 업로드+분석 시작, GET 목록·단건 조회.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>POST /api/analyses: multipart 이미지 + analysisType·problemText → {@link AnalysisService#startAnalysis} → 202 Accepted + AnalysisStartResponse</li>
+ *   <li>GET /api/analyses: {@link AnalysisService#getMyAnalyses} 페이지 조회 (Archive)</li>
+ *   <li>GET /api/analyses/{id}: 본인 분석만 {@link AnalysisService#getAnalysis} → AnalysisDetailResponse</li>
+ * </ul>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @RestController

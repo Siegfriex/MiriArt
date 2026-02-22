@@ -18,6 +18,18 @@ configurations {
         extendsFrom annotationProcessor
     }
 }
+// BE(seller) 이식: springdoc 버전 고정
+configurations.all {
+    resolutionStrategy {
+        force 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+        force 'org.springdoc:springdoc-openapi-starter-common:2.8.6'
+        force 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.6'
+    }
+}
+// BE(seller) 이식: Netty 네이티브 DNS 제외 → UnsatisfiedLinkError 로그 방지
+configurations.all {
+    exclude group: 'io.netty', module: 'netty-resolver-dns-native-macos'
+}
 
 repositories {
     mavenCentral()
@@ -42,9 +54,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    // Cloud Run ↔ Cloud SQL 연결 (프라이빗 IP 대신 소켓 사용)
+    runtimeOnly 'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.25.1'
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // Actuator (health 등)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
@@ -64,6 +82,7 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Dev
     developmentOnly 'org.springframework.boot:spring-boot-devtools'

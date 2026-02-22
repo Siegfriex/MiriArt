@@ -8,8 +8,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 /**
- * GCS Mock 구현체 — dev 프로파일 전용
- * GCP 자격증명 없이 로컬 개발 가능하도록 Bug #2(H1) 수정
+ * 파일 저장 Mock 구현체. dev 프로파일 전용, GCP 자격증명 없이 로컬 개발용.
+ *
+ * <p>연계: @Profile("dev") 시 {@link FileStorageService}로 주입됨.
+ * 실제 GCS 업로드 없이 publicUrl/gcsUri 형식만 반환. 삭제는 로그만 출력.</p>
+ *
+ * <p>Bug #2(H1) 수정: GCP 없이 로컬 개발 가능.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

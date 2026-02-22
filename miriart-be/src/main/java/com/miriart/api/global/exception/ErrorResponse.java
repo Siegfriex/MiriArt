@@ -9,8 +9,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * API 에러 응답 DTO
- * Cariv ErrorResponse 이식 (package명 변경)
+ * API 에러 응답 DTO. 타임스탬프·HTTP 상태·코드·메시지·필드 에러 목록.
+ *
+ * <p>연계: {@link GlobalExceptionHandler}가 예외별로 ErrorResponse.of(...) 호출 후 ResponseEntity로 반환.
+ * FE에서 code로 분기, message·errors로 사용자 안내.</p>
+ *
+ * <p>Cariv ErrorResponse 이식 (package명 변경).</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Builder

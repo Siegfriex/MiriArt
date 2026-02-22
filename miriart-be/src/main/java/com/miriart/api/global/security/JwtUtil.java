@@ -13,8 +13,18 @@ import java.util.Base64;
 import java.util.Date;
 
 /**
- * JWT 토큰 생성/검증 유틸리티
- * Cariv JwtUtil 이식 + role claim 추가 (Bug #3 Fix)
+ * JWT Access/Refresh 토큰 생성 및 검증 유틸리티 (HS256).
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link JwtProperties}에서 시크릿·만료 시간(access 15분, refresh 7일) 로드</li>
+ *   <li>Access 토큰: userId, role, type=access claim 포함 → {@link JwtAuthenticationFilter}에서 검증 후 SecurityContext 설정</li>
+ *   <li>Refresh 토큰: {@link com.miriart.api.domain.auth.service.TokenRefreshService}에서 갱신 시 사용</li>
+ * </ul>
+ *
+ * <p>Cariv JwtUtil 이식 + role claim 추가 (Bug #3 Fix)</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Component

@@ -16,8 +16,18 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.nio.file.AccessDeniedException;
 
 /**
- * 전역 예외 처리 핸들러
- * Cariv GlobalExceptionHandler 이식 (package명 변경)
+ * 전역 예외 처리 핸들러. 컨트롤러/서비스에서 발생한 예외를 일괄 처리해 {@link ErrorResponse} JSON으로 반환.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link BusinessException} → ErrorCode 기반 HTTP 상태·메시지 반환</li>
+ *   <li>유효성/파라미터/메시지/메서드/접근거부/파일크기/헤더 누락 등 → BAD_REQUEST 등 적절한 상태 코드</li>
+ *   <li>미처리 예외 → INTERNAL_SERVER_ERROR. FE는 code·message로 에러 UI 표시</li>
+ * </ul>
+ *
+ * <p>Cariv GlobalExceptionHandler 이식 (package명 변경).</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @RestControllerAdvice

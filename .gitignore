@@ -14,6 +14,8 @@ dist-ssr
 
 # BE / AI (로컬 빌드·가상환경 제외, 임베디드 repo 제외)
 BE/
+miriart-be/.env
+miriart-be/.env.*
 miriart-be/build/
 miriart-be/build2/
 miriart-be/.gradle/
@@ -22,7 +24,7 @@ miriart-ai/.env
 miriart-ai/__pycache__/
 **/__pycache__/
 *.pyc
-service-account-dev.json
+service-account*.json
 
 # Editor directories and files
 .vscode/*

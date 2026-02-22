@@ -8,8 +8,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 /**
- * 앱 기동 시 주요 빈 상태를 로그에 기록
- * Debug 계측 코드 — H1 (GCS 빈 기동 실패 여부) 검증용
+ * 앱 기동 시 주요 빈 상태를 로그에 기록하는 ApplicationRunner.
+ *
+ * <p>연계: 기동 완료 후 {@link FileStorageService} 구현체 클래스명 로그 출력.
+ * dev면 MockFileStorageService, 프로덕션이면 GcsFileStorageService 확인용 (H1 검증).</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Component

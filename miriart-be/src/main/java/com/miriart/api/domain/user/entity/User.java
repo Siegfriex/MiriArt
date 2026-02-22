@@ -8,8 +8,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 사용자 엔티티 (ERD_v2 users 테이블 기반)
- * 소셜 로그인 전용, 이메일/비밀번호 없음
+ * 사용자 엔티티. users 테이블 매핑. 소셜 로그인 전용(이메일/비밀번호 없음).
+ *
+ * <p>연계: {@link com.miriart.api.domain.auth.oauth2.CustomOAuth2UserService}에서 조회/생성.
+ * {@link AnalysisService}에서 플랜 한도 조회, {@link UserService}에서 프로필·플랜 API. JWT role claim은 이 엔티티 role 사용.</p>
+ *
+ * <p>ERD_v2 users 테이블 기반.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

@@ -6,7 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * POST /api/analyses 요청 DTO (multipart/form-data와 함께 전달)
+ * POST /api/analyses 요청 DTO. multipart/form-data의 analysisType·problemText (선택) 필드.
+ *
+ * <p>연계: FE에서 이미지+이 필드 전송 → {@link AnalysisController}가 {@link AnalysisService#startAnalysis}에 전달.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @NoArgsConstructor

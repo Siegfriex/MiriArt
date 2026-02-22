@@ -14,9 +14,18 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * Google Cloud Storage 파일 저장 구현체
- * BE_SETUP_GUIDE §8.3 기반
- * @Profile("!dev") — dev 환경에서는 MockFileStorageService 사용
+ * Google Cloud Storage 파일 저장 구현체. 프로덕션/비-dev 프로파일에서 사용.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link FileStorageService} 구현. {@code miriart.gcs.bucket} 버킷에 category/날짜/UUID_파일명으로 업로드</li>
+ *   <li>반환된 gcsUri(gs://...)를 분석 서비스에서 FastAPI에 전달해 Vertex AI가 이미지 로드</li>
+ *   <li>@Profile("!dev") — dev에서는 {@link MockFileStorageService} 사용</li>
+ * </ul>
+ *
+ * <p>BE_SETUP_GUIDE §8.3 기반.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

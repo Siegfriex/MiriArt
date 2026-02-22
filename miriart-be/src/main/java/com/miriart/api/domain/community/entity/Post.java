@@ -11,8 +11,12 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 커뮤니티 게시글 엔티티 (ERD_v2 posts 테이블)
- * Phase C1 구현 예정 — 현재 Entity + Repository 뼈대만
+ * 커뮤니티 게시글 엔티티. posts 테이블 매핑. FREE/QNA 유형, OPEN·SOLVED·EXPIRED·CLOSED 상태.
+ *
+ * <p>연계: {@link PostRepository}로 목록·필터 조회. Q&A 채택 시 {@link #accept}, 마감 시 {@link #expire}.
+ * {@link Answer}와 1:N, {@link User}, {@link Persona}와 N:1. Phase C1 구현 예정 — 현재 Entity+Repository 뼈대.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Entity

@@ -13,10 +13,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 사용자 API 컨트롤러
- * GET  /api/users/me            — 내 프로필 조회
- * PATCH /api/users/me/profile   — 온보딩 프로필 입력
- * GET  /api/users/me/plan       — 플랜 및 크레딧 조회
+ * 사용자 API 컨트롤러. 내 프로필 조회·수정, 플랜·크레딧 조회.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>GET /api/users/me: {@link UserService#getProfile} → UserProfileResponse</li>
+ *   <li>PATCH /api/users/me/profile: {@link UserService#updateProfile} (닉네임 중복 검사, 온보딩 완료)</li>
+ *   <li>GET /api/users/me/plan: {@link AnalysisService#getUsedThisMonth} + {@link UserService#getPlanInfo} → UserPlanResponse</li>
+ * </ul>
+ *
+ * @author MiriArt Team
  */
 @RestController
 @RequestMapping("/api/users")

@@ -5,7 +5,11 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * POST /api/analyses 응답 DTO (분석 시작 즉시 반환)
+ * POST /api/analyses 응답 DTO. 분석 시작 즉시 202 Accepted로 반환 (analysisId, status, message).
+ *
+ * <p>연계: {@link AnalysisService#startAnalysis} 완료 후 {@link Analysis}에서 from(analysis)로 생성 → FE 폴링/상세 조회용 ID 전달.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Builder

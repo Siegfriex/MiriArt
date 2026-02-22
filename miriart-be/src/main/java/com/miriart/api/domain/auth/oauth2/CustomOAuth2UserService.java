@@ -18,9 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 /**
- * OAuth2 사용자 정보 로딩 서비스
- * 카카오 + 구글 이중 provider 분기
- * Cariv CustomOAuth2UserService 이식 + 구글 provider 추가, placeholder 이메일 제거
+ * OAuth2 사용자 정보 로딩 서비스. Kakao·Google provider 분기, 사용자 조회/생성 후 MiriartOAuth2User 반환.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link com.miriart.api.global.config.SecurityConfig} oauth2Login.userInfoEndpoint에서 등록</li>
+ *   <li>로그인 성공 시 {@link OAuth2LoginSuccessHandler}가 Redis에 code 저장 후 FE 리다이렉트</li>
+ *   <li>{@link User} findByProviderAndProviderUserId 또는 save로 신규 생성 → {@link MiriartOAuth2User}로 래핑</li>
+ * </ul>
+ *
+ * <p>Cariv 이식 + 구글 provider 추가.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

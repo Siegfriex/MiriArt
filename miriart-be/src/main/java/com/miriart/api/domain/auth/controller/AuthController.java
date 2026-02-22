@@ -21,10 +21,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 
 /**
- * 인증 API 컨트롤러
- * POST /api/auth/token   — OAuth2 코드 → JWT 교환
- * POST /api/auth/refresh — Access Token 갱신
- * POST /api/auth/logout  — 로그아웃
+ * 인증 API 컨트롤러. OAuth2 코드→JWT 교환, Access 토큰 갱신, 로그아웃.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>POST /api/auth/token: FE가 OAuth 리다이렉트 후 받은 code 전달 → {@link OAuth2TokenExchangeService#exchange} → JWT + Refresh 쿠키</li>
+ *   <li>POST /api/auth/refresh: 쿠키의 refreshToken으로 {@link TokenRefreshService#refresh} → 새 Access 토큰</li>
+ *   <li>POST /api/auth/logout: {@link TokenRefreshService#logout} + Refresh 쿠키 만료</li>
+ * </ul>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @RestController

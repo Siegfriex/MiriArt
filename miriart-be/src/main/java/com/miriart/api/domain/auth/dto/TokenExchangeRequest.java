@@ -5,7 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * POST /api/auth/token 요청 DTO
+ * POST /api/auth/token 요청 DTO. FE가 OAuth 콜백에서 받은 1회용 code.
+ *
+ * <p>연계: FE → {@link AuthController#exchangeToken} → {@link OAuth2TokenExchangeService#exchange}.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @NoArgsConstructor

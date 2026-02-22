@@ -27,8 +27,19 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 작품 분석 서비스
- * AGENT_BE Task 3 기반
+ * 작품 분석 오케스트레이션 서비스. GCS 업로드 → FastAPI 분석 호출 → DB 저장·크레딧 차감.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link FileStorageService}로 이미지 업로드 후 gcsUri 획득 → {@link AiProxyService#analyze}로 FastAPI /internal/ai/analyze 호출</li>
+ *   <li>{@link AnalysisRepository}에 PENDING으로 저장 후 AI 응답으로 complete/fail 업데이트</li>
+ *   <li>{@link AnalysisUsageLogRepository}로 월별 사용량 집계, {@link User} 플랜 한도 초과 시 CREDIT_LIMIT_EXCEEDED</li>
+ *   <li>{@link AnalysisController}에서 startAnalysis, getAnalysis, getMyAnalyses 호출</li>
+ * </ul>
+ *
+ * <p>AGENT_BE Task 3 기반.</p>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Service

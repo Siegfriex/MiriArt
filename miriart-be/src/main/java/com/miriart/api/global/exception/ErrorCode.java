@@ -5,8 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /**
- * MiriArt 에러 코드 정의
- * Cariv global/ 패턴 이식 + MiriArt 신규 코드 추가
+ * MiriArt 에러 코드 정의. HTTP 상태·코드 문자열·한글 메시지 보유.
+ *
+ * <p>연계: {@link BusinessException} 생성자 인자, {@link GlobalExceptionHandler}·{@link ApiResponse#error}에서
+ * 클라이언트 응답 code/message 결정. 공통·Auth·Member·File·Analysis·Credit·AI Chat·Community 도메인별 코드.</p>
+ *
+ * <p>Cariv global/ 패턴 이식 + MiriArt 신규 코드 추가.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @RequiredArgsConstructor

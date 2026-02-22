@@ -7,8 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Redis에 저장되는 OAuth2 인가 코드 페이로드
- * Cariv OAuth2AuthCodePayload 이식 + provider 추가, emailRequired 제거
+ * Redis에 저장되는 OAuth2 1회용 인가 코드 페이로드 (userId, email, provider). JSON 직렬화/역직렬화.
+ *
+ * <p>연계: {@link OAuth2LoginSuccessHandler}가 toJson()으로 Redis 저장 → FE가 code로 /api/auth/token 호출 시 {@link OAuth2TokenExchangeService}가 getAndDeleteOAuth2Code 후 fromJson()으로 복원.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @NoArgsConstructor

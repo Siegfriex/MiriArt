@@ -7,7 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * PATCH /api/users/me/profile 요청 DTO
+ * PATCH /api/users/me/profile 요청 DTO. 온보딩 프로필(닉네임·학년·도메인). 유효성 검사 적용.
+ *
+ * <p>연계: FE → {@link UserController#updateProfile} → {@link UserService#updateProfile} (닉네임 중복 시 DUPLICATE_NICKNAME).</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @NoArgsConstructor

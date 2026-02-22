@@ -7,7 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FastAPI POST /internal/ai/chat 요청 DTO (BE → FastAPI)
+ * FastAPI POST /internal/ai/chat 요청 DTO (BE → FastAPI). Python Pydantic InternalChatRequest와 필드 대응.
+ *
+ * <p>연계: {@link AiProxyService#chat}에서 {@link ChatRequest}를 이 DTO로 변환해 WebClient bodyValue로 전송.</p>
+ *
+ * @author MiriArt Team
  */
 @Getter
 @Builder

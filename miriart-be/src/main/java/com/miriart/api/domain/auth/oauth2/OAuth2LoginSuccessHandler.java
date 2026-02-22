@@ -14,9 +14,17 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * OAuth2 로그인 성공 핸들러
- * UUID one-time code를 Redis에 저장하고 프론트엔드로 리다이렉트
- * Cariv OAuth2LoginSuccessHandler 이식 + FRONTEND_OAUTH_SUCCESS_URL env var 적용
+ * OAuth2 로그인 성공 핸들러. UUID 1회용 코드를 Redis에 저장 후 FE OAuth 콜백 URL로 리다이렉트.
+ *
+ * <p>연계 구조:</p>
+ * <ul>
+ *   <li>{@link CustomOAuth2UserService} 로드 후 인증 성공 시 Spring이 이 핸들러 호출</li>
+ *   <li>{@link MiriartOAuth2User}에서 userId·email·provider 추출 → {@link OAuth2AuthCodePayload} 생성</li>
+ *   <li>{@link com.miriart.api.global.redis.RedisService#saveOAuth2Code} (60초 TTL) 후 FE {@code miriart.frontend.oauth-success-url}/auth/callback?code= 로 리다이렉트</li>
+ *   <li>FE가 이 code로 POST /api/auth/token 호출 → {@link OAuth2TokenExchangeService}</li>
+ * </ul>
+ *
+ * @author MiriArt Team
  */
 @Slf4j
 @Component
