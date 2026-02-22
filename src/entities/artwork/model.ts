@@ -1,6 +1,13 @@
-// Entities Layer: Artwork Model
+/**
+ * @fileoverview 작품(Artwork) 엔티티. id, imageUrl, university, major, grade, score, timestamp, aiSummary.
+ * @참조 AnalysisCard, ArtworkGrid, Archive, Home, result-detail Page
+ * @라우팅 /app/archive, /app/home, /result/:artworkId
+ * @상태 (직접 사용 안 함 - Mock/API 데이터)
+ */
+
 import { Grade } from '../../shared/model/types';
 
+/** 작품 한 건. id, 이미지, 대학, 전공, 성적, 점수, 타임스탬프, AI 요약 */
 export interface Artwork {
   id: string;
   imageUrl: string;
@@ -9,18 +16,13 @@ export interface Artwork {
   grade: Grade;
   score?: number;
   timestamp: number;
+  aiSummary?: string;
 }
 
-// Mock Data Service
-export const MOCK_ARTWORKS: Artwork[] = Array.from({ length: 12 }).map((_, i) => ({
-  id: `art-${i}`,
-  imageUrl: `https://picsum.photos/300/400?random=${i + 100}`,
-  university: i % 2 === 0 ? 'Hongik Univ.' : 'Kookmin Univ.',
-  major: i % 3 === 0 ? 'Visual Design' : 'Basic Design',
-  grade: i % 4 === 0 ? Grade.A : i % 4 === 1 ? Grade.B : Grade.C,
-  timestamp: Date.now() - (i * 86400000),
-}));
-
-export const getRecentArtworks = (limit: number = 5) => MOCK_ARTWORKS.slice(0, limit);
-export const getAllArtworks = () => MOCK_ARTWORKS;
-export const getArtworkById = (id: string): Artwork | undefined => MOCK_ARTWORKS.find(art => art.id === id);
+// Mock 데이터 헬퍼 — __mocks__에서 re-export (하위 호환)
+export {
+  MOCK_ARTWORKS,
+  getRecentArtworks,
+  getAllArtworks,
+  getArtworkById,
+} from '../../__mocks__/artworks';

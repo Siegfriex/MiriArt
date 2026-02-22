@@ -1,33 +1,56 @@
+/**
+ * @fileoverview 전역 토스트 컨테이너. useToastStore의 toasts 렌더링. success/error/info 스타일.
+ * @참조 App.tsx (전역 마운트)
+ * @라우팅 전역
+ * @상태 useToastStore (toasts, dismiss)
+ */
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToastStore } from '../model/toastStore';
+import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
-// Simple Toast store for demo (can be expanded to global store)
-// For now, this is a UI component to be used where needed or controlled via props
-interface ToastProps {
-  message: string;
-  isVisible: boolean;
-  type?: 'success' | 'error' | 'info';
-}
+const ICONS = {
+  success: CheckCircle,
+  error: AlertCircle,
+  info: Info,
+};
 
-export const Toast: React.FC<ToastProps> = ({ message, isVisible, type = 'info' }) => {
-  const bgColors = {
-    success: 'bg-lime-400 text-dark-900',
-    error: 'bg-red-500 text-white',
-    info: 'bg-dark-800 text-white border border-white/10'
-  };
+const STYLES = {
+  success: 'bg-primary-lime text-text-inverse',
+  error: 'bg-semantic-error text-white',
+  info: 'bg-dark-800 text-white border border-white/10',
+};
+
+/** 토스트 컨테이너. useToastStore toasts 렌더링. @참조 App.tsx @상태 useToastStore */
+export const ToastContainer: React.FC = () => {
+  const { toasts, dismiss } = useToastStore();
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-full shadow-lg font-medium text-sm ${bgColors[type]}`}
-        >
-          {message}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center gap-2 z-toast pointer-events-none px-4">
+      <AnimatePresence>
+        {toasts.map((toast) => {
+          const Icon = ICONS[toast.type];
+          return (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-full shadow-elevated font-medium text-sm max-w-xs ${STYLES[toast.type]}`}
+            >
+              <Icon size={16} className="flex-shrink-0" />
+              <span className="flex-1">{toast.message}</span>
+              <button
+                onClick={() => dismiss(toast.id)}
+                className="ml-1 opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </div>
   );
 };

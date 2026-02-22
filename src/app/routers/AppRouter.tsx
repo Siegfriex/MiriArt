@@ -1,3 +1,10 @@
+/**
+ * @fileoverview 앱 라우터. Splash, Onboarding, Auth, Tutorial, App(Home/Archive/Chat/Profile), ChatRoom, ResultDetail.
+ * @참조 App.tsx
+ * @라우팅 /, /onboarding, /auth/*, /tutorial, /app/*, /chat/:id, /result/:id
+ * @상태 (직접 사용 안 함)
+ */
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
@@ -17,11 +24,11 @@ import { Profile } from '../../pages/profile/ui/Page';
 import { ChatRoom } from '../../pages/chat-room/ui/Page';
 import { ResultDetail } from '../../pages/result-detail/ui/Page';
 
+/** 앱 라우터. @참조 App */
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<Splash onFinish={() => {}} />} /> 
-      {/* Splash handles its own navigation via useEffect inside component */}
+      <Route path="/" element={<Splash />} />
 
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/auth/login" element={<Login />} />
@@ -30,6 +37,7 @@ export const AppRouter: React.FC = () => {
 
       {/* Main App Layout */}
       <Route path="/app" element={<MainLayout />}>
+        <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<Home />} />
         <Route path="archive" element={<Archive />} />
         <Route path="chat" element={<AIChatList />} />

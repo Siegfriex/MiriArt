@@ -1,6 +1,6 @@
 {
-  "name": "dysprime",
-  "description": "AI-based Art/Design College Admission Mentoring App",
+  "name": "miri-art",
+  "description": "MiriArt (미리미대) - AI-based Art/Design College Admission Mentoring App",
   "requestFramePermissions": [
     "camera",
     "microphone"

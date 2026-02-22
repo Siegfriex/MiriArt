@@ -1,3 +1,10 @@
+/**
+ * @fileoverview 공통 버튼. variant(primary/secondary/ghost/outline), size, isLoading, fullWidth.
+ * @참조 Home, Archive, Profile, Login, Signup, Onboarding, UploadFlow, GradeInputSheet, SubscriptionSheet, ConfirmDialog, EmptyState 등
+ * @라우팅 전역
+ * @상태 (직접 사용 안 함)
+ */
+
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -8,6 +15,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+/** 버튼 컴포넌트. variant, size, isLoading, fullWidth. @참조 전역 */
 export const Button: React.FC<ButtonProps> = ({ 
   children, 
   variant = 'primary', 
@@ -25,9 +33,9 @@ export const Button: React.FC<ButtonProps> = ({
     // Primary: Lime #C2F970 + Inverse Text
     primary: "bg-primary-lime text-text-inverse hover:brightness-110 shadow-glow",
     // Secondary: Dark 800 + White Text
-    secondary: "bg-dark-800 text-text-primary border border-white/10 hover:bg-dark-700",
-    // Ghost: Transparent + Secondary Text
-    ghost: "bg-transparent text-text-secondary hover:text-text-primary hover:bg-white/5",
+    secondary: "bg-dark-800 text-white border border-white/10 hover:bg-dark-700",
+    // Ghost: Transparent + Mid Text
+    ghost: "bg-transparent text-text-mid hover:text-white hover:bg-white/5",
     // Outline: Transparent + Lime Border
     outline: "bg-transparent border border-primary-lime text-primary-lime hover:bg-primary-lime/10"
   };

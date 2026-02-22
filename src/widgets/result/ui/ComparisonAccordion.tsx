@@ -1,0 +1,1 @@
+export { ComparisonAccordion } from '../ComparisonAccordion';

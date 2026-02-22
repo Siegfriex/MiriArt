@@ -1,3 +1,10 @@
+/**
+ * @fileoverview 타이포그래피 컴포넌트. H1, H2, H3, BodyText. display/heading/subhead/body 스타일.
+ * @참조 Home, Archive, Profile, Login, Signup, Onboarding, ChatRoom, MessageBubble, UploadFlow, GradeInputSheet, SubscriptionSheet, ConfirmDialog, EmptyState 등
+ * @라우팅 전역
+ * @상태 (직접 사용 안 함)
+ */
+
 import React from 'react';
 
 interface TextProps extends React.HTMLAttributes<HTMLElement> {
@@ -6,37 +13,30 @@ interface TextProps extends React.HTMLAttributes<HTMLElement> {
   as?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'div';
 }
 
-// VID v1.4 §7.2 Type Scale & Weight Specifications
-// Note: We use 'font-sans' (Rubik) as base, but enforce SUITE weights for Korean context.
-// In a real browser, the font file for the rendered glyph will determine the look, 
-// but we apply the CSS weight that maps to the primary intent.
-
+/** H1. display 폰트. @참조 Splash, Home, SessionListPanel, Profile 등 */
 export const H1: React.FC<TextProps> = ({ children, className = '', as: Component = 'h1', ...props }) => (
-  // KR: SUITE 800 (Extrabold) | EN: Rubik 600 (Semibold)
-  // We prioritize the Korean weight (800) as the primary display style.
-  <Component className={`text-display font-extrabold text-text-primary ${className}`} {...props}>
+  <Component className={`text-display font-extrabold text-white ${className}`} {...props}>
     {children}
   </Component>
 );
 
+/** H2. heading 폰트. @참조 Section, ChatRoom, SideGNB, GradeInputSheet 등 */
 export const H2: React.FC<TextProps> = ({ children, className = '', as: Component = 'h2', ...props }) => (
-  // KR: SUITE 700 (Bold) | EN: Rubik 500 (Medium)
-  <Component className={`text-heading font-bold text-text-primary ${className}`} {...props}>
+  <Component className={`text-heading font-bold text-white ${className}`} {...props}>
     {children}
   </Component>
 );
 
+/** H3. subhead 폰트. @참조 UploadFlow, EmptyState, ComparisonAccordion 등 */
 export const H3: React.FC<TextProps> = ({ children, className = '', as: Component = 'h3', ...props }) => (
-  // KR: SUITE 500 (Medium) | EN: Rubik 400 (Regular)
-  <Component className={`text-subhead font-medium text-text-primary ${className}`} {...props}>
+  <Component className={`text-subhead font-medium text-white ${className}`} {...props}>
     {children}
   </Component>
 );
 
+/** BodyText. body 폰트. @참조 MessageBubble, Onboarding, Login, Signup, EmptyState 등 */
 export const BodyText: React.FC<TextProps> = ({ children, className = '', as: Component = 'p', ...props }) => (
-  // KR: SUITE 500 (Medium) | EN: Rubik 300 (Light)
-  // Warning: Light weight on dark background needs anti-aliasing.
-  <Component className={`text-body font-medium text-text-secondary antialiased ${className}`} {...props}>
+  <Component className={`text-body font-medium text-text-mid antialiased ${className}`} {...props}>
     {children}
   </Component>
 );

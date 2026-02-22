@@ -1,14 +1,23 @@
+/**
+ * @fileoverview 전역 모달 컨테이너. modalRegistry, layoutConfig로 모달 타입별 컴포넌트·레이아웃 매핑.
+ * @참조 ModalProvider, ModalRegistry
+ * @라우팅 전역
+ * @상태 useModalStore (activeModal, modalProps, closeModal)
+ */
+
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalStore, ModalType } from '../../model/modalStore';
 import { X } from 'lucide-react';
 
+/** GlobalModal props: modalRegistry, layoutConfig */
 export interface GlobalModalProps {
   modalRegistry: Record<ModalType, React.FC<any>>;
   layoutConfig: Record<ModalType, 'center' | 'bottom-sheet' | 'full'>;
 }
 
+/** 전역 모달. modalRegistry, layoutConfig. @참조 ModalProvider @상태 useModalStore */
 export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutConfig }) => {
   const { activeModal, modalProps, closeModal } = useModalStore();
   const [mounted, setMounted] = useState(false);
@@ -21,14 +30,11 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
   if (!mounted) return null;
 
   const modalRoot = document.getElementById('modal-root') || document.body;
-  
-  // Resolve Component & Layout from Props
   const Component = activeModal ? modalRegistry[activeModal] : null;
   const layoutType = activeModal ? layoutConfig[activeModal] : 'center';
   const isBottomSheet = layoutType === 'bottom-sheet';
   const isFull = layoutType === 'full';
 
-  // Animation Variants
   const backdropVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
@@ -36,8 +42,8 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
 
   const contentVariants = {
     hidden: isBottomSheet ? { y: '100%' } : isFull ? { opacity: 0 } : { scale: 0.9, opacity: 0 },
-    visible: isBottomSheet 
-      ? { y: 0, transition: { type: 'spring' as const, damping: 25, stiffness: 300 } } 
+    visible: isBottomSheet
+      ? { y: 0, transition: { type: 'spring' as const, damping: 25, stiffness: 300 } }
       : { scale: 1, opacity: 1, transition: { type: 'spring' as const, duration: 0.2 } },
     exit: isBottomSheet ? { y: '100%' } : isFull ? { opacity: 0 } : { scale: 0.9, opacity: 0 },
   };
@@ -45,8 +51,12 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
   return createPortal(
     <AnimatePresence>
       {activeModal && Component && (
-        <div className={`fixed inset-0 z-[100] flex ${isBottomSheet ? 'items-end' : isFull ? '' : 'items-center justify-center'}`}>
-          {/* Backdrop (Skip for full screen if component handles its own background) */}
+        <div
+          className={`fixed inset-0 z-modal flex ${
+            isBottomSheet ? 'items-end' : isFull ? '' : 'items-center justify-center'
+          }`}
+        >
+          {/* 백드롭 */}
           {!isFull && (
             <motion.div
               variants={backdropVariants}
@@ -58,7 +68,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
             />
           )}
 
-          {/* Modal Container */}
+          {/* 모달 컨테이너 */}
           <motion.div
             variants={contentVariants}
             initial="hidden"
@@ -66,29 +76,32 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
             exit="exit"
             className={`
               relative z-10 w-full overflow-hidden shadow-2xl
-              ${isBottomSheet 
-                ? 'rounded-t-[24px] bg-dark-800 border-t border-white/10 max-h-[90vh]' 
-                : isFull 
-                  ? 'h-full bg-dark-900' 
-                  : 'max-w-sm rounded-[24px] bg-dark-800 border border-white/10 m-4'
+              ${isBottomSheet
+                ? 'rounded-t-large bg-dark-800 border-t border-white/10 max-h-[90vh]'
+                : isFull
+                  ? 'h-full bg-dark-900'
+                  : 'max-w-sm rounded-large bg-dark-800 border border-white/10 m-4'
               }
             `}
           >
-            {/* Drag Handle (Bottom Sheet only) */}
+            {/* 드래그 핸들 (Bottom Sheet) */}
             {isBottomSheet && (
               <div className="w-full flex justify-center pt-3 pb-1 cursor-grab" onClick={closeModal}>
-                <div className="w-12 h-1.5 bg-gray-600 rounded-full opacity-50" />
+                <div className="w-12 h-1.5 bg-dark-600 rounded-full" />
               </div>
             )}
 
-            {/* Close Button (Center only) */}
+            {/* 닫기 버튼 (Center) */}
             {!isBottomSheet && !isFull && (
-              <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-white z-20">
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 text-text-mid hover:text-white z-20 transition-colors"
+              >
                 <X size={20} />
               </button>
             )}
 
-            {/* Render Registry Component with Props */}
+            {/* 컴포넌트 렌더 */}
             <Component {...modalProps} />
           </motion.div>
         </div>

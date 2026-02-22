@@ -1,11 +1,20 @@
+/**
+ * @fileoverview 갤러리 뷰. images 그리드 표시. ArtifactViewer 내부에서 사용.
+ * @참조 ArtifactViewer
+ * @라우팅 (아티팩트 내부)
+ * @상태 (직접 사용 안 함)
+ */
+
 import React from 'react';
 
+/** 갤러리 이미지: id, url, label */
 export interface GalleryImage {
   id: string;
   url: string;
   label: string;
 }
 
+/** 갤러리 뷰. images. @참조 ArtifactViewer */
 export const GalleryView: React.FC<{ images: GalleryImage[] }> = ({ images }) => {
   return (
     <div className="p-4 grid grid-cols-2 gap-4">

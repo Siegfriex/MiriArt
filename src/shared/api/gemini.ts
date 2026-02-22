@@ -1,148 +1,190 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { AIModelType } from "../model/types";
+/**
+ * @fileoverview MiriArt API 서비스. AI 호출은 Cloud Run 프록시(VITE_API_BASE_URL) 경유. API 키는 프론트에 없음.
+ * @참조 chat-room Page, UploadFlow, GradeInputSheet (ApiService.chat, analyze, editImage)
+ * @라우팅 /chat/:sessionId, /result/:id, /tutorial
+ * @상태 useToastStore (에러 시 토스트)
+ */
 
-// Initialize the client
-const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { AIModelType } from '../model/types';
+import { useToastStore } from '../model/toastStore';
 
-// Constants for Model Names based on strict guidelines
-const MODELS = {
-  [AIModelType.CHAT_PRO]: 'gemini-3-pro-preview',
-  [AIModelType.FAST]: 'gemini-2.5-flash-lite-latest', // "gemini lite" alias mapping
-  [AIModelType.THINKING]: 'gemini-3-pro-preview',
-  [AIModelType.SEARCH]: 'gemini-3-flash-preview',
-  [AIModelType.IMAGE_EDIT]: 'gemini-2.5-flash-image', // "nano banana" alias mapping
-};
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-interface ChatParams {
-  modelType: AIModelType;
-  history: { role: string; parts: { text: string }[] }[];
-  message: string;
-  imagePart?: { inlineData: { data: string; mimeType: string } };
+// ─── 에러 클래스 ──────────────────────────────────────────────────────────────
+
+/** API 에러. status, message 보유. 402=크레딧 부족, 408=타임아웃 등 */
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-interface ImageEditParams {
+// ─── 요청/응답 타입 ───────────────────────────────────────────────────────────
+
+/** 채팅 컨텍스트: 성적, 점수, 수정 범위, 레이더 데이터 */
+export interface StickyContext {
+  grade: string;
+  score: number;
+  fixScope: 'StructureRebuild' | 'DetailTuning';
+  radarData?: Record<string, number>;
+}
+
+/** 채팅 요청: modelType, message, sessionId, stickyContext, 이미지, 히스토리 */
+export interface ChatRequest {
+  modelType: AIModelType;
+  message: string;
+  sessionId?: string;
+  stickyContext?: StickyContext;
+  imageBase64?: string;
+  imageMimeType?: string;
+  history?: { role: 'user' | 'model'; parts: { text: string }[] }[];
+}
+
+/** 채팅 응답: text, groundingUrls, quickReplies */
+export interface ChatResponse {
+  text: string;
+  groundingUrls?: string[];
+  quickReplies?: string[];
+}
+
+/** 분석 옵션: basic | major, problemText */
+export interface AnalyzeOptions {
+  type: 'basic' | 'major';
+  problemText?: string;
+}
+
+/** 분석 응답: id, grade, totalScore, radarData, fixScope, comment */
+export interface AnalyzeResponse {
+  id: string;
+  grade: string;
+  totalScore: number;
+  radarData: {
+    density: number;
+    form: number;
+    completion: number;
+    relevance: number;
+    thinking: number;
+  };
+  fixScope: 'StructureRebuild' | 'DetailTuning';
+  comment: string;
+}
+
+/** 이미지 편집 요청: imageBase64, prompt */
+export interface ImageEditRequest {
   imageBase64: string;
   prompt: string;
 }
 
-export const GeminiService = {
+/** 이미지 편집 응답: text, imageUrl */
+export interface ImageEditResponse {
+  text: string;
+  imageUrl?: string;
+}
+
+// ─── 내부 fetch 헬퍼 ──────────────────────────────────────────────────────────
+
+async function apiFetch<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => res.statusText);
+    throw new ApiError(res.status, body);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ─── API Service ──────────────────────────────────────────────────────────────
+
+/**
+ * API 서비스 객체. chat, analyze, editImage 메서드. 에러 시 useToastStore로 토스트 표시.
+ * @참조 chat-room Page, UploadFlow, GradeInputSheet
+ * @상태 useToastStore
+ */
+export const ApiService = {
   /**
-   * General Chat Generation with support for Thinking, Fast, and Search modes
+   * 채팅 메시지 전송 (Ask / Plan / Critic / Inference / Image Edit)
+   * Cloud Run /api/chat → Gemini generateContent
    */
-  generateChatResponse: async (params: ChatParams): Promise<{ text: string; groundingUrls?: string[] }> => {
-    const ai = getClient();
-    const modelName = MODELS[params.modelType];
-    
-    // Base configuration
-    let config: any = {};
-
-    // 1. Thinking Mode Configuration
-    if (params.modelType === AIModelType.THINKING) {
-      config = {
-        thinkingConfig: { thinkingBudget: 32768 }, // Max for 3 Pro
-        // Explicitly NOT setting maxOutputTokens as per requirement
-      };
-    }
-
-    // 2. Search Grounding Configuration
-    if (params.modelType === AIModelType.SEARCH) {
-      config = {
-        tools: [{ googleSearch: {} }],
-      };
-    }
-
-    // Construct content parts
-    const parts: any[] = [];
-    
-    // Add image if exists (Multimodal)
-    if (params.imagePart) {
-      parts.push(params.imagePart);
-    }
-    
-    // Add text message
-    parts.push({ text: params.message });
-
+  chat: async (params: ChatRequest): Promise<ChatResponse> => {
     try {
-      const response: GenerateContentResponse = await ai.models.generateContent({
-        model: modelName,
-        contents: {
-           role: 'user',
-           parts: parts
-        },
-        config: config,
+      return await apiFetch<ChatResponse>('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
       });
-
-      // Handle Grounding (Search)
-      let groundingUrls: string[] = [];
-      if (params.modelType === AIModelType.SEARCH) {
-        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-        if (chunks) {
-            chunks.forEach((chunk: any) => {
-                if (chunk.web?.uri) {
-                    groundingUrls.push(chunk.web.uri);
-                }
-            });
-        }
-      }
-
-      return {
-        text: response.text || "No response generated.",
-        groundingUrls
-      };
-
     } catch (error) {
-      console.error("Gemini API Error:", error);
-      return { text: "Sorry, I encountered an error connecting to the AI mentor." };
+      const msg =
+        error instanceof ApiError && error.status === 402
+          ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
+          : 'AI 멘토 연결에 실패했습니다. 다시 시도해주세요.';
+      useToastStore.getState().show(msg, 'error');
+      throw error;
     }
   },
 
   /**
-   * Image Editing using Nano Banana (Gemini 2.5 Flash Image)
+   * 작품 이미지 분석
+   * Cloud Run /api/analyze → Gemini Vision + 5-Point Analysis
    */
-  editImage: async (params: ImageEditParams): Promise<{ text: string; imageUrl?: string }> => {
-    const ai = getClient();
-    const modelName = MODELS[AIModelType.IMAGE_EDIT];
-
+  analyze: async (imageFile: File, options: AnalyzeOptions): Promise<AnalyzeResponse> => {
     try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: params.imageBase64,
-                mimeType: 'image/png', // Assuming PNG for this demo, usually detected
-              },
-            },
-            {
-              text: params.prompt,
-            },
-          ],
-        },
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('options', JSON.stringify(options));
+      return await apiFetch<AnalyzeResponse>('/api/analyze', {
+        method: 'POST',
+        body: formData,
       });
-
-      // Parse response for image
-      let generatedImageUrl: string | undefined;
-      let outputText = "";
-
-      if (response.candidates?.[0]?.content?.parts) {
-          for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
-            } else if (part.text) {
-                outputText += part.text;
-            }
-          }
-      }
-
-      return {
-        text: outputText || "Here is your edited image.",
-        imageUrl: generatedImageUrl
-      };
-
     } catch (error) {
-      console.error("Image Edit Error:", error);
-      return { text: "Failed to edit image." };
+      const msg =
+        error instanceof ApiError && error.status === 402
+          ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
+          : error instanceof ApiError && error.status === 408
+            ? '분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.'
+            : '작품 분석에 실패했습니다.';
+      useToastStore.getState().show(msg, 'error');
+      throw error;
     }
-  }
+  },
+
+  /**
+   * 이미지 편집 (Gemini Image Edit)
+   * Cloud Run /api/edit-image
+   */
+  editImage: async (params: ImageEditRequest): Promise<ImageEditResponse> => {
+    try {
+      return await apiFetch<ImageEditResponse>('/api/edit-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+    } catch (error) {
+      useToastStore.getState().show('이미지 편집에 실패했습니다.', 'error');
+      throw error;
+    }
+  },
 };
+
+// ─── 유틸 ─────────────────────────────────────────────────────────────────────
+
+/** File → base64 string 변환 (멀티파트 대신 JSON body 사용 시) */
+export async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]); // data:image/png;base64, 제거
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+

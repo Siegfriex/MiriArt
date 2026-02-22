@@ -1,37 +1,9 @@
-// Entities Layer: Session Model
-import { Grade, Session } from '../../shared/model/types';
+/**
+ * @fileoverview 세션 엔티티. Session 타입은 shared/model/types. Mock 데이터는 __mocks__/sessions.
+ * @참조 SessionListPanel, SessionCard, chat-room Page
+ * @라우팅 /app/chat, /chat/:sessionId
+ * @상태 (직접 사용 안 함 - Mock/API 데이터)
+ */
 
-export const MOCK_SESSIONS: Session[] = [
-  {
-    id: '1',
-    title: 'Composition Layout Check',
-    university: 'Hongik Univ.',
-    major: 'Visual Design',
-    lastMessage: 'The density in the lower left corner needs more work. Try adding...',
-    timestamp: Date.now() - 1000 * 60 * 30, // 30 mins ago
-    grade: Grade.B,
-    thumbnailUrl: 'https://picsum.photos/100/100?random=1',
-  },
-  {
-    id: '2',
-    title: 'Color Tone Analysis',
-    university: 'Kookmin Univ.',
-    major: 'Basic Design',
-    lastMessage: 'Your color palette is very consistent with the winning entries from last year.',
-    timestamp: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
-    grade: Grade.A,
-    thumbnailUrl: 'https://picsum.photos/100/100?random=2',
-  },
-  {
-    id: '3',
-    title: 'Texture Rendering Review',
-    university: 'Seoul Nat. Univ.',
-    major: 'Craft Design',
-    lastMessage: 'The texture of the metal object looks a bit flat.',
-    timestamp: Date.now() - 1000 * 60 * 60 * 48,
-    grade: Grade.C,
-    thumbnailUrl: 'https://picsum.photos/100/100?random=3',
-  }
-];
-
-export const getSessions = () => MOCK_SESSIONS;
+// Mock 데이터 헬퍼 — __mocks__에서 re-export (하위 호환)
+export { MOCK_SESSIONS, getSessions } from '../../__mocks__/sessions';

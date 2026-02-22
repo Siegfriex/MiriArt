@@ -1,89 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>dysprime</title>
+    <title>MiriArt - 미리미대</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUITE/fonts/static/woff2/SUITE.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                lime: '#C2F970', // VID v1.1 Primary
-              },
-              semantic: {
-                critical: '#E53935',
-                safe: '#1E88E5',
-              },
-              dark: {
-                900: '#121212', // Main background
-                800: '#1E1E1E', // Secondary background
-              }
-            },
-            fontFamily: {
-              sans: ['Rubik', 'SUITE', 'sans-serif'],
-              kr: ['SUITE', 'sans-serif'],
-            },
-            borderRadius: {
-              'large': '24px', // VID v1.1
-              'medium': '12px', // VID v1.1
-            },
-            boxShadow: {
-              'soft': '0 4px 12px rgba(0, 0, 0, 0.1)', // VID v1.1
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.3s ease-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              slideUp: {
-                '0%': { transform: 'translateY(20px)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              }
-            }
-          },
-        },
-      }
-    </script>
-    <style>
-      body {
-        background-color: #000000;
-        color: #ffffff;
-        font-family: 'Rubik', 'SUITE', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "tailwindcss": "https://esm.sh/tailwindcss@^4.1.18",
-    "framer-motion": "https://esm.sh/framer-motion@^11.0.0",
-    "zustand": "https://esm.sh/zustand@^4.5.0",
-    "clsx": "https://esm.sh/clsx@^2.1.0",
-    "tailwind-merge": "https://esm.sh/tailwind-merge@^2.2.1",
-    "react-dom": "https://esm.sh/react-dom@^19.2.4",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+  </head>
   <body>
     <div id="root"></div>
     <div id="modal-root"></div>
