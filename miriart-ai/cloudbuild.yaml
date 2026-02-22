@@ -1,0 +1,33 @@
+steps:
+  # 1. Docker 이미지 빌드
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - gcr.io/$PROJECT_ID/miriart-ai:$COMMIT_SHA
+      - .
+
+  # 2. Artifact Registry에 푸시
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/miriart-ai:$COMMIT_SHA
+
+  # 3. Cloud Run 배포 (내부 호출 전용 -- --no-allow-unauthenticated)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - miriart-ai
+      - --image=gcr.io/$PROJECT_ID/miriart-ai:$COMMIT_SHA
+      - --region=asia-northeast3
+      - --platform=managed
+      - --no-allow-unauthenticated
+      - --set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,GCS_BUCKET_NAME=miriart-bucket,GCP_REGION=asia-northeast3
+      - --memory=1Gi
+      - --cpu=1
+      - --timeout=120
+
+images:
+  - gcr.io/$PROJECT_ID/miriart-ai:$COMMIT_SHA

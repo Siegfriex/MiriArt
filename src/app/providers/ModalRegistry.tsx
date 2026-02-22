@@ -11,6 +11,7 @@ import { GradeInputSheet } from '../../features/grade/ui/GradeInputSheet';
 import { SubscriptionSheet } from '../../features/subscription/ui/SubscriptionSheet';
 import { UploadFlow } from '../../features/upload/UploadFlow';
 import { ConfirmDialog } from '../../shared/ui/modal/ConfirmDialog';
+import { WritePostSheet } from '../../widgets/community/WritePostSheet';
 import { H2, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
 import { STRINGS } from '../../shared/config/strings';
@@ -49,6 +50,7 @@ export const MODAL_REGISTRY: Record<ModalType, React.FC<any>> = {
   CONFIRM_CREDIT: ConfirmCreditModal,
   CONFIRM: ConfirmDialog,
   UPLOAD_FLOW: UploadFlow,
+  WRITE_POST_SHEET: WritePostSheet,
 };
 
 /** 모달 타입별 레이아웃 (center | bottom-sheet | full) */
@@ -58,4 +60,5 @@ export const LAYOUT_CONFIG: Record<ModalType, 'center' | 'bottom-sheet' | 'full'
   CONFIRM_CREDIT: 'center',
   CONFIRM: 'center',
   UPLOAD_FLOW: 'full',
+  WRITE_POST_SHEET: 'full',
 };

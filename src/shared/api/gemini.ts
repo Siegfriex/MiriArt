@@ -3,6 +3,14 @@
  * @참조 chat-room Page, UploadFlow, GradeInputSheet (ApiService.chat, analyze, editImage)
  * @라우팅 /chat/:sessionId, /result/:id, /tutorial
  * @상태 useToastStore (에러 시 토스트)
+ *
+ * @deprecated miriartApi.ts로 교체됨.
+ * ApiService.chat → ChatApi.sendMessage
+ * ApiService.analyze → AnalysisApi.analyze
+ * ApiService.editImage → ChatApi.sendMessage (modelType: IMAGE_EDIT)
+ * ApiError → miriartApi.ApiError
+ * fileToBase64 → miriartApi.fileToBase64
+ * @see src/shared/api/miriartApi.ts
  */
 
 import { AIModelType } from '../model/types';

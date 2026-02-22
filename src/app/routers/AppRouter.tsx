@@ -15,9 +15,13 @@ import { Onboarding } from '../../pages/auth/Onboarding';
 import { Login } from '../../pages/auth/Login';
 import { Signup } from '../../pages/auth/Signup';
 import { FirstUploadTutorial } from '../../pages/auth/FirstUploadTutorial';
+import { AuthCallback } from '../../pages/auth/AuthCallback';
 
 // App Pages
 import { Home } from '../../pages/home/ui/Page';
+import { PostDetailPage } from '../../pages/posts/ui/PostDetailPage';
+import { QnaDetailPage } from '../../pages/posts/ui/QnaDetailPage';
+import { WritePostPage } from '../../pages/posts/ui/WritePostPage';
 import { Archive } from '../../pages/archive/ui/Page';
 import { AIChatList } from '../../pages/chat-list/ui/Page';
 import { Profile } from '../../pages/profile/ui/Page';
@@ -32,6 +36,7 @@ export const AppRouter: React.FC = () => {
 
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/auth/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/auth/signup" element={<Signup />} />
       <Route path="/tutorial" element={<FirstUploadTutorial />} />
 
@@ -47,6 +52,9 @@ export const AppRouter: React.FC = () => {
       {/* Full Screen Pages (Level 2/3) */}
       <Route path="/chat/:sessionId" element={<ChatRoom />} />
       <Route path="/result/:artworkId" element={<ResultDetail />} />
+      <Route path="/posts/:id" element={<PostDetailPage />} />
+      <Route path="/qna/:id" element={<QnaDetailPage />} />
+      <Route path="/write" element={<WritePostPage />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

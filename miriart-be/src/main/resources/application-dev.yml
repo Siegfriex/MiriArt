@@ -1,0 +1,65 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/miriart_dev?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # DB 미실행 시에도 앱 기동 허용 (연결은 요청 시 시도)
+      initialization-fail-timeout: -1
+  jpa:
+    hibernate:
+      # none: 시작 시 DB 연결 불필요 (MySQL 없이도 기동 가능)
+      # MySQL 실행 중일 때 스키마 자동 생성이 필요하면 'update'로 변경
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # dialect 명시 + use_jdbc_metadata_defaults:false 조합 → DB 없이도 기동 가능
+        dialect: org.hibernate.dialect.MySQLDialect
+        temp:
+          use_jdbc_metadata_defaults: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:dev-kakao-id}
+            client-secret: ${KAKAO_CLIENT_SECRET:dev-kakao-secret}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: profile_nickname, account_email
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:dev-google-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dev-google-secret}
+            scope: email, profile
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+miriart:
+  jwt:
+    secret:
+      # 로컬 개발용 Base64 인코딩된 32바이트 이상 시크릿
+      # [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("miriartDevAccessSecret0123456789AB"))
+      access: ${JWT_ACCESS_SECRET:bWlyaWFydERldkFjY2Vzc1NlY3JldDAxMjM0NTY3ODlBQg==}
+      # [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("miriartDevRefreshSecret012345678901"))
+      refresh: ${JWT_REFRESH_SECRET:bWlyaWFydERldlJlZnJlc2hTZWNyZXQwMTIzNDU2Nzg5QQ==}
+
+logging:
+  level:
+    com.miriart.api: DEBUG
+    org.springframework.security: DEBUG

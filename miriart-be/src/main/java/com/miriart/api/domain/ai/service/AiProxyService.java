@@ -1,0 +1,153 @@
+package com.miriart.api.domain.ai.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miriart.api.domain.ai.dto.*;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
+import com.miriart.api.global.redis.RedisService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+
+/**
+ * FastAPI AI 서비스 WebClient 프록시
+ * Bug #4 Fix: Redis 세션에 text만 저장하던 것을 전체 메시지 JSON으로 변경
+ * Phase 1 전략: FE가 매 요청마다 history를 포함해 보내는 stateless 방식 지원 +
+ *              BE Redis에서 세션 히스토리 보완 저장 (72h TTL)
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AiProxyService {
+
+    private static final int AI_TIMEOUT_SECONDS = 30;
+
+    private final WebClient fastapiWebClient;
+    private final RedisService redisService;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * 작품 분석 요청 (FastAPI /internal/ai/analyze)
+     */
+    public InternalAnalyzeResponse analyze(String gcsUrl, String analysisType, String problemText) {
+        InternalAnalyzeRequest request = InternalAnalyzeRequest.builder()
+                .gcsUri(gcsUrl)
+                .analysisType(analysisType)
+                .problemText(problemText)
+                .build();
+
+        return fastapiWebClient.post()
+                .uri("/internal/ai/analyze")
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(status -> status.is5xxServerError(),
+                        res -> Mono.error(new BusinessException(ErrorCode.AI_ANALYSIS_FAILED)))
+                .bodyToMono(InternalAnalyzeResponse.class)
+                .timeout(Duration.ofSeconds(AI_TIMEOUT_SECONDS))
+                .onErrorMap(TimeoutException.class,
+                        e -> new BusinessException(ErrorCode.AI_ANALYSIS_TIMEOUT))
+                .onErrorMap(BusinessException.class, e -> e)
+                .onErrorMap(e -> !(e instanceof BusinessException),
+                        e -> {
+                            log.error("FastAPI 분석 호출 실패: {}", e.getMessage(), e);
+                            return new BusinessException(ErrorCode.AI_ANALYSIS_FAILED);
+                        })
+                .block();
+    }
+
+    /**
+     * AI 채팅 요청 (FastAPI /internal/ai/chat)
+     * Phase 1 히스토리 전략:
+     * - FE가 매 요청에 history 배열 포함 → FastAPI로 그대로 전달 (stateless 1차)
+     * - BE는 Redis에 전체 메시지 이력을 JSON으로 저장 (stateful 보완)
+     */
+    public ChatResponse chat(ChatRequest chatRequest) {
+        String sessionId = chatRequest.getSessionId() != null
+                ? chatRequest.getSessionId()
+                : UUID.randomUUID().toString();
+
+        InternalChatRequest internalRequest = InternalChatRequest.builder()
+                .modelType(chatRequest.getModelType())
+                .message(chatRequest.getMessage())
+                .stickyContext(chatRequest.getStickyContext())
+                .history(chatRequest.getHistory())
+                .imageBase64(chatRequest.getImageBase64())
+                .imageMimeType(chatRequest.getImageMimeType())
+                .build();
+
+        InternalChatResponse response = fastapiWebClient.post()
+                .uri("/internal/ai/chat")
+                .bodyValue(internalRequest)
+                .retrieve()
+                .onStatus(status -> status.is5xxServerError(),
+                        res -> Mono.error(new BusinessException(ErrorCode.AI_CHAT_FAILED)))
+                .bodyToMono(InternalChatResponse.class)
+                .timeout(Duration.ofSeconds(AI_TIMEOUT_SECONDS))
+                .onErrorMap(TimeoutException.class,
+                        e -> new BusinessException(ErrorCode.AI_CHAT_TIMEOUT))
+                .onErrorMap(BusinessException.class, e -> e)
+                .onErrorMap(e -> !(e instanceof BusinessException),
+                        e -> {
+                            log.error("FastAPI 채팅 호출 실패: {}", e.getMessage(), e);
+                            return new BusinessException(ErrorCode.AI_CHAT_FAILED);
+                        })
+                .block();
+
+        // Redis 세션 업데이트 — 전체 메시지 이력을 JSON으로 저장 (Bug #4 Fix)
+        if (response != null) {
+            updateSessionHistory(sessionId, chatRequest, response);
+        }
+
+        return ChatResponse.builder()
+                .text(response != null ? response.getText() : "")
+                .groundingUrls(response != null ? response.getGroundingUrls() : List.of())
+                .quickReplies(response != null ? response.getQuickReplies() : List.of())
+                .sessionId(sessionId)
+                .build();
+    }
+
+    /**
+     * Redis에 채팅 세션 히스토리를 완전한 JSON으로 저장 (Bug #4 Fix)
+     * 저장 형식: [ {"role":"user","text":"..."}, {"role":"model","text":"..."}, ... ]
+     */
+    @SuppressWarnings("unchecked")
+    private void updateSessionHistory(String sessionId, ChatRequest request, InternalChatResponse response) {
+        try {
+            // 기존 히스토리 로드
+            List<Map<String, String>> history = new ArrayList<>();
+            String existing = redisService.getChatSession(sessionId);
+            if (existing != null) {
+                history = objectMapper.readValue(existing,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+            }
+
+            // 사용자 메시지 추가
+            Map<String, String> userMsg = new HashMap<>();
+            userMsg.put("role", "user");
+            userMsg.put("text", request.getMessage());
+            history.add(userMsg);
+
+            // 모델 응답 추가
+            Map<String, String> modelMsg = new HashMap<>();
+            modelMsg.put("role", "model");
+            modelMsg.put("text", response.getText());
+            history.add(modelMsg);
+
+            redisService.updateChatSession(sessionId, objectMapper.writeValueAsString(history));
+
+        } catch (JsonProcessingException e) {
+            log.warn("채팅 세션 히스토리 저장 실패 - sessionId: {}, error: {}", sessionId, e.getMessage());
+        }
+    }
+}

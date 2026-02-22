@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# BE / AI (로컬 빌드·가상환경 제외, 임베디드 repo 제외)
+BE/
+miriart-be/build/
+miriart-be/build2/
+miriart-be/.gradle/
+miriart-ai/.venv/
+miriart-ai/.env
+miriart-ai/__pycache__/
+service-account-dev.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

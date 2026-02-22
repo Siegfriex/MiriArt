@@ -1,17 +1,16 @@
 /**
- * @fileoverview 홈 페이지. 크레딧 위젯, 최근 분석 캐러셀, 업로드 CTA, LiveTicker, FAB.
+ * @fileoverview 홈 페이지. ContextBar + Hero CTA + HomeFeed + CreditStatusWidget + WriteFAB.
  * @참조 AppRouter
  * @라우팅 /app/home
- * @상태 useModalStore, useUserStore, useToastStore
+ * @상태 useModalStore, useUserStore, useToastStore, usePostsFeed (통해 HomeFeed)
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { H1, H2, BodyText } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
-import { UploadCloud, ChevronRight } from 'lucide-react';
+import { UploadCloud, ChevronRight, Plus } from 'lucide-react';
 import { MOCK_ARTWORKS } from '../../../entities/artwork/model';
 import { LiveTicker } from '../../../widgets/home/LiveTicker';
-import { FAB } from '../../../shared/ui/FAB';
 import { PageContainer } from '../../../shared/ui/PageContainer';
 import { Section } from '../../../shared/ui/Section';
 import { CreditStatusWidget } from '../../../widgets/home/CreditStatusWidget';
@@ -21,6 +20,8 @@ import { useToastStore } from '../../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
+import { ContextBar } from '../../../widgets/community/ContextBar';
+import { HomeFeed } from '../../../widgets/community/HomeFeed';
 
 /** 홈 페이지. @참조 AppRouter @상태 useModalStore, useUserStore, useToastStore */
 export const Home: React.FC = () => {
@@ -28,6 +29,8 @@ export const Home: React.FC = () => {
   const { isFirstLogin, setFirstLoginDone, profile } = useUserStore();
   const { show: showToast } = useToastStore();
   const navigate = useNavigate();
+  const [grade, setGrade] = useState(profile.grade || '');
+  const [domain, setDomain] = useState(profile.domain || '');
 
   // 첫 로그인 시 공식 ToastStore를 통해 가이드 메시지 표시
   useEffect(() => {
@@ -43,16 +46,27 @@ export const Home: React.FC = () => {
   const handleUpload = () => {
     openModal('UPLOAD_FLOW', {
       onComplete: (_file) => {
-        // TODO: 실제 API 연동 후 result.id로 교체
         navigate(ROUTES.RESULT('art-0'));
       },
     });
   };
 
+  const handleWriteFAB = () => {
+    openModal('WRITE_POST_SHEET');
+  };
+
   return (
     <PageContainer>
+      {/* 컨텍스트 바 */}
+      <ContextBar
+        grade={grade}
+        domain={domain}
+        onGradeChange={setGrade}
+        onDomainChange={setDomain}
+      />
+
       {/* 헤더 */}
-      <header className="flex justify-between items-center mb-2">
+      <header className="flex justify-between items-center mb-2 mt-2">
         <H1 className="text-white">{STRINGS.APP_NAME}</H1>
         <div className="px-3 py-1 bg-primary-lime/10 rounded-full border border-primary-lime/20">
           <span className="text-xs text-primary-lime font-medium">{STRINGS.HOME_PLAN_BADGE}</span>
@@ -115,13 +129,25 @@ export const Home: React.FC = () => {
         </div>
       </Section>
 
+      {/* 커뮤니티 홈 피드 */}
+      <div className="-mx-4">
+        <HomeFeed initialGrade={grade} initialDomain={domain} />
+      </div>
+
       {/* 크레딧 위젯 */}
       <CreditStatusWidget
         credits={profile.credits}
         onUpgrade={() => openModal('SUBSCRIPTION', { currentPlan: profile.plan })}
       />
 
-      <FAB onClick={handleUpload} />
+      {/* 통합 FAB — 글쓰기/업로드 분기 */}
+      <button
+        onClick={handleWriteFAB}
+        className="fixed bottom-24 right-4 z-fab w-14 h-14 bg-primary-lime rounded-full flex items-center justify-center shadow-lg hover:bg-primary-lime/90 active:scale-95 transition-all"
+        aria-label="글쓰기 또는 업로드"
+      >
+        <Plus size={24} className="text-dark-900" strokeWidth={2.5} />
+      </button>
     </PageContainer>
   );
 };

@@ -1,0 +1,24 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: miriart-api
+  jpa:
+    open-in-view: false
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+server:
+  port: 8080
+
+miriart:
+  frontend:
+    oauth-success-url: ${FRONTEND_OAUTH_SUCCESS_URL:http://localhost:5173}
+  fastapi:
+    internal-url: ${FASTAPI_INTERNAL_URL:http://localhost:8000}
+  jwt:
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  gcs:
+    bucket: ${GCS_BUCKET_NAME:miriart-bucket}

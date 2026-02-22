@@ -8,7 +8,7 @@
 import { create } from 'zustand';
 
 /** 사용 가능한 모달 타입 */
-export type ModalType = 'GRADE_INPUT' | 'SUBSCRIPTION' | 'CONFIRM_CREDIT' | 'CONFIRM' | 'UPLOAD_FLOW';
+export type ModalType = 'GRADE_INPUT' | 'SUBSCRIPTION' | 'CONFIRM_CREDIT' | 'CONFIRM' | 'UPLOAD_FLOW' | 'WRITE_POST_SHEET';
 
 /** 각 모달 타입별 props 매핑 */
 export interface ModalPropsMap {
@@ -31,6 +31,7 @@ export interface ModalPropsMap {
   UPLOAD_FLOW: {
     onComplete?: (file: File) => void;
   };
+  WRITE_POST_SHEET: Record<string, never>;
 }
 
 interface ModalState {

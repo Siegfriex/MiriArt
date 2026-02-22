@@ -1,0 +1,77 @@
+package com.miriart.api.domain.auth.service;
+
+import com.miriart.api.domain.auth.dto.TokenExchangeResponse;
+import com.miriart.api.domain.auth.oauth2.OAuth2AuthCodePayload;
+import com.miriart.api.domain.user.entity.User;
+import com.miriart.api.domain.user.repository.UserRepository;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
+import com.miriart.api.global.redis.RedisService;
+import com.miriart.api.global.security.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Service;
+
+/**
+ * OAuth2 인가 코드 → JWT 교환 서비스
+ * Cariv OAuth2TokenExchangeService 이식 + Refresh Token httpOnly Cookie 발급 추가
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class OAuth2TokenExchangeService {
+
+    private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
+    private final RedisService redisService;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+
+    /**
+     * one-time code → JWT 교환
+     * @param code Redis에 저장된 UUID
+     * @param response Refresh Token Cookie를 Set-Cookie 헤더에 추가
+     */
+    public TokenExchangeResponse exchange(String code, HttpServletResponse response) {
+        // 1. Redis에서 code 조회 + 삭제 (1회용)
+        String payloadJson = redisService.getAndDeleteOAuth2Code(code);
+        if (payloadJson == null) {
+            throw new BusinessException(ErrorCode.OAUTH_CODE_INVALID);
+        }
+
+        OAuth2AuthCodePayload payload = OAuth2AuthCodePayload.fromJson(payloadJson);
+
+        // 2. 사용자 조회
+        User user = userRepository.findById(payload.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 3. JWT 발급 (role claim 포함 — Bug #3 Fix)
+        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().name());
+        String refreshToken = jwtUtil.createRefreshToken(user.getId());
+
+        // 4. Refresh Token Redis 저장 (TTL 7일)
+        redisService.saveRefreshToken(user.getId(), refreshToken);
+
+        // 5. Refresh Token httpOnly Cookie 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/api/auth/refresh")
+                .maxAge(604800)  // 7일
+                .build();
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        log.debug("JWT 발급 완료 - userId: {}", user.getId());
+
+        return TokenExchangeResponse.builder()
+                .accessToken(accessToken)
+                .expiresIn(jwtUtil.getAccessTokenExpirationSeconds())
+                .userId(String.valueOf(user.getId()))
+                .needsProfile(user.isNeedsProfile())
+                .provider(payload.getProvider())
+                .build();
+    }
+}

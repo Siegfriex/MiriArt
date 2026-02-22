@@ -19,7 +19,7 @@ import { getArtworkById } from '../../../entities/artwork/model';
 import { MOCK_SESSIONS } from '../../../entities/session/model';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
-import { ApiService, fileToBase64 } from '../../../shared/api/gemini';
+import { ChatApi, fileToBase64 } from '../../../shared/api/miriartApi';
 import { useToastStore } from '../../../shared/model/toastStore';
 
 /** 채팅방 페이지. @참조 AppRouter @상태 useSideGNBStore, useNavStore, useToastStore, messages 등 */
@@ -109,7 +109,7 @@ export const ChatRoom: React.FC = () => {
       const imageBase64 = image ? await fileToBase64(image) : undefined;
       const imageMimeType = image?.type;
 
-      const response = await ApiService.chat({
+      const response = await ChatApi.sendMessage({
         modelType,
         message: text,
         sessionId,

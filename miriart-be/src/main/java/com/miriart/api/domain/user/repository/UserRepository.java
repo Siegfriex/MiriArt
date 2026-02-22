@@ -1,0 +1,14 @@
+package com.miriart.api.domain.user.repository;
+
+import com.miriart.api.domain.user.entity.LoginProvider;
+import com.miriart.api.domain.user.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByProviderAndProviderUserId(LoginProvider provider, String providerUserId);
+
+    boolean existsByNickname(String nickname);
+}

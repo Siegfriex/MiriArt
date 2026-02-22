@@ -14,7 +14,7 @@ import { useToastStore } from '../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
-import { ApiService, ApiError } from '../../shared/api/gemini';
+import { AnalysisApi, ApiError } from '../../shared/api/miriartApi';
 
 const MAX_FILE_SIZE_MB = 10;
 const ANALYSIS_DURATION_SEC = 8;
@@ -99,7 +99,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
     }, 100);
 
     try {
-      const result = await ApiService.analyze(selectedImage, {
+      const result = await AnalysisApi.analyze(selectedImage, {
         type,
         problemText: text || undefined,
       });

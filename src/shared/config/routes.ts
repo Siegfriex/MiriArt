@@ -22,4 +22,7 @@ export const ROUTES = {
   },
   CHAT_ROOM: (sessionId: string) => `/chat/${sessionId}`,
   RESULT: (artworkId: string) => `/result/${artworkId}`,
+  POST_DETAIL: (id: string) => `/posts/${id}`,
+  QNA_DETAIL: (id: string) => `/qna/${id}`,
+  WRITE: '/write',
 } as const;
