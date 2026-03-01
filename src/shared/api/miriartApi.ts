@@ -18,17 +18,12 @@ import { API_BASE } from '../config/api';
 
 // #region agent log
 const DEBUG_LOG = (message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  const payload = { sessionId: 'a4f614', location: 'miriartApi.ts', message, data, timestamp: Date.now(), hypothesisId };
+  if (import.meta.env.DEV) console.log('[DEBUG]', message, data);
   fetch('http://127.0.0.1:7620/ingest/67ee1a3b-2ca5-4344-aa14-d8c9f2ec8b28', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a4f614' },
-    body: JSON.stringify({
-      sessionId: 'a4f614',
-      location: 'miriartApi.ts',
-      message,
-      data,
-      timestamp: Date.now(),
-      hypothesisId,
-    }),
+    body: JSON.stringify(payload),
   }).catch(() => {});
 };
 // #endregion
@@ -166,6 +161,14 @@ export const UserApi = {
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = userProfileApiSchema.safeParse(payload);
     if (!parsed.success) {
+      const issues = parsed.error.issues;
+      console.warn('[getMe] parse failed. payload:', payload, 'zod issues:', issues);
+      // #region agent log
+      DEBUG_LOG('getMe parse failed', {
+        payloadKeys: typeof payload === 'object' && payload !== null ? Object.keys(payload as object) : [],
+        zodIssues: issues?.map((i) => ({ path: i.path, message: i.message })),
+      }, 'C');
+      // #endregion
       throw new ApiError(500, 'Invalid user profile response');
     }
     return parsed.data;
