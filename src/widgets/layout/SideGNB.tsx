@@ -99,7 +99,7 @@ export const SideGNB: React.FC = () => {
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.1}
             onDragEnd={handleDragEnd}
-            className="fixed top-0 left-0 h-full z-modal glass-panel border-r border-white/10 flex flex-col overflow-hidden shadow-2xl"
+            className="fixed top-0 left-0 h-full z-sidebar glass-panel border-r border-white/10 flex flex-col overflow-hidden shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5 flex-shrink-0">

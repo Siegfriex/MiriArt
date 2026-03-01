@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { H2, H3, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
+import { TextInput } from '../../shared/ui/TextInput';
 import { X, Image as ImageIcon, AlertCircle, ArrowLeft, Camera } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
 import { useToastStore } from '../../shared/model/toastStore';
@@ -216,11 +217,13 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             </div>
 
             <div>
-              <label className="text-xs text-text-mid block mb-2">{STRINGS.UPLOAD_STEP2_CONTEXT_LABEL}</label>
-              <textarea
+              <label htmlFor="upload-context" className="text-xs text-text-mid block mb-2">{STRINGS.UPLOAD_STEP2_CONTEXT_LABEL}</label>
+              <TextInput
+                id="upload-context"
+                multiline
+                rows={5}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                className="w-full bg-dark-800 text-white rounded-xl p-4 min-h-[120px] focus-visible:ring-2 focus-visible:ring-primary-lime outline-none text-sm border border-white/5"
                 placeholder={STRINGS.UPLOAD_STEP2_CONTEXT_PLACEHOLDER}
                 maxLength={500}
               />

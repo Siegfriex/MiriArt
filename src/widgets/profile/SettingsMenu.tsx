@@ -6,13 +6,26 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, CreditCard, HelpCircle, LogOut, ChevronRight, Bell } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
+import { AuthApi } from '../../shared/api/miriartApi';
+import { ROUTES } from '../../shared/config/routes';
 import { STRINGS } from '../../shared/config/strings';
 
 /** 설정 메뉴. @참조 Profile Page @상태 useModalStore */
 export const SettingsMenu: React.FC = () => {
+  const navigate = useNavigate();
   const { openModal } = useModalStore();
+
+  const handleLogout = async () => {
+    try {
+      await AuthApi.logout();
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    } catch {
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    }
+  };
 
   const menuItems = [
     { icon: Bell, label: STRINGS.PROFILE_SETTINGS_NOTIFICATIONS, action: () => {} },
@@ -45,7 +58,10 @@ export const SettingsMenu: React.FC = () => {
         </button>
       ))}
 
-      <button className="w-full flex items-center gap-3 p-4 mt-3 text-semantic-error hover:text-red-300 hover:bg-semantic-error/10 rounded-xl transition-colors">
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 p-4 mt-3 text-semantic-error hover:text-red-300 hover:bg-semantic-error/10 rounded-xl transition-colors"
+      >
         <LogOut size={20} />
         <span className="text-sm font-medium">{STRINGS.PROFILE_SETTINGS_LOGOUT}</span>
       </button>

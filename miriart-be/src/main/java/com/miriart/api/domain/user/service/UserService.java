@@ -36,7 +36,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
-        User user = findById(userId);
+        User user = userRepository.findByIdOrThrow(userId);
         return UserProfileResponse.from(user);
     }
 
@@ -45,7 +45,7 @@ public class UserService {
      */
     @Transactional
     public UserProfileResponse updateProfile(Long userId, UserProfileUpdateRequest request) {
-        User user = findById(userId);
+        User user = userRepository.findByIdOrThrow(userId);
 
         // 닉네임 중복 검사
         if (!request.getNickname().equals(user.getNickname())
@@ -65,7 +65,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserPlanResponse getPlanInfo(Long userId, long usedThisMonth) {
-        User user = findById(userId);
+        User user = userRepository.findByIdOrThrow(userId);
         int monthlyLimit = user.getPlanType().getMonthlyLimit();
         long remaining = Math.max(0, monthlyLimit - usedThisMonth);
 
@@ -78,14 +78,5 @@ public class UserService {
                 .remaining(remaining)
                 .billingPeriodStart(billingPeriodStart)
                 .build();
-    }
-
-    private User findById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private String currentBillingMonth() {
-        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
     }
 }

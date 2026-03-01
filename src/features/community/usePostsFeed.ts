@@ -1,7 +1,7 @@
 /**
  * @fileoverview 커뮤니티 피드 목록 훅. 탭/필터 상태 + 피드 데이터.
- * Phase C1 전: MOCK_POSTS 필터링. Phase C1 후: CommunityApi.getPosts() 호출로 교체.
- * @참조 HomeFeed, ContextBar
+ * tab/setTab, grade/setGrade, domain/setDomain을 외부에서 주면 URL 동기화용(useFeedQuery).
+ * @참조 HomeFeed, ContextBar, useFeedQuery
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,13 +23,34 @@ interface UsePostsFeedReturn {
   toggleLike: (postId: string) => void;
 }
 
+export interface UsePostsFeedOptions {
+  /** URL과 동기화할 때 Home에서 useFeedQuery로 넘김 */
+  tab?: FeedTab;
+  setTab?: (tab: FeedTab) => void;
+  grade?: string;
+  setGrade?: (grade: string) => void;
+  domain?: string;
+  setDomain?: (domain: string) => void;
+}
+
 export function usePostsFeed(
   initialGrade = '',
-  initialDomain = ''
+  initialDomain = '',
+  options?: UsePostsFeedOptions
 ): UsePostsFeedReturn {
-  const [activeTab, setActiveTab] = useState<FeedTab>('timeline');
-  const [grade, setGrade] = useState(initialGrade);
-  const [domain, setDomain] = useState(initialDomain);
+  const [internalTab, setInternalTab] = useState<FeedTab>('timeline');
+  const activeTab = options?.tab ?? internalTab;
+  const setActiveTab = options?.setTab ?? setInternalTab;
+
+  const hasGradeControl = options?.setGrade != null;
+  const hasDomainControl = options?.setDomain != null;
+  const [internalGrade, setInternalGrade] = useState(initialGrade);
+  const [internalDomain, setInternalDomain] = useState(initialDomain);
+  const grade = hasGradeControl ? (options!.grade ?? '') : internalGrade;
+  const setGrade = hasGradeControl ? options!.setGrade! : setInternalGrade;
+  const domain = hasDomainControl ? (options!.domain ?? '') : internalDomain;
+  const setDomain = hasDomainControl ? options!.setDomain! : setInternalDomain;
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 

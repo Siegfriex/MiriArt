@@ -9,8 +9,14 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-build
 dist-ssr
 *.local
+
+# 루트(프론트) 로컬 환경변수 (실제 키/시크릿 포함 금지)
+.env
+.env.local
+.env.*.local
 
 # BE / AI (로컬 빌드·가상환경 제외, 임베디드 repo 제외)
 BE/
@@ -36,3 +42,27 @@ service-account*.json
 *.njsproj
 *.sln
 *.sw?
+# Playwright UI regression / checklist smoke
+artifacts/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# 에이전트/로컬 산출물 (커밋 제외)
+_ai_sandbox/
+.cursor/
+
+# Docs / 테스트 / 패치 (전부 제외)
+docs/
+tests/
+**/*.patch
+**/*.orig
+
+# 테스트·빌드 산출물 추가
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.turbo/
+*.bak
+*.tmp
+.cache/

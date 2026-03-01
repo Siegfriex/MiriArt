@@ -8,6 +8,8 @@
 import React, { useState } from 'react';
 import { H1, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
+import { TextInput } from '../../shared/ui/TextInput';
+import { Select } from '../../shared/ui/Select';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
@@ -56,12 +58,12 @@ export const Signup: React.FC = () => {
             { label: STRINGS.SIGNUP_NICKNAME, key: 'nickname', type: 'text', placeholder: '?????????????' },
           ].map(({ label, key, type, placeholder }) => (
             <div key={key} className="space-y-1.5">
-              <label className="text-xs text-text-mid ml-1 font-medium uppercase tracking-wider">
+              <label htmlFor={key} className="text-xs text-text-mid ml-1 font-medium uppercase tracking-wider">
                 {label}
               </label>
-              <input
+              <TextInput
+                id={key}
                 type={type}
-                className="w-full bg-dark-800 text-white rounded-xl px-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-white/5 placeholder-text-low"
                 required
                 value={(formData as Record<string, string>)[key]}
                 onChange={(e) => update(key, e.target.value)}
@@ -84,18 +86,20 @@ export const Signup: React.FC = () => {
               },
             ].map(({ label, key, options }) => (
               <div key={key} className="flex-1 space-y-1.5">
-                <label className="text-xs text-text-mid ml-1 font-medium uppercase tracking-wider">
+                <label htmlFor={key} className="text-xs text-text-mid ml-1 font-medium uppercase tracking-wider">
                   {label}
                 </label>
-                <select
-                  className="w-full bg-dark-800 text-white rounded-xl px-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-white/5 appearance-none text-sm"
+                <Select
+                  id={key}
+                  size="md"
+                  fullWidth
                   value={(formData as Record<string, string>)[key]}
                   onChange={(e) => update(key, e.target.value)}
                 >
                   {options.map((o) => (
                     <option key={o}>{o}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             ))}
           </div>

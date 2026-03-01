@@ -90,8 +90,9 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Gradle 9: 리포트 출력 경로 잠금 시 AccessDeniedException 방지 (Windows/IDE 등)
+    doNotTrackState("Test report output may be locked by another process")
 }
 
-// IDE가 이전 빌드 결과물 잠금 시 대체 출력 디렉토리 사용
-buildDir = file('build2')
+// 기본 출력 디렉토리 사용 (build). build2 사용 시 일부 환경에서 AccessDenied 발생 가능)
 

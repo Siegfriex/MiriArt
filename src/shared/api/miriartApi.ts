@@ -5,7 +5,15 @@
  */
 
 import { useToastStore } from '../model/toastStore';
+import { useUserStore } from '../model/userStore';
 import { AIModelType } from '../model/types';
+import { tokenManager } from './tokenManager';
+import { tokenExchangeSchema, refreshResponseSchema } from './schemas/auth';
+import { userProfileApiSchema } from './schemas/user';
+import { analysisResponseSchema } from './schemas/analysis';
+import { normalizeAnalysisResult } from '../../entities/analysis/schema';
+import type { AnalysisResult } from '../model/types';
+import { chatResponseSchema, ChatResponse } from './schemas/chat';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -18,12 +26,8 @@ export class ApiError extends Error {
   }
 }
 
-// ─── 토큰 관리 ─────────────────────────────────────────────────────────────────
-export const tokenManager = {
-  getAccessToken: () => localStorage.getItem('accessToken'),
-  setAccessToken: (token: string) => localStorage.setItem('accessToken', token),
-  clearAccessToken: () => localStorage.removeItem('accessToken'),
-};
+// ─── 토큰 관리 (정의는 tokenManager.ts, 재export) ────────────────────────────────
+export { tokenManager } from './tokenManager';
 
 // ─── 인증 헤더 빌더 ────────────────────────────────────────────────────────────
 export function getAuthHeaders(): Record<string, string> {
@@ -42,11 +46,19 @@ async function refreshToken(): Promise<void> {
   });
   if (!res.ok) {
     tokenManager.clearAccessToken();
-    window.location.href = '/auth/login';
+    useUserStore.getState().clearAuth();
+    const isDevSkipAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_SKIP_AUTH !== 'false';
+    if (!isDevSkipAuth) {
+      window.location.href = '/auth/login';
+    }
     throw new ApiError(401, 'Refresh token expired');
   }
-  const { accessToken } = await res.json();
-  tokenManager.setAccessToken(accessToken);
+  const json = await res.json();
+  const parsed = refreshResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new ApiError(500, 'Invalid refresh response');
+  }
+  tokenManager.setAccessToken(parsed.data.accessToken);
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit, retry = true): Promise<T> {
@@ -82,43 +94,37 @@ export async function apiFetch<T>(path: string, init: RequestInit, retry = true)
 }
 
 // ─── Auth API ──────────────────────────────────────────────────────────────────
-export interface TokenExchangeResponse {
-  accessToken: string;
-  expiresIn: number;
-  userId: string;
-  needsProfile: boolean;
-  provider: string;
-}
+export type { TokenExchangeResponse } from './schemas/auth';
 
 export const AuthApi = {
-  exchangeToken: async (code: string): Promise<TokenExchangeResponse> =>
-    apiFetch<TokenExchangeResponse>('/api/auth/token', {
+  exchangeToken: async (code: string): Promise<import('./schemas/auth').TokenExchangeResponse> => {
+    const raw = await apiFetch<unknown>('/api/auth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
-    }),
+    });
+    const parsed = tokenExchangeSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new ApiError(500, 'Invalid auth response');
+    }
+    return parsed.data;
+  },
 
   logout: async (): Promise<void> => {
-    await apiFetch('/api/auth/logout', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    });
-    tokenManager.clearAccessToken();
+    try {
+      await apiFetch('/api/auth/logout', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+    } finally {
+      tokenManager.clearAccessToken();
+      useUserStore.getState().clearAuth();
+    }
   },
 };
 
 // ─── User API ──────────────────────────────────────────────────────────────────
-export interface UserProfile {
-  id: string;
-  nickname: string;
-  grade: string;
-  domain: string;
-  provider: string;
-  role: string;
-  reputationScore: number;
-  reputationLevel: number;
-  needsProfile: boolean;
-}
+export type UserProfile = import('./schemas/user').UserProfileApi;
 
 export interface PlanInfo {
   plan: 'FREE' | 'BASIC' | 'PREMIUM';
@@ -128,8 +134,14 @@ export interface PlanInfo {
 }
 
 export const UserApi = {
-  getMe: async (): Promise<UserProfile> =>
-    apiFetch('/api/users/me', { headers: getAuthHeaders() }),
+  getMe: async (): Promise<UserProfile> => {
+    const raw = await apiFetch<unknown>('/api/users/me', { headers: getAuthHeaders() });
+    const parsed = userProfileApiSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new ApiError(500, 'Invalid user profile response');
+    }
+    return parsed.data;
+  },
 
   updateProfile: async (data: { nickname: string; grade: string; domain: string }): Promise<{ needsProfile: boolean }> =>
     apiFetch('/api/users/me/profile', {
@@ -148,34 +160,32 @@ export interface AnalyzeOptions {
   problemText?: string;
 }
 
-export interface AnalyzeResponse {
-  id: string;
-  grade: string;
-  totalScore: number;
-  radarData: { density: number; form: number; completion: number; relevance: number; thinking: number };
-  fixScope: 'StructureRebuild' | 'DetailTuning';
-  comment: string;
-}
+export type AnalyzeResponse = import('./schemas/analysis').AnalysisResponseApi;
 
 export const AnalysisApi = {
-  analyze: async (imageFile: File, options: AnalyzeOptions): Promise<AnalyzeResponse> => {
+  analyze: async (imageFile: File, options: AnalyzeOptions): Promise<AnalysisResult> => {
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('analysisType', options.type);
       if (options.problemText) formData.append('problemText', options.problemText);
-      return await apiFetch<AnalyzeResponse>('/api/analyses', {
+      const raw = await apiFetch<unknown>('/api/analyses', {
         method: 'POST',
-        headers: getAuthHeaders(), // Content-Type은 FormData가 자동 설정
+        headers: getAuthHeaders(),
         body: formData,
       });
+      const parsed = analysisResponseSchema.safeParse(raw);
+      if (!parsed.success) {
+        throw new ApiError(500, 'Invalid analysis response');
+      }
+      return normalizeAnalysisResult(parsed.data);
     } catch (error) {
       const msg =
         error instanceof ApiError && error.status === 402
           ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
           : error instanceof ApiError && error.status === 408
             ? '분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.'
-            : '작품 분석에 실패했습니다.';
+            : handleApiError(error);
       useToastStore.getState().show(msg, 'error');
       throw error;
     }
@@ -186,8 +196,14 @@ export const AnalysisApi = {
       headers: getAuthHeaders(),
     }),
 
-  getById: async (id: string): Promise<AnalyzeResponse> =>
-    apiFetch(`/api/analyses/${id}`, { headers: getAuthHeaders() }),
+  getById: async (id: string): Promise<AnalysisResult> => {
+    const raw = await apiFetch<unknown>(`/api/analyses/${id}`, { headers: getAuthHeaders() });
+    const parsed = analysisResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new ApiError(500, 'Invalid analysis response');
+    }
+    return normalizeAnalysisResult(parsed.data);
+  },
 };
 
 // ─── AI Chat API (gemini.ts ApiService.chat 대체) ─────────────────────────────
@@ -201,26 +217,27 @@ export interface ChatRequest {
   history?: { role: 'user' | 'model'; parts: { text: string }[] }[];
 }
 
-export interface ChatResponse {
-  text: string;
-  groundingUrls?: string[];
-  quickReplies?: string[];
-  sessionId: string;
-}
+// ChatResponse 타입은 schemas/chat에서 export (Zod 검증용)
+export type { ChatResponse };
 
 export const ChatApi = {
   sendMessage: async (params: ChatRequest): Promise<ChatResponse> => {
     try {
-      return await apiFetch<ChatResponse>('/api/chat', {
+      const raw = await apiFetch<unknown>('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(params),
       });
+      const parsed = chatResponseSchema.safeParse(raw);
+      if (!parsed.success) {
+        throw new ApiError(500, 'Invalid chat response');
+      }
+      return parsed.data;
     } catch (error) {
       const msg =
         error instanceof ApiError && error.status === 402
           ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
-          : 'AI 멘토 연결에 실패했습니다. 다시 시도해주세요.';
+          : handleApiError(error);
       useToastStore.getState().show(msg, 'error');
       throw error;
     }
@@ -228,9 +245,19 @@ export const ChatApi = {
 };
 
 // ─── ErrorCode 처리 ────────────────────────────────────────────────────────────
-/** API 계약서 §9 기반 ErrorCode → 한국어 메시지 변환 */
+/** API 계약서 §9 기반 ErrorCode → 한국어 메시지 변환. 스키마 검증 실패 메시지도 친절한 문구로 매핑 */
 export function handleApiError(error: unknown): string {
   if (!(error instanceof ApiError)) return '알 수 없는 오류가 발생했습니다.';
+
+  // 스키마 검증 실패 등 메시지 문자열 기반 매핑 (사용자 노출용)
+  const messageMap: Record<string, string> = {
+    'Invalid analysis response':
+      '분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+    'Invalid chat response':
+      'AI 답변을 불러오지 못했어요. 다시 한 번 시도해 주세요.',
+  };
+  if (messageMap[error.message]) return messageMap[error.message];
+
   try {
     const body = JSON.parse(error.message);
     const code = body?.code;

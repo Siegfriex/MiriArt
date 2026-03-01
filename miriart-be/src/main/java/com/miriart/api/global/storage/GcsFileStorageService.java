@@ -2,6 +2,8 @@ package com.miriart.api.global.storage;
 
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +43,7 @@ public class GcsFileStorageService implements FileStorageService {
     @Override
     public FileUploadResult upload(MultipartFile file, FileCategory category) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("업로드할 파일이 없습니다");
+            throw new BusinessException(ErrorCode.FILE_EMPTY);
         }
 
         String objectName = category.getPathPrefix() + "/"

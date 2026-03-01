@@ -1,17 +1,18 @@
 /**
- * @fileoverview 글쓰기/질문하기 Full Page. useSearchParams에서 type 파라미터 읽기.
+ * @fileoverview 글쓰기/질문하기 Full Page. usePostTypeQuery로 type 쿼리 읽기 (URL single source of truth).
  * @참조 AppRouter
  * @라우팅 /write?type=free|qna
  */
 
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { X, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { H2 } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
 import { TagChip } from '../../../shared/ui/TagChip';
 import { useCreatePost } from '../../../features/community/useCreatePost';
-import { PostType } from '../../../entities/community/model/post';
+import { usePostTypeQuery } from '../../../shared/lib/router/usePostTypeQuery';
+import { useFeedQuery } from '../../../features/community/useFeedQuery';
 
 const PRESET_TAGS = ['석고', '정물', '풍경', '인체', '색채', '구도', '수채화', '기초디자인'];
 const DEADLINE_OPTIONS: { label: string; value: 24 | 48 | 72 }[] = [
@@ -22,15 +23,15 @@ const DEADLINE_OPTIONS: { label: string; value: 24 | 48 | 72 }[] = [
 
 /** 글쓰기/질문하기 페이지. */
 export const WritePostPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [type] = usePostTypeQuery();
+  const { grade: initialGrade, domain: initialDomain } = useFeedQuery();
   const navigate = useNavigate();
-  const initialType = (searchParams.get('type') ?? 'free') as PostType;
   const {
     formState, setTitle, setContent, toggleTag,
-    setIsAnonymous, setDeadlineHours,
+    setIsAnonymous, setDeadlineHours, setGradeScope, setDomainScope,
     addImage, removeImage,
     isSubmitting, submit,
-  } = useCreatePost(initialType);
+  } = useCreatePost(type, initialGrade || undefined, initialDomain || undefined);
 
   const isQna = formState.type === 'qna';
   const pageTitle = isQna ? '질문하기' : '자유글 쓰기';
@@ -141,6 +142,39 @@ export const WritePostPage: React.FC = () => {
               {formState.tags.map((tag) => <TagChip key={tag} label={tag} />)}
             </div>
           )}
+        </div>
+
+        {/* 대상 (설계서: Context Bar 값 기본 세팅) */}
+        <div className="space-y-2 pt-2 border-t border-white/5">
+          <label className="text-xs text-text-mid font-medium uppercase tracking-wider">
+            대상
+          </label>
+          <div className="flex gap-2">
+            <select
+              value={formState.gradeScope ?? ''}
+              onChange={(e) => setGradeScope(e.target.value || undefined)}
+              className="flex-1 bg-dark-800 text-white text-sm rounded-xl px-3 py-2.5 border border-white/5 focus:outline-none focus:ring-1 focus:ring-primary-lime"
+            >
+              <option value="">전체</option>
+              <option value="고1">고1</option>
+              <option value="고2">고2</option>
+              <option value="고3">고3</option>
+              <option value="재수">재수</option>
+              <option value="N수">N수</option>
+            </select>
+            <select
+              value={formState.domainScope ?? ''}
+              onChange={(e) => setDomainScope(e.target.value || undefined)}
+              className="flex-1 bg-dark-800 text-white text-sm rounded-xl px-3 py-2.5 border border-white/5 focus:outline-none focus:ring-1 focus:ring-primary-lime"
+            >
+              <option value="">전체</option>
+              <option value="기초디자인">기초디자인</option>
+              <option value="수채화">수채화</option>
+              <option value="소묘">소묘</option>
+              <option value="사고의전환">사고의전환</option>
+              <option value="만화·애니">만화·애니</option>
+            </select>
+          </div>
         </div>
 
         {/* Q&A 전용: 마감 시간 */}

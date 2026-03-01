@@ -1,6 +1,7 @@
 /**
  * @fileoverview 커뮤니티 홈 피드. SubTabBar + PostCard 목록 + 무한스크롤 준비.
- * @참조 Home Page
+ * tab/grade/domain은 useFeedQuery에서 전달해 URL과 동기화.
+ * @참조 Home Page, useFeedQuery
  */
 
 import React, { useRef, useEffect } from 'react';
@@ -9,21 +10,33 @@ import { PostCard } from './PostCard';
 import { usePostsFeed, FeedTab } from '../../features/community/usePostsFeed';
 
 interface HomeFeedProps {
-  initialGrade?: string;
-  initialDomain?: string;
+  tab: FeedTab;
+  setTab: (tab: FeedTab) => void;
+  grade: string;
+  setGrade: (grade: string) => void;
+  domain: string;
+  setDomain: (domain: string) => void;
   onTabChange?: (tab: FeedTab) => void;
 }
 
 /** 홈 피드. SubTabBar + PostCard[] + IntersectionObserver. */
 export const HomeFeed: React.FC<HomeFeedProps> = ({
-  initialGrade = '',
-  initialDomain = '',
+  tab,
+  setTab,
+  grade,
+  setGrade,
+  domain,
+  setDomain,
   onTabChange,
 }) => {
-  const { posts, activeTab, setActiveTab, isLoading, loadMore } = usePostsFeed(
-    initialGrade,
-    initialDomain
-  );
+  const { posts, activeTab, setActiveTab, isLoading, loadMore } = usePostsFeed('', '', {
+    tab,
+    setTab,
+    grade,
+    setGrade,
+    domain,
+    setDomain,
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // 무한스크롤 트리거 (Phase C1 전은 noop)

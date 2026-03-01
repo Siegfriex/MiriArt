@@ -25,18 +25,11 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        temp:
-          # DB 메타데이터 없이도 방어적 기동 허용
-          use_jdbc_metadata_defaults: false
+        # dialect·temp는 application.yml 공통 설정 사용
   data:
     redis:
       host: ${REDIS_HOST}
       port: 6379
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 50MB
   security:
     oauth2:
       client:

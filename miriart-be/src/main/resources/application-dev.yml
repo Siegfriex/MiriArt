@@ -1,4 +1,9 @@
 spring:
+  # Cloud SQL 자동설정 비활성화 (로컬 MySQL 사용 시 — 미설정 시 "A database name must be provided" 오류)
+  cloud:
+    gcp:
+      sql:
+        enabled: false
   datasource:
     url: jdbc:mysql://localhost:3306/miriart_dev?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: root

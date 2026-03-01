@@ -2,10 +2,10 @@
  * @fileoverview 홈 페이지. ContextBar + Hero CTA + HomeFeed + CreditStatusWidget + WriteFAB.
  * @참조 AppRouter
  * @라우팅 /app/home
- * @상태 useModalStore, useUserStore, useToastStore, usePostsFeed (통해 HomeFeed)
+ * @상태 useModalStore, useUserStore, useToastStore, useFeedQuery → HomeFeed
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { H1, H2, BodyText } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
 import { UploadCloud, ChevronRight, Plus } from 'lucide-react';
@@ -22,15 +22,15 @@ import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { ContextBar } from '../../../widgets/community/ContextBar';
 import { HomeFeed } from '../../../widgets/community/HomeFeed';
+import { useFeedQuery } from '../../../features/community/useFeedQuery';
 
 /** 홈 페이지. @참조 AppRouter @상태 useModalStore, useUserStore, useToastStore */
 export const Home: React.FC = () => {
+  const { tab, setTab, grade, setGrade, domain, setDomain } = useFeedQuery();
   const { openModal } = useModalStore();
   const { isFirstLogin, setFirstLoginDone, profile } = useUserStore();
   const { show: showToast } = useToastStore();
   const navigate = useNavigate();
-  const [grade, setGrade] = useState(profile.grade || '');
-  const [domain, setDomain] = useState(profile.domain || '');
 
   // 첫 로그인 시 공식 ToastStore를 통해 가이드 메시지 표시
   useEffect(() => {
@@ -77,9 +77,8 @@ export const Home: React.FC = () => {
       <LiveTicker />
 
       {/* Hero Upload CTA */}
-      <section className="relative overflow-hidden rounded-large bg-dark-800 border border-white/5 p-6 min-h-[200px] flex flex-col justify-center items-center text-center group">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-lime/5 to-transparent" />
-        <div className="relative z-base flex flex-col items-center">
+      <section className="relative overflow-visible rounded-large bg-dark-800 border border-white/5">
+        <div className="rounded-large bg-gradient-to-br from-primary-lime/5 to-transparent p-6 min-h-[200px] flex flex-col justify-center items-center text-center group">
           <div className="w-16 h-16 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <UploadCloud className="text-primary-lime" size={32} />
           </div>
@@ -131,7 +130,7 @@ export const Home: React.FC = () => {
 
       {/* 커뮤니티 홈 피드 */}
       <div className="-mx-4">
-        <HomeFeed initialGrade={grade} initialDomain={domain} />
+        <HomeFeed tab={tab} setTab={setTab} grade={grade} setGrade={setGrade} domain={domain} setDomain={setDomain} />
       </div>
 
       {/* 크레딧 위젯 */}
@@ -143,7 +142,7 @@ export const Home: React.FC = () => {
       {/* 통합 FAB — 글쓰기/업로드 분기 */}
       <button
         onClick={handleWriteFAB}
-        className="fixed bottom-24 right-4 z-fab w-14 h-14 bg-primary-lime rounded-full flex items-center justify-center shadow-lg hover:bg-primary-lime/90 active:scale-95 transition-all"
+        className="fixed bottom-24 right-4 z-nav w-14 h-14 bg-primary-lime rounded-full flex items-center justify-center shadow-lg hover:bg-primary-lime/90 active:scale-95 transition-all"
         aria-label="글쓰기 또는 업로드"
       >
         <Plus size={24} className="text-dark-900" strokeWidth={2.5} />

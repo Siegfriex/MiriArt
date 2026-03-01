@@ -1,21 +1,22 @@
 /**
  * @fileoverview OAuth2 콜백 처리 페이지.
  * BE가 /auth/callback?code={uuid} 로 리다이렉트하면 JWT 교환 후 needsProfile 분기.
+ * 로그인 성공 = exchangeToken + getMe 모두 성공. getMe 실패 시 세션 폐기 후 /auth/login으로 이동.
  * @참조 AppRouter
  * @라우팅 /auth/callback
- * @상태 useUserStore (setAuth)
+ * @상태 useUserStore (setAuth, setProfileFromApi, clearAuth)
  */
 
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AuthApi, tokenManager } from '../../shared/api/miriartApi';
+import { AuthApi, UserApi, tokenManager } from '../../shared/api/miriartApi';
 import { useUserStore } from '../../shared/model/userStore';
 
-/** OAuth2 콜백. code → exchangeToken → setAuth → needsProfile 분기. */
+/** OAuth2 콜백. code → exchangeToken → setAuth → getMe → setProfileFromApi 또는 clearAuth + /auth/login */
 export const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setAuth } = useUserStore();
+  const { setAuth, setProfileFromApi } = useUserStore();
 
   useEffect(() => {
     const code = searchParams.get('code');
@@ -25,9 +26,20 @@ export const AuthCallback: React.FC = () => {
     }
 
     AuthApi.exchangeToken(code)
-      .then((response) => {
+      .then(async (response) => {
         tokenManager.setAccessToken(response.accessToken);
         setAuth(response.userId);
+
+        try {
+          const me = await UserApi.getMe();
+          setProfileFromApi(me);
+        } catch (err) {
+          console.error('[AuthCallback] getMe failed, treating login as failed:', err);
+          useUserStore.getState().clearAuth();
+          navigate('/auth/login', { replace: true });
+          return;
+        }
+
         if (response.needsProfile) {
           navigate('/onboarding');
         } else {
@@ -35,7 +47,7 @@ export const AuthCallback: React.FC = () => {
         }
       })
       .catch(() => navigate('/auth/login'));
-  }, []);
+  }, [navigate, searchParams, setAuth, setProfileFromApi]);
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">

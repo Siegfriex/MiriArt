@@ -1,11 +1,11 @@
 /**
- * @fileoverview 아카이브 페이지. ArtworkGrid/AnalysisCarousel, viewMode, sortMode, FilterChip, FAB.
+ * @fileoverview 아카이브 페이지. ArtworkGrid/AnalysisCarousel, view/sort는 URL 쿼리와 동기화.
  * @참조 AppRouter
- * @라우팅 /app/archive
- * @상태 useModalStore, useState (viewMode, sortMode)
+ * @라우팅 /app/archive, /app/archive?view=list&sort=school
+ * @상태 useModalStore, useArchiveQuery (view, sort)
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { H1 } from '../../../shared/ui/Typography';
 import { Grid as GridIcon, List } from 'lucide-react';
 import { ArtworkGrid } from '../../../widgets/artwork/ArtworkGrid';
@@ -20,16 +20,13 @@ import { useModalStore } from '../../../shared/model/modalStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
+import { useArchiveQuery } from '../model/useArchiveQuery';
 
-type ViewMode = 'grid' | 'list';
-type SortMode = 'latest' | 'school';
-
-/** 아카이브 페이지. @참조 AppRouter @상태 useModalStore, viewMode, sortMode */
+/** 아카이브 페이지. @참조 AppRouter @상태 useModalStore, useArchiveQuery */
 export const Archive: React.FC = () => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortMode, setSortMode] = useState<SortMode>('latest');
+  const { view, setView, sort, setSort } = useArchiveQuery();
 
   const handleUpload = () => {
     openModal('UPLOAD_FLOW', {
@@ -39,11 +36,11 @@ export const Archive: React.FC = () => {
 
   const sortedArtworks = useMemo(() => {
     return [...MOCK_ARTWORKS].sort((a, b) =>
-      sortMode === 'latest'
+      sort === 'latest'
         ? b.timestamp - a.timestamp
         : a.university.localeCompare(b.university, 'ko')
     );
-  }, [sortMode]);
+  }, [sort]);
 
   const hasArtworks = sortedArtworks.length > 0;
 
@@ -60,30 +57,30 @@ export const Archive: React.FC = () => {
         <div className="flex gap-2">
           <FilterChip
             label={STRINGS.ARCHIVE_SORT_LATEST}
-            selected={sortMode === 'latest'}
-            onClick={() => setSortMode('latest')}
+            selected={sort === 'latest'}
+            onClick={() => setSort('latest')}
           />
           <FilterChip
             label={STRINGS.ARCHIVE_SORT_SCHOOL}
-            selected={sortMode === 'school'}
-            onClick={() => setSortMode('school')}
+            selected={sort === 'school'}
+            onClick={() => setSort('school')}
           />
         </div>
 
         {/* 뷰 토글 */}
         <div className="flex bg-dark-800 rounded-lg p-1 border border-white/5">
           <button
-            onClick={() => setViewMode('grid')}
+            onClick={() => setView('grid')}
             className={`p-1.5 rounded-md transition-all ${
-              viewMode === 'grid' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
+              view === 'grid' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
             }`}
           >
             <GridIcon size={16} />
           </button>
           <button
-            onClick={() => setViewMode('list')}
+            onClick={() => setView('list')}
             className={`p-1.5 rounded-md transition-all ${
-              viewMode === 'list' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
+              view === 'list' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
             }`}
           >
             <List size={16} />
@@ -99,7 +96,7 @@ export const Archive: React.FC = () => {
       {/* 콘텐츠 */}
       {hasArtworks ? (
         <>
-          {viewMode === 'grid' ? (
+          {view === 'grid' ? (
             <ArtworkGrid artworks={sortedArtworks} />
           ) : (
             <AnalysisCarousel artworks={sortedArtworks} />

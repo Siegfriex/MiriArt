@@ -2,16 +2,17 @@
  * @fileoverview 결과 상세 페이지. artworkId로 분석 결과 표시. RadarChart, ComparisonAccordion, ArtifactViewer, 채팅 이동.
  * @참조 AppRouter
  * @라우팅 /result/:artworkId
- * @상태 useModalStore, useState (activeArtifact)
+ * @상태 useModalStore, useState (activeArtifact, result)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Share2, MoreHorizontal, MessageCircle, RotateCcw } from 'lucide-react';
 import { H1, H2, H3, BodyText } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
 import { AnalysisResult, Grade, ComparisonTier } from '../../../shared/model/types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getArtworkById } from '../../../entities/artwork/model';
+import { AnalysisApi } from '../../../shared/api/miriartApi';
 import { useModalStore } from '../../../shared/model/modalStore';
 import { RadarChart } from '../../../shared/ui/charts/RadarChart';
 import { ComparisonAccordion } from '../../../widgets/result/ComparisonAccordion';
@@ -67,39 +68,50 @@ const MOCK_TIERS: ComparisonTier[] = [
   },
 ];
 
-/** 결과 상세 페이지. @참조 AppRouter @상태 useModalStore, activeArtifact */
+/** 결과 상세 페이지. @참조 AppRouter @상태 useModalStore, activeArtifact, result */
 export const ResultDetail: React.FC = () => {
   const { artworkId } = useParams();
   const navigate = useNavigate();
   const { openModal } = useModalStore();
   const [hasGradeInput] = useState(false);
-
   const artwork = artworkId ? getArtworkById(artworkId) : null;
 
-  const result: AnalysisResult = artwork
-    ? {
-        ...artwork,
-        totalScore: 88,
-        radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
-        fixScope: 'DetailTuning',
-        comment: '구조가 탄탄합니다. 하단부 밀도를 높이면 더욱 강해질 것 같아요.',
-        comparisonTiers: MOCK_TIERS,
-        hasAcceptedArtwork: false,
-      }
-    : {
-        id: 'mock',
-        imageUrl: 'https://picsum.photos/400/500',
-        grade: Grade.A,
-        totalScore: 88,
-        university: '홍익대학교',
-        major: '시각디자인',
-        radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
-        fixScope: 'DetailTuning',
-        comment: '구조가 탄탄합니다.',
-        comparisonTiers: MOCK_TIERS,
-        hasAcceptedArtwork: false,
-        timestamp: Date.now(),
-      };
+  function buildMockResult(forArtworkId?: string): AnalysisResult {
+    const art = forArtworkId ? getArtworkById(forArtworkId) : artwork;
+    return art
+      ? {
+          ...art,
+          totalScore: 88,
+          radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
+          fixScope: 'DetailTuning',
+          comment: '구조가 탄탄합니다. 하단부 밀도를 높이면 더욱 강해질 것 같아요.',
+          comparisonTiers: MOCK_TIERS,
+          hasAcceptedArtwork: false,
+        }
+      : {
+          id: 'mock',
+          imageUrl: 'https://picsum.photos/400/500',
+          grade: Grade.A,
+          totalScore: 88,
+          university: '홍익대학교',
+          major: '시각디자인',
+          radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
+          fixScope: 'DetailTuning',
+          comment: '구조가 탄탄합니다.',
+          comparisonTiers: MOCK_TIERS,
+          hasAcceptedArtwork: false,
+          timestamp: Date.now(),
+        };
+  }
+
+  const [result, setResult] = useState<AnalysisResult>(() => buildMockResult(artworkId));
+
+  useEffect(() => {
+    if (!artworkId) return;
+    AnalysisApi.getById(artworkId)
+      .then((data) => setResult(data))
+      .catch(() => setResult(buildMockResult(artworkId)));
+  }, [artworkId]);
 
   const handleDelete = () => {
     openModal('CONFIRM', {
@@ -124,7 +136,7 @@ export const ResultDetail: React.FC = () => {
   const sessionId = result.id;
 
   return (
-    <div className="fixed inset-0 z-priority bg-dark-900 overflow-y-auto no-scrollbar pb-28">
+    <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24">
       {/* 헤더 */}
       <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
         <button
@@ -171,7 +183,7 @@ export const ResultDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-5 py-6 space-y-8">
+      <div className="px-5 py-6 space-y-8 pb-40">
         {/* fixScope 배너 */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-3">
           <div
@@ -246,8 +258,8 @@ export const ResultDetail: React.FC = () => {
         />
       </div>
 
-      {/* Action Bar (하단 고정) */}
-      <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
+      {/* Action Bar (하단 고정, BottomNav 위에 배치) */}
+      <div className="fixed bottom-20 left-0 w-full p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
         <Button
           variant="secondary"
           className="flex-1 flex gap-2 items-center justify-center"

@@ -14,7 +14,7 @@ export const LiveTicker: React.FC = () => {
   const doubled = [...STRINGS.TICKER_ITEMS, ...STRINGS.TICKER_ITEMS];
 
   return (
-    <div className="w-full overflow-hidden bg-primary-lime/5 border-y border-primary-lime/10 py-2">
+    <div className="w-full overflow-x-hidden overflow-y-visible bg-primary-lime/5 border-y border-primary-lime/10 py-2 flex-shrink-0">
       <motion.div
         className="flex gap-8 whitespace-nowrap"
         animate={{ x: [0, '-50%'] }}

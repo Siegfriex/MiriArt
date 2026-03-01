@@ -8,6 +8,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, HelpCircle, UploadCloud, X } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
+import { ROUTES } from '../../shared/config/routes';
 
 /** 글쓰기 Bottom Sheet. */
 export const WritePostSheet: React.FC = () => {
@@ -16,12 +17,12 @@ export const WritePostSheet: React.FC = () => {
 
   const handleFreePost = () => {
     closeModal();
-    navigate('/write?type=free');
+    navigate(`${ROUTES.WRITE}?type=free`);
   };
 
   const handleQnaPost = () => {
     closeModal();
-    navigate('/write?type=qna');
+    navigate(`${ROUTES.WRITE}?type=qna`);
   };
 
   const handleUpload = () => {
