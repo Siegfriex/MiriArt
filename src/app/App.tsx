@@ -28,8 +28,10 @@ const App: React.FC = () => {
         {/* 전역 SideGNB — 모든 라우트에서 접근 가능 */}
         <SideGNB />
 
-        {/* 라우터 컨텐츠 */}
-        <AppRouter />
+        {/* 메인 스크롤 영역: 단일 스크롤 컨테이너로 SubTabBar sticky가 확실히 동작 */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <AppRouter />
+        </main>
 
         {/* 전역 BottomNav — navStore로 visibility 제어 */}
         <BottomNav />

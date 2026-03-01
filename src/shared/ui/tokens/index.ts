@@ -119,3 +119,7 @@ export const zLayers = {
 export type Theme = typeof semantic;
 /** ZLayers 타입 */
 export type ZLayers = typeof zLayers;
+
+// ─── 레이아웃·그리드·r값·root 변수 (중앙 관리) ─────────────────────────────────
+export * from './layout';
+export { getRootVarsObject, injectRootVars } from './rootVars';

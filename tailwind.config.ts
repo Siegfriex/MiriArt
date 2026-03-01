@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import { primitives, zLayers, semantic } from './src/shared/ui/tokens/index';
+import { contentMaxWidth, grid, pagePadding, sectionGap, cardGap } from './src/shared/ui/tokens/layout';
 import { themeFromDesignTokensAdditive } from './src/design/tailwindTheme';
 
 const designThemeAdditive = themeFromDesignTokensAdditive();
@@ -76,6 +77,25 @@ const config: Config = {
       },
       backdropBlur: {
         glass: '20px',
+      },
+      // 레이아웃·그리드 (tokens/layout.ts 단일 소스)
+      maxWidth: {
+        'content-xs': `${contentMaxWidth.xs}px`,
+        'content-sm': `${contentMaxWidth.sm}px`,
+        'content-md': `${contentMaxWidth.md}px`,
+        'content-lg': `${contentMaxWidth.lg}px`,
+      },
+      spacing: {
+        'page-x': `${pagePadding.x}px`,
+        'page-y': `${pagePadding.y}px`,
+        'section-gap': `${sectionGap}px`,
+        'card-gap': `${cardGap}px`,
+      },
+      gridTemplateColumns: {
+        'content-1': `repeat(${grid.columns.narrow}, minmax(0, 1fr))`,
+        'content-2': `repeat(${grid.columns.default}, minmax(0, 1fr))`,
+        'content-3': `repeat(${grid.columns.wide}, minmax(0, 1fr))`,
+        'content-5': `repeat(${grid.columns.gallery}, minmax(0, 1fr))`,
       },
       // Z-index 7단계 시맨틱 시스템 (+ sidebar)
       zIndex: {

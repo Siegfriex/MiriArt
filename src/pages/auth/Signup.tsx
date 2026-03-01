@@ -1,12 +1,11 @@
 /**
  * @fileoverview 회원가입 페이지. 이메일, 비밀번호, 닉네임, 학년, 전공. 제출 시 Tutorial로 이동.
- * 이미 로그인된 경우(예: OAuth 직후 잘못 진입) 앱 홈으로 보냄.
  * @참조 AppRouter
  * @라우팅 /auth/signup
  * @상태 useState (formData)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { H1, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
 import { TextInput } from '../../shared/ui/TextInput';
@@ -15,12 +14,10 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
-import { useUserStore } from '../../shared/model/userStore';
 
 /** 회원가입. @참조 AppRouter @상태 formData */
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
-  const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,15 +33,6 @@ export const Signup: React.FC = () => {
 
   const update = (key: string, val: string) =>
     setFormData((prev) => ({ ...prev, [key]: val }));
-
-  /** 이미 로그인된 사용자(OAuth 등)는 앱 홈으로(온보딩→로그인 루프 방지) */
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(ROUTES.APP.HOME, { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
-  if (isAuthenticated) return null;
 
   return (
     <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 overflow-y-auto no-scrollbar z-priority">
