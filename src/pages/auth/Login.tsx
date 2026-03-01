@@ -1,10 +1,11 @@
 /**
  * @fileoverview 로그인 페이지. 카카오/구글 소셜 로그인 버튼. OAuth2 리다이렉트 방식.
+ * 이미 로그인된 경우 /app/home 또는 /onboarding으로 바로 보냄(로그인→온보딩 루프 방지).
  * @참조 AppRouter
  * @라우팅 /auth/login
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { H1, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
 import { ArrowLeft } from 'lucide-react';
@@ -12,10 +13,24 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { API_BASE } from '../../shared/config/api';
+import { useUserStore } from '../../shared/model/userStore';
 
 /** 로그인. 카카오/구글 OAuth2 리다이렉트. @참조 AppRouter */
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, profile } = useUserStore();
+
+  /** 이미 로그인된 사용자는 앱 홈 또는 온보딩으로(루프 방지) */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (profile.hasGradeInput) {
+      navigate(ROUTES.APP.HOME, { replace: true });
+    } else {
+      navigate(ROUTES.ONBOARDING, { replace: true });
+    }
+  }, [isAuthenticated, profile.hasGradeInput, navigate]);
+
+  if (isAuthenticated) return null;
 
   const handleKakaoLogin = () => {
     window.location.href = `${API_BASE}/oauth2/authorization/kakao`;

@@ -87,9 +87,9 @@ export const AuthCallback: React.FC = () => {
         DEBUG_LOG('navigating after success', { runId, target }, 'D');
         // #endregion
         if (response.needsProfile) {
-          navigate('/onboarding');
+          navigate('/onboarding', { replace: true });
         } else {
-          navigate('/app/home');
+          navigate('/app/home', { replace: true });
         }
       })
       .catch((err) => {

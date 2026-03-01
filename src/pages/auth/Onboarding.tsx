@@ -11,6 +11,7 @@ import { Button } from '../../shared/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
+import { useUserStore } from '../../shared/model/userStore';
 
 const SLIDES = [
   {
@@ -33,13 +34,28 @@ const SLIDES = [
 /** 온보딩. @참조 AppRouter @상태 current */
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const [current, setCurrent] = useState(0);
 
   const handleNext = () => {
     if (current < SLIDES.length - 1) {
       setCurrent(current + 1);
     } else {
-      navigate(ROUTES.AUTH.SIGNUP);
+      // 마지막 슬라이드 '시작하기': OAuth 로그인된 사용자는 앱 홈으로, 비로그인은 회원가입으로
+      if (isAuthenticated) {
+        navigate(ROUTES.APP.HOME);
+      } else {
+        navigate(ROUTES.AUTH.SIGNUP);
+      }
+    }
+  };
+
+  /** 건너뛰기: 이미 로그인된 경우 앱 홈으로, 비로그인 시 로그인 페이지로 */
+  const handleSkip = () => {
+    if (isAuthenticated) {
+      navigate(ROUTES.APP.HOME);
+    } else {
+      navigate(ROUTES.AUTH.LOGIN);
     }
   };
 
@@ -47,7 +63,7 @@ export const Onboarding: React.FC = () => {
     <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 z-priority">
       <div className="flex justify-end h-12 items-center">
         <button
-          onClick={() => navigate(ROUTES.AUTH.LOGIN)}
+          onClick={handleSkip}
           className="text-text-mid text-sm font-medium hover:text-white transition-colors"
         >
           {STRINGS.SKIP}
