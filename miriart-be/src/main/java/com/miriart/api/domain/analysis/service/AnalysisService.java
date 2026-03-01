@@ -59,8 +59,7 @@ public class AnalysisService {
     @Transactional
     public AnalysisStartResponse startAnalysis(Long userId, MultipartFile image,
                                                String analysisType, String problemText) throws IOException {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        User user = userRepository.findByIdOrThrow(userId);
 
         // 1. 파일 검증
         if (image == null || image.isEmpty()) {
@@ -72,6 +71,7 @@ public class AnalysisService {
         long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentMonth);
         int monthlyLimit = user.getPlanType().getMonthlyLimit();
         if (usedThisMonth >= monthlyLimit) {
+            log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
             throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
         }
 
@@ -91,6 +91,7 @@ public class AnalysisService {
                         .build()
         );
         log.debug("분석 생성 - analysisId: {}, userId: {}", analysis.getId(), userId);
+        log.info("분석 시작 - analysisId: {}, userId: {}, status: PENDING", analysis.getId(), userId);
 
         // 5. FastAPI WebClient 호출
         try {
@@ -109,11 +110,13 @@ public class AnalysisService {
         } catch (BusinessException e) {
             analysis.fail();
             analysisRepository.save(analysis);
+            log.info("분석 실패 - analysisId: {}, userId: {}, status: FAILED", analysis.getId(), userId);
             throw e;
         }
 
         // 7. usage_logs INSERT
         usageLogRepository.save(AnalysisUsageLog.create(user, analysis.getId()));
+        log.info("분석 완료 - analysisId: {}, userId: {}, status: COMPLETED", analysis.getId(), userId);
 
         return AnalysisStartResponse.from(analysis);
     }

@@ -7,7 +7,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { tokenManager } from '../api/miriartApi';
+import { tokenManager } from '../api/tokenManager';
 
 /** 사용자 프로필 내부 타입 */
 interface UserProfile {
@@ -18,6 +18,15 @@ interface UserProfile {
   credits: number;
   hasGradeInput: boolean;
 }
+
+const INITIAL_PROFILE: UserProfile = {
+  nickname: '디자인 마스터',
+  grade: '고등학교 3학년',
+  domain: '시각디자인',
+  plan: 'basic',
+  credits: 12,
+  hasGradeInput: false,
+};
 
 interface UserStore {
   isFirstLogin: boolean;
@@ -32,6 +41,10 @@ interface UserStore {
   setCredits: (n: number) => void;
   setAuth: (userId: string) => void;
   clearAuth: () => void;
+  /** API getMe 응답으로 store profile 동기화 (AuthCallback 등에서 사용) */
+  setProfileFromApi: (api: { nickname: string; grade: string; domain: string; needsProfile: boolean; role?: string }) => void;
+  /** 프로필만 INITIAL로 리셋 (getMe 실패 시 등) */
+  resetProfile: () => void;
 }
 
 /**
@@ -43,14 +56,7 @@ export const useUserStore = create<UserStore>()(
   persist(
     (set) => ({
       isFirstLogin: true,
-      profile: {
-        nickname: '디자인 마스터',
-        grade: '고등학교 3학년',
-        domain: '시각디자인',
-        plan: 'basic',
-        credits: 12,
-        hasGradeInput: false,
-      },
+      profile: { ...INITIAL_PROFILE },
       isAuthenticated: false,
       userId: null,
 
@@ -62,8 +68,26 @@ export const useUserStore = create<UserStore>()(
       setAuth: (userId) => set({ isAuthenticated: true, userId }),
       clearAuth: () => {
         tokenManager.clearAccessToken();
-        set({ isAuthenticated: false, userId: null });
+        set({
+          isAuthenticated: false,
+          userId: null,
+          isFirstLogin: true,
+          profile: { ...INITIAL_PROFILE },
+        });
       },
+      setProfileFromApi: (api) =>
+        set((s) => ({
+          profile: {
+            ...s.profile,
+            nickname: api.nickname,
+            grade: api.grade,
+            domain: api.domain,
+            plan: api.role === 'PREMIUM' ? 'premium' : api.role === 'BASIC' ? 'basic' : 'free',
+            credits: s.profile.credits,
+            hasGradeInput: !api.needsProfile,
+          },
+        })),
+      resetProfile: () => set({ profile: { ...INITIAL_PROFILE } }),
     }),
     {
       name: 'miri-art-user',

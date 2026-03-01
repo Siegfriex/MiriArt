@@ -8,6 +8,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Heart } from 'lucide-react';
 import { Post } from '../../entities/community/model/post';
+import { ROUTES } from '../../shared/config/routes';
 import { PersonaAvatar } from '../../shared/ui/PersonaAvatar';
 import { TagChip } from '../../shared/ui/TagChip';
 import { DeadlineTimer } from '../../shared/ui/DeadlineTimer';
@@ -34,7 +35,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   );
 
   const handleClick = () => {
-    navigate(post.type === 'qna' ? `/qna/${post.id}` : `/posts/${post.id}`);
+    if (post.type === 'qna') {
+      navigate(ROUTES.QNA_DETAIL(post.id));
+    } else {
+      navigate(ROUTES.POST_DETAIL(post.id));
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {

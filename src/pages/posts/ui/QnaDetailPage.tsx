@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Bookmark, Sparkles } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, Sparkles, MessageCircle } from 'lucide-react';
 import { MOCK_POSTS, MOCK_ANSWERS } from '../../../entities/community/model/mock';
 import { PersonaAvatar } from '../../../shared/ui/PersonaAvatar';
 import { TagChip } from '../../../shared/ui/TagChip';
@@ -117,6 +117,17 @@ export const QnaDetailPage: React.FC = () => {
             </button>
           </div>
 
+          {/* 답변 작성하기 CTA (설계서: 본문 아래 버튼) */}
+          <div className="pt-2 pb-2">
+            <button
+              type="button"
+              onClick={() => document.querySelector('[data-answer-input]')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full py-3 rounded-xl border border-primary-lime/30 text-primary-lime text-sm font-medium hover:bg-primary-lime/10 transition-colors"
+            >
+              답변 작성하기
+            </button>
+          </div>
+
           {/* 답변 목록 */}
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-white pt-2">답변 {answers.length}개</h2>
@@ -151,6 +162,10 @@ export const QnaDetailPage: React.FC = () => {
                     <Heart size={12} />
                     {answer.likeCount}
                   </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle size={12} />
+                    댓글 {answer.commentCount ?? 0}
+                  </span>
                 </div>
               </div>
             ))}
@@ -168,7 +183,7 @@ export const QnaDetailPage: React.FC = () => {
       </div>
 
       {/* 답변 입력 */}
-      <div className="p-4 border-t border-white/5 flex-shrink-0">
+      <div className="p-4 border-t border-white/5 flex-shrink-0" data-answer-input>
         <div className="flex gap-2">
           <input
             type="text"

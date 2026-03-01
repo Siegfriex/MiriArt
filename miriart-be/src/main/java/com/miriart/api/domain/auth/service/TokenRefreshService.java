@@ -49,8 +49,7 @@ public class TokenRefreshService {
         }
 
         // 3. 최신 role로 새 Access Token 발급 (DB 1회 조회 — 권한 변경 즉시 반영)
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        User user = userRepository.findByIdOrThrow(userId);
         String newAccessToken = jwtUtil.createAccessToken(userId, user.getRole().name());
         log.debug("Access Token 갱신 완료 - userId: {}", userId);
 
@@ -64,5 +63,6 @@ public class TokenRefreshService {
         if (refreshToken != null && userId != null) {
             redisService.deleteRefreshToken(userId);
         }
+        log.info("로그아웃 완료 - userId: {}, refreshToken 전달 여부: {}", userId, refreshToken != null);
     }
 }

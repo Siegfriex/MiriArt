@@ -102,12 +102,13 @@ export const semantic = {
 
 // ─── Layer 3: Z-index 7단계 시맨틱 시스템 ────────────────────────────────────
 
-/** Z-index 계층: base, sticky, nav, overlay, modal, priority, toast, critical */
+/** Z-index 계층: base, sticky, nav, overlay, sidebar, modal, priority, toast, critical */
 export const zLayers = {
   base: 0,       // 페이지 콘텐츠
   sticky: 10,    // StickyContextCard, 고정 헤더
   nav: 30,       // BottomNav, FAB
   overlay: 40,   // SideGNB backdrop, dim overlay
+  sidebar: 45,   // SideGNB 패널 (modal 아래)
   modal: 50,     // GlobalModal (center, bottom-sheet), ArtifactViewer
   priority: 60,  // UploadFlow full, Auth 페이지
   toast: 70,     // Toast 알림

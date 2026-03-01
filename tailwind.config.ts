@@ -1,5 +1,8 @@
 import type { Config } from 'tailwindcss';
-import { primitives, zLayers } from './src/shared/ui/tokens/index';
+import { primitives, zLayers, semantic } from './src/shared/ui/tokens/index';
+import { themeFromDesignTokensAdditive } from './src/design/tailwindTheme';
+
+const designThemeAdditive = themeFromDesignTokensAdditive();
 
 const config: Config = {
   content: [
@@ -18,6 +21,14 @@ const config: Config = {
           700: primitives.color.dark700,
           600: primitives.color.dark600,
         },
+        // 디자인 시스템 별칭 (인벤토리·리팩터 계획 v1)
+        surface: primitives.color.dark900,
+        'surface-alt': primitives.color.dark800,
+        'surface-tertiary': primitives.color.dark700,
+        muted: primitives.color.gray400,
+        'muted-alt': primitives.color.gray500,
+        'border-default': semantic.color.borderDefault,
+        'border-subtle': semantic.color.borderSubtle,
         'text-primary': primitives.color.white,
         'text-secondary': primitives.color.gray400,
         'text-mid': primitives.color.gray400,
@@ -29,6 +40,7 @@ const config: Config = {
           success: primitives.color.lime400,
           warning: primitives.color.orange500,
         },
+        ...designThemeAdditive.colors,
       },
       fontFamily: {
         sans: ['Rubik', 'SUITE', 'sans-serif'],
@@ -54,21 +66,24 @@ const config: Config = {
         large: '24px',
         medium: '12px',
         small: '8px',
+        ...designThemeAdditive.borderRadius,
       },
       boxShadow: {
         soft: '0 4px 12px rgba(0,0,0,0.10)',
         glow: '0 0 20px rgba(194,249,112,0.30)',
         elevated: '0 8px 32px rgba(0,0,0,0.40)',
+        ...designThemeAdditive.boxShadow,
       },
       backdropBlur: {
         glass: '20px',
       },
-      // Z-index 7단계 시맨틱 시스템
+      // Z-index 7단계 시맨틱 시스템 (+ sidebar)
       zIndex: {
         base: String(zLayers.base),
         sticky: String(zLayers.sticky),
         nav: String(zLayers.nav),
         overlay: String(zLayers.overlay),
+        sidebar: String(zLayers.sidebar),
         modal: String(zLayers.modal),
         priority: String(zLayers.priority),
         toast: String(zLayers.toast),

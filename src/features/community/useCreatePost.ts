@@ -15,6 +15,8 @@ interface CreatePostForm {
   isAnonymous: boolean;
   deadlineHours?: 24 | 48 | 72;
   images: File[];
+  gradeScope?: string;
+  domainScope?: string;
 }
 
 interface UseCreatePostReturn {
@@ -24,13 +26,19 @@ interface UseCreatePostReturn {
   toggleTag: (tag: string) => void;
   setIsAnonymous: (v: boolean) => void;
   setDeadlineHours: (v: 24 | 48 | 72 | undefined) => void;
+  setGradeScope: (v: string | undefined) => void;
+  setDomainScope: (v: string | undefined) => void;
   addImage: (file: File) => void;
   removeImage: (index: number) => void;
   isSubmitting: boolean;
   submit: () => Promise<void>;
 }
 
-export function useCreatePost(initialType: PostType = 'free'): UseCreatePostReturn {
+export function useCreatePost(
+  initialType: PostType = 'free',
+  initialGrade?: string,
+  initialDomain?: string
+): UseCreatePostReturn {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<CreatePostForm>({
@@ -41,12 +49,16 @@ export function useCreatePost(initialType: PostType = 'free'): UseCreatePostRetu
     isAnonymous: true,
     deadlineHours: initialType === 'qna' ? 48 : undefined,
     images: [],
+    gradeScope: initialGrade ?? undefined,
+    domainScope: initialDomain ?? undefined,
   });
 
   const setTitle = (v: string) => setFormState((s) => ({ ...s, title: v }));
   const setContent = (v: string) => setFormState((s) => ({ ...s, content: v }));
   const setIsAnonymous = (v: boolean) => setFormState((s) => ({ ...s, isAnonymous: v }));
   const setDeadlineHours = (v: 24 | 48 | 72 | undefined) => setFormState((s) => ({ ...s, deadlineHours: v }));
+  const setGradeScope = (v: string | undefined) => setFormState((s) => ({ ...s, gradeScope: v }));
+  const setDomainScope = (v: string | undefined) => setFormState((s) => ({ ...s, domainScope: v }));
 
   const toggleTag = (tag: string) =>
     setFormState((s) => ({
@@ -75,7 +87,8 @@ export function useCreatePost(initialType: PostType = 'free'): UseCreatePostRetu
 
   return {
     formState, setTitle, setContent, toggleTag,
-    setIsAnonymous, setDeadlineHours, addImage, removeImage,
+    setIsAnonymous, setDeadlineHours, setGradeScope, setDomainScope,
+    addImage, removeImage,
     isSubmitting, submit,
   };
 }

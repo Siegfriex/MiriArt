@@ -54,8 +54,7 @@ public class OAuth2TokenExchangeService {
         OAuth2AuthCodePayload payload = OAuth2AuthCodePayload.fromJson(payloadJson);
 
         // 2. 사용자 조회
-        User user = userRepository.findById(payload.getUserId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        User user = userRepository.findByIdOrThrow(payload.getUserId());
 
         // 3. JWT 발급 (role claim 포함 — Bug #3 Fix)
         String accessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().name());

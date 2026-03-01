@@ -52,7 +52,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         redisService.saveOAuth2Code(code, payload.toJson());
 
         String redirectUrl = frontendOauthSuccessUrl + "/auth/callback?code=" + code;
-        log.debug("OAuth2 성공 리다이렉트 → {}", redirectUrl);
+        log.debug("OAuth2 성공 리다이렉트 → {} (code 생략)", frontendOauthSuccessUrl + "/auth/callback?code=***");
         response.sendRedirect(redirectUrl);
     }
 }
