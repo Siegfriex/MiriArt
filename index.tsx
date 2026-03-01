@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import App from './src/app/App';
 import { useUserStore } from './src/shared/model/userStore';
 import { IS_DEV_SKIP_AUTH } from './src/shared/config/dev';
+import { injectRootVars } from './src/shared/ui/tokens/rootVars';
 import './src/app/globals.css';
+
+injectRootVars();
 
 // 개발 시 로그인 우회: 로그인된 상태로 시작
 if (IS_DEV_SKIP_AUTH) {

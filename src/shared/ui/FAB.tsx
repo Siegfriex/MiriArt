@@ -7,6 +7,7 @@
 
 import React, { ReactNode } from 'react';
 import { Plus } from 'lucide-react';
+import { bottomNavHeightPx } from './tokens/layout';
 
 interface FABProps {
   icon?: ReactNode;
@@ -20,7 +21,7 @@ export const FAB: React.FC<FABProps> = ({
   icon = <Plus size={28} strokeWidth={2.5} />, 
   onClick, 
   className = '',
-  bottomOffset = 96 // Default bottom-24 (6rem = 96px)
+  bottomOffset = bottomNavHeightPx // layout 토큰 (6rem = 96px)
 }) => {
   return (
     <button 

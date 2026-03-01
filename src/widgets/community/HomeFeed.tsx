@@ -4,7 +4,7 @@
  * @참조 Home Page, useFeedQuery
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { SubTabBar } from './SubTabBar';
 import { PostCard } from './PostCard';
 import { EmptyState } from '../common/EmptyState';
@@ -40,6 +40,24 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     setDomain,
   });
   const bottomRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isSubTabStuck, setSubTabStuck] = useState(false);
+
+  // SubTabBar 고정: 스크롤로 sentinel이 위로 지나가면 상단에 fixed로 표시 (확대/줌에서도 안정)
+  useEffect(() => {
+    const scrollRoot = document.querySelector('main');
+    const sentinel = sentinelRef.current;
+    if (!scrollRoot || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [e] = entries;
+        if (e) setSubTabStuck(!e.isIntersecting);
+      },
+      { root: scrollRoot, rootMargin: '-1px 0 0 0', threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   // 무한스크롤 트리거 (Phase C1 전은 noop)
   useEffect(() => {
@@ -59,7 +77,8 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
   return (
     <div>
-      <SubTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <div ref={sentinelRef} className="h-0 w-full" aria-hidden="true" />
+      <SubTabBar activeTab={activeTab} onTabChange={handleTabChange} isStuck={isSubTabStuck} />
       <div className="space-y-3 p-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
