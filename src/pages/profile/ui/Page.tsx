@@ -60,14 +60,16 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* Subscription Card */}
-      <div className="bg-dark-800 rounded-2xl p-5 border border-white/5 relative overflow-hidden group">
-        <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-lime/10 rounded-full blur-2xl group-hover:bg-primary-lime/20 transition-all duration-500" />
-        <div className="flex justify-between items-start mb-4 relative z-10">
-          <div>
+      <div className="bg-dark-800 rounded-2xl p-5 border border-white/5 relative overflow-visible group">
+        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-lime/10 rounded-full blur-2xl group-hover:bg-primary-lime/20 transition-all duration-500" />
+        </div>
+        <div className="flex justify-between items-start gap-3 mb-4 relative z-10">
+          <div className="min-w-0 flex-1">
             <BodyText className="text-sm text-text-mid mb-1">{STRINGS.PROFILE_CREDITS_LABEL}</BodyText>
             <div className="text-3xl font-sans font-bold text-white">{profile.credits}</div>
           </div>
-          <Button className="h-9 text-xs px-3" onClick={handleUpgrade}>
+          <Button className="flex-shrink-0 h-9 text-xs px-3" onClick={handleUpgrade}>
             {STRINGS.PROFILE_UPGRADE}
           </Button>
         </div>

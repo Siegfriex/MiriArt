@@ -12,12 +12,16 @@ import { ModalProvider } from './providers/ModalProvider';
 import { BottomNav } from '../widgets/layout/BottomNav';
 import { SideGNB } from '../widgets/layout/SideGNB';
 import { ToastContainer } from '../shared/ui/Toast';
+import { useModalStore } from '../shared/model/modalStore';
 
 /** 앱 루트 컴포넌트. @참조 main.tsx */
 const App: React.FC = () => {
+  const activeModal = useModalStore((s) => s.activeModal);
   return (
     <BrowserRouter>
-      <div className="relative w-full h-dvh bg-black flex flex-col font-sans">
+      <div
+        className={`relative w-full h-dvh bg-black flex flex-col font-sans ${activeModal ? 'overflow-hidden' : ''}`}
+      >
         {/* 전역 모달 시스템 */}
         <ModalProvider />
 

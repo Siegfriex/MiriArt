@@ -27,6 +27,17 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
     return () => setMounted(false);
   }, []);
 
+  // 모달 열림 시 배경 스크롤 잠금 (모바일에서 sticky/모달 겹침 방지)
+  useEffect(() => {
+    if (activeModal) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [activeModal]);
+
   if (!mounted) return null;
 
   const modalRoot = document.getElementById('modal-root') || document.body;

@@ -1,0 +1,9 @@
+﻿Grants for miriart@localhost
+GRANT USAGE ON *.* TO `miriart`@`localhost`
+GRANT ALL PRIVILEGES ON `miriart_prod`.* TO `miriart`@`localhost`
+Grants for miriart@%
+GRANT USAGE ON *.* TO `miriart`@`%`
+GRANT ALL PRIVILEGES ON `miriart_prod`.* TO `miriart`@`%`
+Grants for miriart@172.17.0.1
+GRANT USAGE ON *.* TO `miriart`@`172.17.0.1`
+GRANT ALL PRIVILEGES ON `miriart_prod`.* TO `miriart`@`172.17.0.1`

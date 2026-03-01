@@ -11,21 +11,24 @@ import { MOCK_POSTS, MOCK_ANSWERS } from '../../../entities/community/model/mock
 import { PersonaAvatar } from '../../../shared/ui/PersonaAvatar';
 import { TagChip } from '../../../shared/ui/TagChip';
 import { DeadlineTimer } from '../../../shared/ui/DeadlineTimer';
+import { Button } from '../../../shared/ui/Button';
+import { TextInput } from '../../../shared/ui/TextInput';
 import { useLikeToggle } from '../../../features/community/useLikeToggle';
+import { STRINGS } from '../../../shared/config/strings';
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return '방금 전';
-  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  return `${Math.floor(diff / 86400)}일 전`;
+  if (diff < 60) return STRINGS.TIME_JUST_NOW;
+  if (diff < 3600) return STRINGS.TIME_MINUTES(Math.floor(diff / 60));
+  if (diff < 86400) return STRINGS.TIME_HOURS(Math.floor(diff / 3600));
+  return STRINGS.TIME_DAYS(Math.floor(diff / 86400));
 }
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
-  OPEN:    { text: '미해결 🔴', cls: 'bg-semantic-error/10 text-semantic-error' },
-  SOLVED:  { text: '해결됨 ✅', cls: 'bg-primary-lime/10 text-primary-lime' },
-  EXPIRED: { text: '마감됨', cls: 'bg-white/5 text-text-low' },
-  CLOSED:  { text: '닫힘', cls: 'bg-white/5 text-text-low' },
+  OPEN: { text: STRINGS.QNA_STATUS_OPEN, cls: 'bg-semantic-error/10 text-semantic-error' },
+  SOLVED: { text: STRINGS.QNA_STATUS_SOLVED, cls: 'bg-primary-lime/10 text-primary-lime' },
+  EXPIRED: { text: STRINGS.QNA_STATUS_EXPIRED, cls: 'bg-white/5 text-text-low' },
+  CLOSED: { text: STRINGS.QNA_STATUS_CLOSED, cls: 'bg-white/5 text-text-low' },
 };
 
 /** Q&A 스레드 상세 페이지. */
@@ -43,7 +46,7 @@ export const QnaDetailPage: React.FC = () => {
   if (!post) {
     return (
       <div className="fixed inset-0 bg-dark-900 flex items-center justify-center">
-        <div className="text-text-mid text-sm">Q&A를 찾을 수 없습니다.</div>
+        <div className="text-text-mid text-sm">{STRINGS.QNA_DETAIL_NOT_FOUND}</div>
       </div>
     );
   }
@@ -51,14 +54,14 @@ export const QnaDetailPage: React.FC = () => {
   const statusInfo = STATUS_LABEL[post.status] ?? STATUS_LABEL.OPEN;
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden pb-20">
       {/* 헤더 */}
       <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-white transition-colors">
             <ArrowLeft size={22} />
           </button>
-          <span className="text-sm font-medium text-white">Q&A</span>
+          <span className="text-sm font-medium text-white">{STRINGS.QNA_DETAIL_HEADER}</span>
         </div>
         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusInfo.cls}`}>
           {statusInfo.text}
@@ -111,7 +114,9 @@ export const QnaDetailPage: React.FC = () => {
               <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
               {likeCount}
             </button>
-            <span className="text-sm text-text-mid">📝 답변 {answers.length}개</span>
+            <span className="text-sm text-text-mid">
+              📝 {STRINGS.QNA_ANSWERS_COUNT(answers.length)}
+            </span>
             <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-white transition-colors ml-auto">
               <Bookmark size={16} />
             </button>
@@ -119,18 +124,28 @@ export const QnaDetailPage: React.FC = () => {
 
           {/* 답변 작성하기 CTA (설계서: 본문 아래 버튼) */}
           <div className="pt-2 pb-2">
-            <button
+            <Button
               type="button"
-              onClick={() => document.querySelector('[data-answer-input]')?.scrollIntoView({ behavior: 'smooth' })}
-              className="w-full py-3 rounded-xl border border-primary-lime/30 text-primary-lime text-sm font-medium hover:bg-primary-lime/10 transition-colors"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                const el = document.querySelector<HTMLElement>('[data-answer-input]');
+                el?.scrollIntoView({ behavior: 'smooth' });
+                const input = el?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea');
+                if (input) {
+                  requestAnimationFrame(() => input.focus());
+                }
+              }}
             >
-              답변 작성하기
-            </button>
+              {STRINGS.QNA_ANSWER_CTA}
+            </Button>
           </div>
 
           {/* 답변 목록 */}
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-white pt-2">답변 {answers.length}개</h2>
+            <h2 className="text-sm font-semibold text-white pt-2">
+              {STRINGS.QNA_ANSWERS_COUNT(answers.length)}
+            </h2>
             {answers.map((answer) => (
               <div
                 key={answer.id}
@@ -149,8 +164,8 @@ export const QnaDetailPage: React.FC = () => {
                   />
                   <div className="flex items-center gap-2">
                     {answer.isAccepted && (
-                      <span className="text-[10px] bg-primary-lime/10 text-primary-lime px-2 py-0.5 rounded-full font-semibold">
-                        ✅ 채택됨
+                      <span className="text-micro bg-primary-lime/10 text-primary-lime px-2 py-0.5 rounded-full font-semibold">
+                        {STRINGS.QNA_ACCEPTED_BADGE}
                       </span>
                     )}
                     <span className="text-[11px] text-text-low">{relativeTime(answer.createdAt)}</span>
@@ -164,7 +179,7 @@ export const QnaDetailPage: React.FC = () => {
                   </span>
                   <span className="flex items-center gap-1">
                     <MessageCircle size={12} />
-                    댓글 {answer.commentCount ?? 0}
+                    {STRINGS.QNA_COMMENTS(answer.commentCount ?? 0)}
                   </span>
                 </div>
               </div>
@@ -172,11 +187,11 @@ export const QnaDetailPage: React.FC = () => {
           </div>
 
           {/* AI 요약 카드 (Phase C4 자리) */}
-          <div className="rounded-xl border border-white/5 bg-dark-800 p-4 flex items-center gap-3 opacity-50">
+          <div className="rounded-medium border border-white/5 bg-dark-800 p-4 flex items-center gap-3 opacity-50">
             <Sparkles size={18} className="text-primary-lime flex-shrink-0" />
             <div>
-              <div className="text-sm font-medium text-white">AI가 답변 요약/보충</div>
-              <div className="text-xs text-text-mid">Phase C4에서 구현 예정</div>
+              <div className="text-sm font-medium text-white">{STRINGS.QNA_AI_SUMMARY_TITLE}</div>
+              <div className="text-xs text-text-mid">{STRINGS.QNA_AI_SUMMARY_PLACEHOLDER}</div>
             </div>
           </div>
         </div>
@@ -185,20 +200,24 @@ export const QnaDetailPage: React.FC = () => {
       {/* 답변 입력 */}
       <div className="p-4 border-t border-white/5 flex-shrink-0" data-answer-input>
         <div className="flex gap-2">
-          <input
-            type="text"
+          <TextInput
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="답변을 입력하세요..."
-            className="flex-1 bg-dark-800 text-white text-sm rounded-xl px-4 py-3 border border-white/5 focus:outline-none focus:ring-1 focus:ring-primary-lime placeholder-text-low"
+            placeholder={STRINGS.QNA_PLACEHOLDER}
+            size="md"
+            className="flex-1"
           />
-          <button
-            onClick={() => { console.log('답변 작성:', answerText); setAnswerText(''); }}
+          <Button
+            onClick={() => {
+              console.log('답변 작성:', answerText);
+              setAnswerText('');
+            }}
             disabled={!answerText.trim()}
-            className="px-4 py-3 bg-primary-lime text-dark-900 text-sm font-semibold rounded-xl disabled:opacity-40 hover:bg-primary-lime/90 transition-colors"
+            size="md"
+            className="shrink-0"
           >
-            답변
-          </button>
+            {STRINGS.QNA_ANSWER_BUTTON}
+          </Button>
         </div>
       </div>
     </div>

@@ -49,3 +49,13 @@ logging:
   level:
     root: INFO
     com.miriart.api: INFO
+
+# Actuator health 노출 (Cloud Run 헬스체크·모니터링용)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when_authorized

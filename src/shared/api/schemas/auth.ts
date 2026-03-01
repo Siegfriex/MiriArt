@@ -15,5 +15,6 @@ export type TokenExchangeResponse = z.infer<typeof tokenExchangeSchema>;
 
 export const refreshResponseSchema = z.object({
   accessToken: z.string(),
+  expiresIn: z.number().optional(),
 });
 export type RefreshResponse = z.infer<typeof refreshResponseSchema>;

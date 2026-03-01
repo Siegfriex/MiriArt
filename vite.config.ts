@@ -4,8 +4,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-// 프로젝트 내 dist/dist-build 잠금(EPERM) 시: 시스템 임시 폴더에 빌드 (항상 쓰기 가능)
-const outDir = path.join(os.tmpdir(), 'miriart-build');
+// Vercel/CI에서는 dist 사용. 로컬에서 dist 잠금(EPERM) 시에만 임시 폴더 사용
+const outDir =
+  process.env.VERCEL === '1' || process.env.CI ? 'dist' : path.join(os.tmpdir(), 'miriart-build');
 
 export default defineConfig(() => {
     return {

@@ -15,7 +15,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'dot' : 'list',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
@@ -25,12 +25,14 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  webServer: process.env.CI
+  // PLAYWRIGHT_BASE_URL이 있으면 이미 서버가 떠 있다고 보고 webServer 미기동. 없으면 npm run dev 기동.
+  // Vite 기본 포트는 vite.config.ts server.port(3000)와 맞춤. 다른 포트 사용 시 PLAYWRIGHT_BASE_URL로 지정.
+  webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
         command: 'npm run dev',
-        url: 'http://localhost:5173',
+        url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
-        timeout: 30_000,
+        timeout: 60_000,
       },
 });

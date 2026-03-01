@@ -7,9 +7,7 @@
 import React from 'react';
 import { Bell, Search } from 'lucide-react';
 import { Select } from '../../shared/ui/Select';
-
-const GRADE_OPTIONS = ['전체', '고1', '고2', '고3', '재수', 'N수'];
-const DOMAIN_OPTIONS = ['전체', '기초디자인', '수채화', '소묘', '사고의전환', '만화·애니'];
+import { GRADE_OPTIONS, DOMAIN_OPTIONS } from '../../shared/config/community';
 
 interface ContextBarProps {
   grade: string;
@@ -26,8 +24,8 @@ export const ContextBar: React.FC<ContextBarProps> = ({
     <div className="flex items-center gap-2">
       <Select
         size="sm"
-        value={grade || '전체'}
-        onChange={(e) => onGradeChange(e.target.value === '전체' ? '' : e.target.value)}
+        value={grade || GRADE_OPTIONS[0]}
+        onChange={(e) => onGradeChange(e.target.value === GRADE_OPTIONS[0] ? '' : e.target.value)}
         aria-label="학년 필터"
       >
         {GRADE_OPTIONS.map((g) => (
@@ -36,8 +34,8 @@ export const ContextBar: React.FC<ContextBarProps> = ({
       </Select>
       <Select
         size="sm"
-        value={domain || '전체'}
-        onChange={(e) => onDomainChange(e.target.value === '전체' ? '' : e.target.value)}
+        value={domain || DOMAIN_OPTIONS[0]}
+        onChange={(e) => onDomainChange(e.target.value === DOMAIN_OPTIONS[0] ? '' : e.target.value)}
         aria-label="도메인 필터"
       >
         {DOMAIN_OPTIONS.map((d) => (

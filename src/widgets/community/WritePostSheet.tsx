@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { Pencil, HelpCircle, UploadCloud, X } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
 import { ROUTES } from '../../shared/config/routes';
+import { STRINGS } from '../../shared/config/strings';
+import { Button } from '../../shared/ui/Button';
 
 /** 글쓰기 Bottom Sheet. */
 export const WritePostSheet: React.FC = () => {
@@ -38,52 +40,60 @@ export const WritePostSheet: React.FC = () => {
       >
         <div className="w-12 h-1.5 bg-dark-600 rounded-full mx-auto mb-4" />
 
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-large bg-primary-lime/10 border-primary-lime/20 hover:bg-primary-lime/15"
           onClick={handleUpload}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-primary-lime/10 border border-primary-lime/20 hover:bg-primary-lime/15 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-primary-lime/20 flex items-center justify-center flex-shrink-0">
             <UploadCloud size={20} className="text-primary-lime" />
           </div>
-          <div className="text-left">
-            <div className="text-sm font-semibold text-white">작품 분석</div>
-            <div className="text-xs text-text-mid">AI가 8초 만에 5축 채점</div>
+          <div className="text-left flex-1">
+            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_UPLOAD_TITLE}</div>
+            <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_UPLOAD_DESC}</div>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-large"
           onClick={handleFreePost}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-dark-700 border border-white/5 hover:border-white/10 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
             <Pencil size={20} className="text-text-mid" />
           </div>
-          <div className="text-left">
-            <div className="text-sm font-semibold text-white">자유글 쓰기</div>
-            <div className="text-xs text-text-mid">작품 공유, 팁 나누기</div>
+          <div className="text-left flex-1">
+            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_FREE_TITLE}</div>
+            <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_FREE_DESC}</div>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-large"
           onClick={handleQnaPost}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-dark-700 border border-white/5 hover:border-white/10 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
             <HelpCircle size={20} className="text-text-mid" />
           </div>
-          <div className="text-left">
-            <div className="text-sm font-semibold text-white">질문하기</div>
-            <div className="text-xs text-text-mid">커뮤니티에 Q&A 올리기</div>
+          <div className="text-left flex-1">
+            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_QNA_TITLE}</div>
+            <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_QNA_DESC}</div>
           </div>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full justify-center gap-2 py-3"
           onClick={closeModal}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-text-mid hover:text-white transition-colors"
         >
           <X size={16} />
-          취소
-        </button>
+          {STRINGS.CANCEL}
+        </Button>
         <div className="h-2" />
       </div>
     </div>

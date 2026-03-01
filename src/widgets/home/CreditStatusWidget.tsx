@@ -25,17 +25,17 @@ export const CreditStatusWidget: React.FC<CreditStatusWidgetProps> = ({
   const percentage = Math.min((credits / maxCredits) * 100, 100);
 
   return (
-    <div className="rounded-xl bg-dark-800 p-4 border border-white/5 flex justify-between items-center relative overflow-hidden">
+    <div className="rounded-xl bg-dark-800 p-4 border border-white/5 flex justify-between items-center gap-3 relative overflow-visible">
       <div
         className="absolute bottom-0 left-0 h-1 bg-primary-lime/20 transition-all duration-700"
         style={{ width: `${percentage}%` }}
       />
 
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary-lime/10 flex items-center justify-center border border-primary-lime/20">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="w-10 h-10 rounded-full bg-primary-lime/10 flex items-center justify-center border border-primary-lime/20 flex-shrink-0">
           <Zap className="text-primary-lime" size={20} fill="currentColor" />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-xs text-text-mid mb-0.5">{STRINGS.PROFILE_CREDITS_LABEL}</div>
           <div className="text-xl font-bold text-white font-sans leading-none">
             {credits}{' '}
@@ -44,7 +44,7 @@ export const CreditStatusWidget: React.FC<CreditStatusWidgetProps> = ({
         </div>
       </div>
 
-      <Button variant="secondary" className="px-4 py-2 h-auto text-xs" onClick={onUpgrade}>
+      <Button variant="secondary" className="flex-shrink-0 px-4 py-2 h-auto text-xs" onClick={onUpgrade}>
         {STRINGS.PROFILE_CREDITS_CHARGE}
       </Button>
     </div>
