@@ -14,8 +14,7 @@ import { analysisResponseSchema } from './schemas/analysis';
 import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { API_BASE } from '../config/api';
 
 // ─── 에러 클래스 ───────────────────────────────────────────────────────────────
 /** API 에러. status, message 보유. 402=크레딧 부족, 408=타임아웃 등 */

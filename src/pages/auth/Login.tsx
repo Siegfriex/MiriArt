@@ -11,8 +11,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { API_BASE } from '../../shared/config/api';
 
 /** 로그인. 카카오/구글 OAuth2 리다이렉트. @참조 AppRouter */
 export const Login: React.FC = () => {
