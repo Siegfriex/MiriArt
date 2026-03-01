@@ -1,6 +1,9 @@
 /**
- * @fileoverview 스플래시 페이지. 2초 후 Onboarding으로 자동 이동.
- * 개발 로그인 우회 시 즉시 /app/home으로 이동.
+ * @fileoverview 스플래시 페이지. 2초 후 인증·프로필 상태에 따라 이동.
+ * - 로그인 안 됨 → /auth/login
+ * - 로그인됨 + 프로필 미완료(needsProfile) → /onboarding
+ * - 로그인됨 + 프로필 완료 → /app/home
+ * 개발 로그인 우회(IS_DEV_SKIP_AUTH) 시 즉시 /app/home.
  * @참조 AppRouter
  * @라우팅 /
  * @상태 useEffect (타이머)
@@ -12,19 +15,30 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../shared/config/routes';
 import { STRINGS } from '../../shared/config/strings';
 import { IS_DEV_SKIP_AUTH } from '../../shared/config/dev';
+import { useUserStore } from '../../shared/model/userStore';
 
 /** 스플래시. @참조 AppRouter */
 export const Splash: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, profile } = useUserStore();
 
   useEffect(() => {
     const delay = IS_DEV_SKIP_AUTH ? 0 : 2000;
-    const target = IS_DEV_SKIP_AUTH ? ROUTES.APP.HOME : ROUTES.ONBOARDING;
     const timer = setTimeout(() => {
-      navigate(target);
+      if (IS_DEV_SKIP_AUTH) {
+        navigate(ROUTES.APP.HOME);
+        return;
+      }
+      if (isAuthenticated && profile.hasGradeInput) {
+        navigate(ROUTES.APP.HOME);
+      } else if (isAuthenticated && !profile.hasGradeInput) {
+        navigate(ROUTES.ONBOARDING);
+      } else {
+        navigate(ROUTES.AUTH.LOGIN);
+      }
     }, delay);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, isAuthenticated, profile.hasGradeInput]);
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-critical">
