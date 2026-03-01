@@ -16,6 +16,18 @@ import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
 import { API_BASE } from '../config/api';
 
+// #region agent log
+const DEBUG_LOG = (message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  const payload = { sessionId: 'a4f614', location: 'miriartApi.ts', message, data, timestamp: Date.now(), hypothesisId };
+  if (import.meta.env.DEV) console.log('[DEBUG]', message, data);
+  fetch('http://127.0.0.1:7620/ingest/67ee1a3b-2ca5-4344-aa14-d8c9f2ec8b28', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a4f614' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+};
+// #endregion
+
 // ─── 에러 클래스 ───────────────────────────────────────────────────────────────
 /** API 에러. status, message 보유. 402=크레딧 부족, 408=타임아웃 등 */
 export class ApiError extends Error {
@@ -98,6 +110,9 @@ export type { TokenExchangeResponse } from './schemas/auth';
 
 export const AuthApi = {
   exchangeToken: async (code: string): Promise<import('./schemas/auth').TokenExchangeResponse> => {
+    // #region agent log
+    DEBUG_LOG('exchangeToken apiFetch start', { codeLength: code.length }, 'A');
+    // #endregion
     const raw = await apiFetch<unknown>('/api/auth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,6 +121,12 @@ export const AuthApi = {
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = tokenExchangeSchema.safeParse(payload);
     if (!parsed.success) {
+      // #region agent log
+      DEBUG_LOG('exchangeToken parse failed', {
+        firstError: parsed.error.errors[0]?.message,
+        issues: parsed.error.issues?.length,
+      }, 'B');
+      // #endregion
       throw new ApiError(500, 'Invalid auth response');
     }
     return parsed.data;
@@ -140,6 +161,14 @@ export const UserApi = {
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = userProfileApiSchema.safeParse(payload);
     if (!parsed.success) {
+      const issues = parsed.error.issues;
+      console.warn('[getMe] parse failed. payload:', payload, 'zod issues:', issues);
+      // #region agent log
+      DEBUG_LOG('getMe parse failed', {
+        payloadKeys: typeof payload === 'object' && payload !== null ? Object.keys(payload as object) : [],
+        zodIssues: issues?.map((i) => ({ path: i.path, message: i.message })),
+      }, 'C');
+      // #endregion
       throw new ApiError(500, 'Invalid user profile response');
     }
     return parsed.data;
