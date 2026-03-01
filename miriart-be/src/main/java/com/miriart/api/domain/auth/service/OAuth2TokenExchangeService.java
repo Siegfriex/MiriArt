@@ -11,6 +11,7 @@ import com.miriart.api.global.security.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,9 @@ public class OAuth2TokenExchangeService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
+    @Value("${miriart.auth.cookie-same-site:Lax}")
+    private String cookieSameSite;
+
     /**
      * one-time code → JWT 교환
      * @param code Redis에 저장된 UUID
@@ -63,11 +67,11 @@ public class OAuth2TokenExchangeService {
         // 4. Refresh Token Redis 저장 (TTL 7일)
         redisService.saveRefreshToken(user.getId(), refreshToken);
 
-        // 5. Refresh Token httpOnly Cookie 설정
+        // 5. Refresh Token httpOnly Cookie 설정 (prod: SameSite=None으로 cross-site 전송 허용)
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .path("/api/auth/refresh")
                 .maxAge(604800)  // 7일
                 .build();

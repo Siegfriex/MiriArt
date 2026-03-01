@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.Arrays;
 
 /**
@@ -43,6 +45,9 @@ public class AuthController {
     private final OAuth2TokenExchangeService tokenExchangeService;
     private final TokenRefreshService tokenRefreshService;
     private final JwtUtil jwtUtil;
+
+    @Value("${miriart.auth.cookie-same-site:Lax}")
+    private String cookieSameSite;
 
     /**
      * OAuth2 one-time code → JWT 교환
@@ -77,11 +82,11 @@ public class AuthController {
         String refreshToken = extractRefreshTokenFromCookie(request);
         tokenRefreshService.logout(refreshToken, userId);
 
-        // 쿠키 만료 처리
+        // 쿠키 만료 처리 (SameSite는 토큰 발급 시와 동일하게 — prod에서 None)
         ResponseCookie expiredCookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();
