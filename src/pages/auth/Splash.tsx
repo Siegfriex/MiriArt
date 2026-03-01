@@ -1,5 +1,6 @@
 /**
  * @fileoverview 스플래시 페이지. 2초 후 인증·프로필 상태에 따라 이동.
+ * zustand rehydration 완료 후에만 isAuthenticated를 보고 분기(rehydrate-guard).
  * - 로그인 안 됨 → /auth/login
  * - 로그인됨 + 프로필 미완료(needsProfile) → /onboarding
  * - 로그인됨 + 프로필 완료 → /app/home
@@ -16,13 +17,16 @@ import { ROUTES } from '../../shared/config/routes';
 import { STRINGS } from '../../shared/config/strings';
 import { IS_DEV_SKIP_AUTH } from '../../shared/config/dev';
 import { useUserStore } from '../../shared/model/userStore';
+import { useHydrationStore } from '../../shared/model/hydrationStore';
 
 /** 스플래시. @참조 AppRouter */
 export const Splash: React.FC = () => {
   const navigate = useNavigate();
+  const hasHydrated = useHydrationStore((s) => s._hasHydrated);
   const { isAuthenticated, profile } = useUserStore();
 
   useEffect(() => {
+    if (!hasHydrated) return;
     const delay = IS_DEV_SKIP_AUTH ? 0 : 2000;
     const timer = setTimeout(() => {
       if (IS_DEV_SKIP_AUTH) {
@@ -38,7 +42,7 @@ export const Splash: React.FC = () => {
       }
     }, delay);
     return () => clearTimeout(timer);
-  }, [navigate, isAuthenticated, profile.hasGradeInput]);
+  }, [hasHydrated, navigate, isAuthenticated, profile.hasGradeInput]);
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-critical">

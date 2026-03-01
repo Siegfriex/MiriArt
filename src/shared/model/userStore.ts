@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { tokenManager } from '../api/tokenManager';
+import { useHydrationStore } from './hydrationStore';
 
 /** 사용자 프로필 내부 타입 */
 interface UserProfile {
@@ -97,6 +98,9 @@ export const useUserStore = create<UserStore>()(
         isAuthenticated: state.isAuthenticated,
         userId: state.userId,
       }),
+      onRehydrateStorage: () => () => {
+        useHydrationStore.getState().setHasHydrated();
+      },
     }
   )
 );
