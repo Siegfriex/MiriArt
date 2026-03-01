@@ -13,6 +13,7 @@ import { PersonaAvatar } from '../../shared/ui/PersonaAvatar';
 import { TagChip } from '../../shared/ui/TagChip';
 import { DeadlineTimer } from '../../shared/ui/DeadlineTimer';
 import { useLikeToggle } from '../../features/community/useLikeToggle';
+import { STRINGS } from '../../shared/config/strings';
 
 interface PostCardProps {
   post: Post;
@@ -20,10 +21,10 @@ interface PostCardProps {
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return '방금 전';
-  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  return `${Math.floor(diff / 86400)}일 전`;
+  if (diff < 60) return STRINGS.TIME_JUST_NOW;
+  if (diff < 3600) return STRINGS.TIME_MINUTES(Math.floor(diff / 60));
+  if (diff < 86400) return STRINGS.TIME_HOURS(Math.floor(diff / 3600));
+  return STRINGS.TIME_DAYS(Math.floor(diff / 86400));
 }
 
 /** 피드 카드. PostDetail 또는 QnaDetail로 이동. */
@@ -62,7 +63,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           reputationLevel={post.reputationLevel}
           size="sm"
         />
-        <span className="text-[11px] text-text-low flex-shrink-0 mt-0.5">
+        <span className="text-caption text-text-low flex-shrink-0 mt-0.5">
           {relativeTime(post.createdAt)}
         </span>
       </div>
@@ -119,13 +120,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="flex items-center gap-2">
           {/* Q&A 상태 뱃지 */}
           {post.type === 'qna' && post.status === 'SOLVED' && (
-            <span className="text-[10px] bg-primary-lime/10 text-primary-lime px-2 py-0.5 rounded-full font-medium">
-              ✅ 채택됨
+            <span className="text-micro bg-primary-lime/10 text-primary-lime px-2 py-0.5 rounded-full font-medium">
+              {STRINGS.QNA_ACCEPTED_BADGE}
             </span>
           )}
           {post.type === 'qna' && post.status === 'EXPIRED' && (
-            <span className="text-[10px] bg-white/5 text-text-low px-2 py-0.5 rounded-full">
-              마감
+            <span className="text-micro bg-white/5 text-text-low px-2 py-0.5 rounded-full">
+              {STRINGS.QNA_STATUS_EXPIRED}
             </span>
           )}
           {post.type === 'qna' && post.status === 'OPEN' && post.deadlineAt && (

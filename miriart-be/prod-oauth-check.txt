@@ -1,0 +1,4 @@
+# prod OAuth 검증 (오토런 에이전트 실행 결과)
+# 서버가 포트 8080 사용 중으로 기동하지 못해 실제 OAuth 플로우 미실행.
+# 8080 확보 후 run-prod-local.ps1 재실행 → 부팅 완료 시 수동 확인:
+#   프론트(Vercel/로컬) → 구글 로그인 → /login/oauth2/code/google → FE 리다이렉트(FRONTEND_OAUTH_SUCCESS_URL).

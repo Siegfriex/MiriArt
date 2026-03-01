@@ -220,4 +220,72 @@ export const STRINGS = {
     'User888님이 프리미엄 플랜으로 업그레이드했습니다.',
     '오늘 총 128개의 작품이 분석되었습니다.',
   ],
+
+  // ─── Feed / Community ──────────────────────────────────────────────────────
+  FEED_TAB_TIMELINE: '타임라인',
+  FEED_TAB_QNA: '질문 Q&A',
+  FEED_TAB_POPULAR: '인기',
+  FEED_EMPTY_TITLE: '아직 게시글이 없어요',
+  FEED_EMPTY_DESC: '첫 글을 작성해보세요!',
+
+  // ─── Write Post ─────────────────────────────────────────────────────────────
+  POST_PAGE_TITLE_QNA: '질문하기',
+  POST_PAGE_TITLE_FREE: '자유글 쓰기',
+  POST_LABEL_TITLE: '제목 (필수)',
+  POST_LABEL_TITLE_QNA: '제목 (필수)',
+  POST_LABEL_CONTENT: '본문 (필수)',
+  POST_LABEL_CONTENT_QNA: '질문 내용 (필수)',
+  POST_PLACEHOLDER_TITLE: '제목을 입력하세요',
+  POST_PLACEHOLDER_TITLE_QNA: '궁금한 점을 간단히 적어주세요',
+  POST_PLACEHOLDER_CONTENT: '내용을 입력하세요',
+  POST_PLACEHOLDER_CONTENT_QNA: '구체적으로 설명할수록 좋은 답변을 받을 수 있어요',
+  POST_LABEL_IMAGES: '이미지 첨부 (최대 5장)',
+  POST_LABEL_TAGS: '태그',
+  POST_LABEL_TARGET: '대상',
+  POST_LABEL_DEADLINE: '마감 시간',
+  POST_SUBMIT: '등록',
+  POST_SUBMITTING: '등록 중...',
+  POST_ANONYMOUS: '익명으로 게시',
+  POST_AI_ASK_TITLE: 'AI에게 먼저 물어보기',
+  POST_AI_ASK_PLACEHOLDER: 'Phase C4에서 구현 예정',
+  POST_DEADLINE_24H: '24시간',
+  POST_DEADLINE_48H: '48시간',
+  POST_DEADLINE_72H: '72시간',
+
+  // ─── Write Post Sheet ───────────────────────────────────────────────────────
+  WRITE_SHEET_UPLOAD_TITLE: '작품 분석',
+  WRITE_SHEET_UPLOAD_DESC: 'AI가 8초 만에 5축 채점',
+  WRITE_SHEET_FREE_TITLE: '자유글 쓰기',
+  WRITE_SHEET_FREE_DESC: '작품 공유, 팁 나누기',
+  WRITE_SHEET_QNA_TITLE: '질문하기',
+  WRITE_SHEET_QNA_DESC: '커뮤니티에 Q&A 올리기',
+
+  // ─── Post Detail (자유글) ────────────────────────────────────────────────────
+  POST_DETAIL_HEADER: '자유게시판',
+  POST_DETAIL_NOT_FOUND: '게시글을 찾을 수 없습니다.',
+  POST_DETAIL_COMMENTS: (n: number) => `댓글 ${n}`,
+  POST_DETAIL_PLACEHOLDER: '댓글을 입력하세요...',
+  POST_DETAIL_SEND: '전송',
+
+  // ─── Qna Detail ──────────────────────────────────────────────────────────────
+  QNA_DETAIL_HEADER: 'Q&A',
+  QNA_DETAIL_NOT_FOUND: 'Q&A를 찾을 수 없습니다.',
+  QNA_STATUS_OPEN: '미해결 🔴',
+  QNA_STATUS_SOLVED: '해결됨 ✅',
+  QNA_STATUS_EXPIRED: '마감됨',
+  QNA_STATUS_CLOSED: '닫힘',
+  QNA_ANSWERS_COUNT: (n: number) => `답변 ${n}개`,
+  QNA_ANSWER_CTA: '답변 작성하기',
+  QNA_PLACEHOLDER: '답변을 입력하세요...',
+  QNA_ANSWER_BUTTON: '답변',
+  QNA_ACCEPTED_BADGE: '✅ 채택됨',
+  QNA_AI_SUMMARY_TITLE: 'AI가 답변 요약/보충',
+  QNA_AI_SUMMARY_PLACEHOLDER: 'Phase C4에서 구현 예정',
+  QNA_COMMENTS: (n: number) => `댓글 ${n}`,
+
+  // ─── Relative time (공용) ────────────────────────────────────────────────────
+  TIME_JUST_NOW: '방금 전',
+  TIME_MINUTES: (n: number) => `${n}분 전`,
+  TIME_HOURS: (n: number) => `${n}시간 전`,
+  TIME_DAYS: (n: number) => `${n}일 전`,
 } as const;

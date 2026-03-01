@@ -5,9 +5,9 @@ spring:
       sql:
         enabled: false
   datasource:
-    url: jdbc:mysql://localhost:3306/miriart_dev?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: root
-    password: password
+    url: ${DEV_DB_URL:jdbc:mysql://localhost:3306/miriart_dev?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul}
+    username: ${DEV_DB_USERNAME:root}
+    password: ${DEV_DB_PASSWORD:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       # DB 미실행 시에도 앱 기동 허용 (연결은 요청 시 시도)
@@ -27,7 +27,7 @@ spring:
           use_jdbc_metadata_defaults: false
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST:localhost}
       port: 6379
   servlet:
     multipart:

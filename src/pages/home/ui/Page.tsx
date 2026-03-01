@@ -142,7 +142,7 @@ export const Home: React.FC = () => {
       {/* 통합 FAB — 글쓰기/업로드 분기 */}
       <button
         onClick={handleWriteFAB}
-        className="fixed bottom-24 right-4 z-nav w-14 h-14 bg-primary-lime rounded-full flex items-center justify-center shadow-lg hover:bg-primary-lime/90 active:scale-95 transition-all"
+        className="fixed bottom-24 right-4 z-nav w-14 h-14 min-w-[48px] min-h-[48px] bg-primary-lime rounded-full flex items-center justify-center shadow-lg hover:bg-primary-lime/90 active:scale-95 transition-all touch-manipulation"
         aria-label="글쓰기 또는 업로드"
       >
         <Plus size={24} className="text-dark-900" strokeWidth={2.5} />

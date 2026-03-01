@@ -16,3 +16,12 @@ export const userProfileApiSchema = z.object({
   needsProfile: z.boolean(),
 });
 export type UserProfileApi = z.infer<typeof userProfileApiSchema>;
+
+export const userPlanSchema = z.object({
+  plan: z.string(),
+  monthlyLimit: z.number(),
+  usedThisMonth: z.number(),
+  remaining: z.number(),
+  billingPeriodStart: z.string().optional(),
+});
+export type UserPlanApi = z.infer<typeof userPlanSchema>;

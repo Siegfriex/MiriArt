@@ -9,7 +9,7 @@ import { useUserStore } from '../model/userStore';
 import { AIModelType } from '../model/types';
 import { tokenManager } from './tokenManager';
 import { tokenExchangeSchema, refreshResponseSchema } from './schemas/auth';
-import { userProfileApiSchema } from './schemas/user';
+import { userProfileApiSchema, userPlanSchema } from './schemas/user';
 import { analysisResponseSchema } from './schemas/analysis';
 import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
@@ -54,7 +54,8 @@ async function refreshToken(): Promise<void> {
     throw new ApiError(401, 'Refresh token expired');
   }
   const json = await res.json();
-  const parsed = refreshResponseSchema.safeParse(json);
+  const payload = (json as { data?: unknown }).data ?? json;
+  const parsed = refreshResponseSchema.safeParse(payload);
   if (!parsed.success) {
     throw new ApiError(500, 'Invalid refresh response');
   }
@@ -103,7 +104,8 @@ export const AuthApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
     });
-    const parsed = tokenExchangeSchema.safeParse(raw);
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = tokenExchangeSchema.safeParse(payload);
     if (!parsed.success) {
       throw new ApiError(500, 'Invalid auth response');
     }
@@ -136,7 +138,8 @@ export interface PlanInfo {
 export const UserApi = {
   getMe: async (): Promise<UserProfile> => {
     const raw = await apiFetch<unknown>('/api/users/me', { headers: getAuthHeaders() });
-    const parsed = userProfileApiSchema.safeParse(raw);
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = userProfileApiSchema.safeParse(payload);
     if (!parsed.success) {
       throw new ApiError(500, 'Invalid user profile response');
     }
@@ -150,8 +153,16 @@ export const UserApi = {
       body: JSON.stringify(data),
     }),
 
-  getPlan: async (): Promise<PlanInfo> =>
-    apiFetch('/api/users/me/plan', { headers: getAuthHeaders() }),
+  getPlan: async (): Promise<PlanInfo> => {
+    const raw = await apiFetch<unknown>('/api/users/me/plan', { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = userPlanSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new ApiError(500, 'Invalid plan response');
+    }
+    const p = parsed.data;
+    return { plan: p.plan as PlanInfo['plan'], monthlyLimit: p.monthlyLimit, usedThisMonth: p.usedThisMonth, remaining: p.remaining };
+  },
 };
 
 // ─── Analysis API (gemini.ts ApiService.analyze 대체) ─────────────────────────
@@ -174,7 +185,8 @@ export const AnalysisApi = {
         headers: getAuthHeaders(),
         body: formData,
       });
-      const parsed = analysisResponseSchema.safeParse(raw);
+      const payload = (raw as { data?: unknown }).data ?? raw;
+      const parsed = analysisResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new ApiError(500, 'Invalid analysis response');
       }
@@ -198,7 +210,8 @@ export const AnalysisApi = {
 
   getById: async (id: string): Promise<AnalysisResult> => {
     const raw = await apiFetch<unknown>(`/api/analyses/${id}`, { headers: getAuthHeaders() });
-    const parsed = analysisResponseSchema.safeParse(raw);
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = analysisResponseSchema.safeParse(payload);
     if (!parsed.success) {
       throw new ApiError(500, 'Invalid analysis response');
     }
@@ -228,7 +241,8 @@ export const ChatApi = {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(params),
       });
-      const parsed = chatResponseSchema.safeParse(raw);
+      const payload = (raw as { data?: unknown }).data ?? raw;
+      const parsed = chatResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new ApiError(500, 'Invalid chat response');
       }

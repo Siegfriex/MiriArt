@@ -10,14 +10,17 @@ import { ArrowLeft, Heart, MessageCircle, Bookmark, Flag } from 'lucide-react';
 import { MOCK_POSTS, MOCK_COMMENTS } from '../../../entities/community/model/mock';
 import { PersonaAvatar } from '../../../shared/ui/PersonaAvatar';
 import { TagChip } from '../../../shared/ui/TagChip';
+import { Button } from '../../../shared/ui/Button';
+import { TextInput } from '../../../shared/ui/TextInput';
 import { useLikeToggle } from '../../../features/community/useLikeToggle';
+import { STRINGS } from '../../../shared/config/strings';
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return '방금 전';
-  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  return `${Math.floor(diff / 86400)}일 전`;
+  if (diff < 60) return STRINGS.TIME_JUST_NOW;
+  if (diff < 3600) return STRINGS.TIME_MINUTES(Math.floor(diff / 60));
+  if (diff < 86400) return STRINGS.TIME_HOURS(Math.floor(diff / 3600));
+  return STRINGS.TIME_DAYS(Math.floor(diff / 86400));
 }
 
 /** 자유글 상세 페이지. */
@@ -35,7 +38,7 @@ export const PostDetailPage: React.FC = () => {
   if (!post) {
     return (
       <div className="fixed inset-0 bg-dark-900 flex items-center justify-center">
-        <div className="text-text-mid text-sm">게시글을 찾을 수 없습니다.</div>
+        <div className="text-text-mid text-sm">{STRINGS.POST_DETAIL_NOT_FOUND}</div>
       </div>
     );
   }
@@ -47,7 +50,7 @@ export const PostDetailPage: React.FC = () => {
         <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
-        <span className="text-sm font-medium text-white">자유게시판</span>
+        <span className="text-sm font-medium text-white">{STRINGS.POST_DETAIL_HEADER}</span>
       </header>
 
       {/* 본문 */}
@@ -106,7 +109,9 @@ export const PostDetailPage: React.FC = () => {
 
           {/* 댓글 영역 */}
           <div className="space-y-3 pt-2">
-            <h2 className="text-sm font-semibold text-white">댓글 {comments.length}</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {STRINGS.POST_DETAIL_COMMENTS(comments.length)}
+            </h2>
             {comments.map((c) => (
               <div key={c.id} className="flex gap-3">
                 <div
@@ -131,20 +136,24 @@ export const PostDetailPage: React.FC = () => {
       {/* 댓글 입력 */}
       <div className="p-4 border-t border-white/5 flex-shrink-0">
         <div className="flex gap-2">
-          <input
-            type="text"
+          <TextInput
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="댓글을 입력하세요..."
-            className="flex-1 bg-dark-800 text-white text-sm rounded-xl px-4 py-3 border border-white/5 focus:outline-none focus:ring-1 focus:ring-primary-lime placeholder-text-low"
+            placeholder={STRINGS.POST_DETAIL_PLACEHOLDER}
+            size="md"
+            className="flex-1"
           />
-          <button
-            onClick={() => { console.log('댓글 작성:', commentText); setCommentText(''); }}
+          <Button
+            onClick={() => {
+              console.log('댓글 작성:', commentText);
+              setCommentText('');
+            }}
             disabled={!commentText.trim()}
-            className="px-4 py-3 bg-primary-lime text-dark-900 text-sm font-semibold rounded-xl disabled:opacity-40 hover:bg-primary-lime/90 transition-colors"
+            size="md"
+            className="shrink-0"
           >
-            전송
-          </button>
+            {STRINGS.POST_DETAIL_SEND}
+          </Button>
         </div>
       </div>
     </div>

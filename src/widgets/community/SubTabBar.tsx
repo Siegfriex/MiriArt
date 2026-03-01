@@ -6,22 +6,23 @@
 
 import React from 'react';
 import { FeedTab } from '../../features/community/usePostsFeed';
+import { STRINGS } from '../../shared/config/strings';
 
 interface SubTabBarProps {
   activeTab: FeedTab;
   onTabChange: (tab: FeedTab) => void;
 }
 
-const TABS: { key: FeedTab; label: string }[] = [
-  { key: 'timeline', label: '타임라인' },
-  { key: 'qna', label: '질문 Q&A' },
-  { key: 'popular', label: '인기' },
+const TABS: { key: FeedTab; labelKey: 'FEED_TAB_TIMELINE' | 'FEED_TAB_QNA' | 'FEED_TAB_POPULAR' }[] = [
+  { key: 'timeline', labelKey: 'FEED_TAB_TIMELINE' },
+  { key: 'qna', labelKey: 'FEED_TAB_QNA' },
+  { key: 'popular', labelKey: 'FEED_TAB_POPULAR' },
 ];
 
 /** 서브탭 바. Sticky. */
 export const SubTabBar: React.FC<SubTabBarProps> = ({ activeTab, onTabChange }) => (
   <div className="sticky top-14 z-sticky bg-dark-900 flex border-b border-white/5">
-    {TABS.map(({ key, label }) => (
+    {TABS.map(({ key, labelKey }) => (
       <button
         key={key}
         onClick={() => onTabChange(key)}
@@ -31,7 +32,7 @@ export const SubTabBar: React.FC<SubTabBarProps> = ({ activeTab, onTabChange }) 
             : 'text-text-mid border-transparent hover:text-white'
         }`}
       >
-        {label}
+        {STRINGS[labelKey]}
       </button>
     ))}
   </div>
