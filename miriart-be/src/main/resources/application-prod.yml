@@ -1,5 +1,7 @@
 server:
   port: ${PORT:8080}
+  # Cloud Run 등 리버스 프록시 뒤에서 X-Forwarded-Proto/Host 사용 → OAuth redirect_uri가 https로 나가도록
+  forward-headers-strategy: framework
 
 # Spring Cloud GCP Cloud SQL 자동설정 비활성화
 # (spring-cloud-gcp-starter-storage 포함 시 sql.enabled 명시 필요 — 미설정 시 "database name must be provided" 오류)
@@ -40,6 +42,8 @@ spring:
             scope: email, profile
 
 miriart:
+  auth:
+    cookie-same-site: None
   jwt:
     secret:
       access: ${JWT_ACCESS_SECRET}

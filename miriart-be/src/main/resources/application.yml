@@ -24,6 +24,9 @@ server:
 miriart:
   frontend:
     oauth-success-url: ${FRONTEND_OAUTH_SUCCESS_URL:http://localhost:5173}
+  auth:
+    # Lax: 로컬 same-site. None: prod cross-site(Vercel↔Cloud Run)에서 refresh 쿠키 전송용
+    cookie-same-site: Lax
   fastapi:
     internal-url: ${FASTAPI_INTERNAL_URL:http://localhost:8000}
   jwt:
