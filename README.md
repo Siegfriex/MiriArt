@@ -1,9 +1,24 @@
 <div align="center">
 
+**Frontend**  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node](https://img.shields.io/badge/Node-18+-339933?logo=nodedotjs)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
+
+**Backend**  
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Gradle](https://img.shields.io/badge/Gradle-9.2-02303A?logo=gradle)](https://gradle.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
+
+**AI Service**  
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Google Cloud](https://img.shields.io/badge/Google_Cloud-Vertex_AI-4285F4?logo=googlecloud)](https://cloud.google.com/vertex-ai)
 
 # MiriArt (미리미대)
 
@@ -125,6 +140,36 @@ BE/AI 배포는 GCP Cloud Run 등 별도 파이프라인을 사용합니다. 자
 | **백엔드** | Spring Boot (miriart-be), FastAPI (miriart-ai) |
 | **AI** | Google Gemini API (BE/AI 서비스 경유) |
 | **아이콘** | Lucide React |
+
+### 백엔드 (miriart-be) — Java
+
+| 항목 | 버전/스택 |
+|------|-----------|
+| **언어** | Java 17 |
+| **빌드** | Gradle 9.2.1 |
+| **프레임워크** | Spring Boot 3.4.2 |
+| **주요 의존성** | Spring Web, WebFlux, Security, OAuth2 Client, Data JPA, Data Redis, Validation, Actuator |
+| **DB** | MySQL (mysql-connector-j), Cloud SQL Socket Factory (Cloud Run 연동) |
+| **인증** | OAuth2 (카카오/구글), JWT (jjwt 0.12.6) |
+| **스토리지** | Google Cloud Storage (spring-cloud-gcp-starter-storage) |
+| **API 문서** | SpringDoc OpenAPI 2.8.6 (Swagger UI) |
+| **기타** | Lombok, GCP BOM 6.5.4 |
+
+로컬 실행: `miriart-be/`에서 `./gradlew bootRun` (Java 17 필요). 상세는 [miriart-be/.env.example](miriart-be/.env.example) 및 [docs/MiriArt_BE_SETUP_GUIDE.md](docs/MiriArt_BE_SETUP_GUIDE.md) 참고.
+
+### AI 서비스 (miriart-ai) — Python
+
+| 항목 | 버전/스택 |
+|------|-----------|
+| **언어** | Python 3.11 |
+| **프레임워크** | FastAPI 0.115.8 |
+| **ASGI 서버** | Uvicorn 0.34.0 |
+| **AI** | Google Cloud AI Platform 1.79.0 (Vertex AI / Gemini) |
+| **스토리지** | Google Cloud Storage 2.19.0 |
+| **설정·검증** | Pydantic 2.10.6, pydantic-settings 2.7.1, python-dotenv 1.0.1 |
+| **기타** | httpx 0.27.2, python-multipart 0.0.20 |
+
+로컬 실행: `miriart-ai/`에서 가상환경 생성 후 `uvicorn app.main:app --reload`. 환경 변수는 `.env` 참고 (`.env.example` 복사 후 값 입력).
 
 ---
 
