@@ -24,7 +24,11 @@ if (-not [System.Environment]::GetEnvironmentVariable("DB_PASSWORD", "Process"))
     exit 1
 }
 
-$env:FRONTEND_OAUTH_SUCCESS_URL = "https://miri-art.vercel.app"
+# OAuth 성공 후 리다이렉트할 FE URL. 로컬 FE로 로그인 테스트할 땐 호출 전에 설정:
+#   $env:FRONTEND_OAUTH_SUCCESS_URL = "http://localhost:5173"; .\scripts\run-prod-local.ps1
+if (-not [System.Environment]::GetEnvironmentVariable("FRONTEND_OAUTH_SUCCESS_URL", "Process")) {
+    $env:FRONTEND_OAUTH_SUCCESS_URL = "https://miri-art.vercel.app"
+}
 
 Set-Location (Join-Path $PSScriptRoot "..")
 .\gradlew.bat bootRun --no-daemon
