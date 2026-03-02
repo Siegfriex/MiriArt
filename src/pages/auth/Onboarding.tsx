@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { useUserStore } from '../../shared/model/userStore';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 const SLIDES = [
   {
@@ -60,18 +61,18 @@ export const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 z-priority">
+    <FullScreenContainer scroll="none">
       <div className="flex justify-end h-12 items-center">
         <button
           onClick={handleSkip}
-          className="text-text-mid text-sm font-medium hover:text-white transition-colors"
+          className="text-text-mid text-sm font-medium hover:text-text-primary transition-colors"
         >
           {STRINGS.SKIP}
         </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-10 text-center mt-4">
-        <div className="relative w-72 h-80 rounded-[32px] overflow-hidden border border-white/5 shadow-elevated">
+        <div className="relative w-72 h-80 rounded-[32px] overflow-hidden border border-border-default shadow-elevated">
           <img
             src={SLIDES[current].image}
             className="w-full h-full object-cover opacity-80"
@@ -84,7 +85,7 @@ export const Onboarding: React.FC = () => {
         </div>
 
         <div className="space-y-4 max-w-xs animate-fade-in" key={current}>
-          <H1 className="text-white leading-tight">{SLIDES[current].title}</H1>
+          <H1 className="text-text-primary leading-tight">{SLIDES[current].title}</H1>
           <BodyText className="text-text-mid">{SLIDES[current].desc}</BodyText>
         </div>
       </div>
@@ -95,7 +96,7 @@ export const Onboarding: React.FC = () => {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? 'w-8 bg-primary-lime' : 'w-1.5 bg-dark-700'
+                i === current ? 'w-8 bg-primary-lime' : 'w-1.5 bg-surface-tertiary'
               }`}
             />
           ))}
@@ -110,6 +111,6 @@ export const Onboarding: React.FC = () => {
           {current === SLIDES.length - 1 ? STRINGS.ONBOARDING_GET_STARTED : STRINGS.NEXT}
         </Button>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

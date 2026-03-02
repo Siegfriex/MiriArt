@@ -31,7 +31,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, placement =
             initial={{ opacity: 0, y: placement === 'top' ? 5 : -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className={`absolute left-1/2 -translate-x-1/2 z-toast w-max max-w-[220px] px-3 py-1.5 bg-dark-800 border border-white/10 text-white text-xs rounded-lg shadow-elevated pointer-events-none ${
+            className={`absolute left-1/2 -translate-x-1/2 z-toast w-max max-w-[220px] px-3 py-1.5 bg-surface-alt border border-border-default text-text-primary text-xs rounded-lg shadow-elevated pointer-events-none ${
               placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
             }`}
           >

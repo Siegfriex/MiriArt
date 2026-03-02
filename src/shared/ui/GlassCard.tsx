@@ -25,8 +25,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   const baseStyles = 'rounded-large transition-all duration-300 border backdrop-blur-[20px]';
 
   const variants = {
-    default: 'bg-white/5 border-white/10 shadow-soft',
-    panel: 'bg-dark-800/80 border-white/5 shadow-soft',
+    default: 'bg-black/5 border-border-default shadow-soft',
+    panel: 'bg-surface-alt/80 border-border-default shadow-soft',
     active: 'bg-primary-lime/10 border-primary-lime/30',
   };
 

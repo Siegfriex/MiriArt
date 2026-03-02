@@ -15,8 +15,8 @@ import { clsx } from 'clsx';
 export type TextInputSize = 'sm' | 'md' | 'lg';
 
 const baseInputClasses =
-  'w-full bg-dark-800 text-white rounded-xl border border-white/5 placeholder-text-low ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900 ' +
+  'w-full bg-surface-alt text-text-primary rounded-xl border border-border-default placeholder-text-low ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-surface ' +
   'disabled:opacity-50 disabled:cursor-not-allowed ' +
   'transition-[box-shadow,border-color] duration-200';
 

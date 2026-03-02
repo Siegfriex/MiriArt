@@ -93,16 +93,16 @@ export const ResultDetail: React.FC = () => {
   // ─── 로딩 ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24">
-        <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="min-h-dvh bg-surface overflow-y-auto no-scrollbar pb-bottom-nav">
+        <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-page-x h-14 bg-gradient-to-b from-black/60 to-transparent">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
             <ArrowLeft size={20} />
           </button>
         </header>
-        <div className="w-full aspect-[3/4] bg-dark-800 animate-pulse" />
-        <div className="px-5 py-6 space-y-6">
-          <div className="h-24 bg-dark-800 rounded-xl animate-pulse" />
-          <div className="h-64 bg-dark-800 rounded-2xl animate-pulse" />
+        <div className="w-full aspect-[3/4] bg-surface-alt animate-pulse" />
+        <div className="px-page-x py-page-y space-y-section-gap">
+          <div className="h-24 bg-surface-alt rounded-xl animate-pulse" />
+          <div className="h-64 bg-surface-alt rounded-2xl animate-pulse" />
         </div>
       </div>
     );
@@ -111,8 +111,8 @@ export const ResultDetail: React.FC = () => {
   // ─── 에러 (샘플 미선택 시) ─────────────────────────────────────────────────
   if (error && !showSample) {
     return (
-      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24 flex flex-col items-center justify-center p-6">
-        <header className="fixed top-0 left-0 w-full z-sticky flex items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="min-h-dvh bg-surface overflow-y-auto no-scrollbar pb-bottom-nav flex flex-col items-center justify-center p-page-y">
+        <header className="fixed top-0 left-0 w-full z-sticky flex items-center px-page-x h-14 bg-gradient-to-b from-black/60 to-transparent">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
             <ArrowLeft size={20} />
           </button>
@@ -135,7 +135,7 @@ export const ResultDetail: React.FC = () => {
   // ─── 결과 없음 (artworkId 없음 등) ─────────────────────────────────────────
   if (!displayResult) {
     return (
-      <div className="min-h-dvh bg-dark-900 flex items-center justify-center p-6">
+      <div className="min-h-dvh bg-surface flex items-center justify-center p-page-y">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white" aria-label={STRINGS.BACK}>
           <ArrowLeft size={20} />
         </button>
@@ -146,8 +146,8 @@ export const ResultDetail: React.FC = () => {
 
   // ─── 실제 결과 또는 샘플 결과 렌더 ─────────────────────────────────────────
   return (
-    <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24">
-      <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+    <div className="min-h-dvh bg-surface overflow-y-auto no-scrollbar pb-bottom-nav">
+      <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-page-x h-14 bg-gradient-to-b from-black/60 to-transparent">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
           <ArrowLeft size={20} />
         </button>
@@ -161,9 +161,9 @@ export const ResultDetail: React.FC = () => {
         </div>
       </header>
 
-      <div className="relative w-full aspect-[3/4] bg-dark-800">
+      <div className="relative w-full aspect-[3/4] bg-surface-alt">
         <img src={displayResult.imageUrl} alt="분석 작품" className="w-full h-full object-cover" draggable={false} />
-        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-dark-900 to-transparent pt-24">
+        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-dark-900/95 to-transparent pt-24">
           <div className="flex items-end justify-between">
             <div>
               <div className="text-primary-lime font-bold text-sm mb-1">{displayResult.university}</div>
@@ -179,21 +179,21 @@ export const ResultDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-5 py-6 space-y-8 pb-40">
+      <div className="px-page-x py-page-y space-y-8 pb-40">
         {showSample && (
           <div className="bg-primary-lime/10 border border-primary-lime/30 rounded-xl p-3 text-center">
             <BodyText className="text-sm text-primary-lime">샘플 결과입니다.</BodyText>
             <button
               type="button"
               className="text-xs text-text-mid underline mt-1"
-              onClick={() => { setShowSample(false); setError(RESULT_LOAD_ERROR); }}
+              onClick={() => { setShowSample(false); handleRetry(); }}
             >
               실제 결과 다시 불러오기
             </button>
           </div>
         )}
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-surface-alt/80 border border-border-default rounded-xl p-4 flex items-center gap-3">
           <div
             className={`w-2 h-12 rounded-full ${
               displayResult.fixScope === 'StructureRebuild' ? 'bg-semantic-error' : 'bg-primary-lime'
@@ -201,15 +201,15 @@ export const ResultDetail: React.FC = () => {
           />
           <div>
             <div className="text-[10px] text-text-mid uppercase tracking-wider font-bold">fixScope 분석</div>
-            <H3 className="text-white">
+            <H3>
               {displayResult.fixScope === 'StructureRebuild' ? STRINGS.RESULT_FIXSCOPE_REBUILD : STRINGS.RESULT_FIXSCOPE_TUNING}
             </H3>
           </div>
         </div>
 
         <section>
-          <H2 className="text-white mb-5">{STRINGS.RESULT_5FACTOR}</H2>
-          <div className="bg-dark-800 rounded-2xl border border-white/5 p-5 flex flex-col items-center gap-4">
+          <H2 className="mb-5">{STRINGS.RESULT_5FACTOR}</H2>
+          <div className="bg-surface-alt rounded-2xl border border-border-default p-5 flex flex-col items-center gap-4">
             <RadarChart data={displayResult.radarData} size={220} />
             <div className="w-full space-y-2">
               {(Object.entries(displayResult.radarData) as [keyof typeof displayResult.radarData, number][]).map(([key, value]) => {
@@ -223,10 +223,10 @@ export const ResultDetail: React.FC = () => {
                 return (
                   <div key={key} className="flex items-center gap-3">
                     <span className="w-16 text-xs text-text-mid">{labels[key]}</span>
-                    <div className="flex-1 h-1.5 bg-dark-900 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
                       <div className="h-full bg-primary-lime rounded-full transition-all duration-700" style={{ width: `${value}%` }} />
                     </div>
-                    <span className="w-8 text-xs text-white font-bold text-right">{value}</span>
+                    <span className="w-8 text-xs text-text-primary font-bold text-right">{value}</span>
                   </div>
                 );
               })}
@@ -235,7 +235,7 @@ export const ResultDetail: React.FC = () => {
         </section>
 
         {!hasGradeInput && (
-          <div className="bg-dark-800 rounded-xl p-4 border border-primary-lime/20 flex items-center justify-between gap-3">
+          <div className="bg-surface-alt rounded-xl p-4 border border-primary-lime/20 flex items-center justify-between gap-3">
             <BodyText className="text-sm text-text-mid flex-1">{STRINGS.RESULT_GRADE_INPUT_CTA}</BodyText>
             <Button variant="outline" size="sm" onClick={() => openModal('GRADE_INPUT', {})}>
               {STRINGS.RESULT_GRADE_INPUT_BUTTON}
@@ -249,7 +249,7 @@ export const ResultDetail: React.FC = () => {
         />
       </div>
 
-      <div className="fixed bottom-20 left-0 w-full p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
+      <div className="fixed bottom-20 left-0 w-full p-page-x bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
         <Button variant="secondary" className="flex-1 flex gap-2 items-center justify-center" onClick={handleReanalyze}>
           <RotateCcw size={16} />
           {STRINGS.RESULT_REANALYZE}

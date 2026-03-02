@@ -21,21 +21,21 @@ export const AnalysisCarousel: React.FC<AnalysisCarouselProps> = ({ artworks }) 
           className="min-w-[200px] flex flex-col gap-2 snap-start cursor-pointer group"
         >
           {/* 이미지 */}
-          <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-dark-800 border border-white/5 group-hover:border-primary-lime/30 transition-colors">
+          <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-surface-alt border border-border-default group-hover:border-primary-lime/30 transition-colors">
             <img
               src={art.imageUrl}
               alt="작품"
               className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
             />
             {/* 등급 배지 */}
-            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
+            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-border-default">
               <span className="font-bold text-sm text-primary-lime">{art.grade}</span>
             </div>
           </div>
 
           {/* 정보 */}
           <div className="px-1">
-            <div className="text-xs font-medium text-white truncate">{art.university}</div>
+            <div className="text-xs font-medium text-text-primary truncate">{art.university}</div>
             <div className="text-[11px] text-text-mid truncate">{art.major}</div>
             {art.aiSummary && (
               <div className="text-[10px] text-text-mid mt-1 line-clamp-2 leading-relaxed">

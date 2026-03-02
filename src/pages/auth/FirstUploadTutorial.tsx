@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../../shared/model/modalStore';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 /** 첫 업로드 튜토리얼. @참조 AppRouter @상태 useModalStore */
 export const FirstUploadTutorial: React.FC = () => {
@@ -27,15 +28,15 @@ export const FirstUploadTutorial: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-dark-900 z-priority flex flex-col items-center justify-center px-5 py-8 text-center animate-fade-in">
+    <FullScreenContainer scroll="none" className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary-lime/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-base flex flex-col items-center max-w-xs">
-        <div className="w-24 h-24 bg-dark-800 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-glow animate-pulse">
+        <div className="w-24 h-24 bg-surface-alt rounded-full flex items-center justify-center mb-8 border border-border-subtle shadow-glow animate-pulse">
           <UploadCloud className="text-primary-lime" size={48} />
         </div>
 
-        <H1 className="text-white mb-4 leading-tight">{STRINGS.TUTORIAL_TITLE}</H1>
+        <H1 className="text-text-primary mb-4 leading-tight">{STRINGS.TUTORIAL_TITLE}</H1>
 
         <BodyText className="text-text-mid mb-10">{STRINGS.TUTORIAL_DESC}</BodyText>
 
@@ -47,6 +48,6 @@ export const FirstUploadTutorial: React.FC = () => {
           {STRINGS.TUTORIAL_BUTTON}
         </Button>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

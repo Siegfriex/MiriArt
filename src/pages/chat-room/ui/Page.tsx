@@ -143,36 +143,36 @@ export const ChatRoom: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-black relative">
+    <div className="flex flex-col h-full bg-surface relative">
       {/* 아티팩트 오버레이 */}
       {activeArtifact && (
         <ArtifactViewer artifact={activeArtifact} onClose={() => setActiveArtifact(null)} />
       )}
 
       {/* 헤더 */}
-      <div className="absolute top-0 left-0 w-full z-sticky bg-dark-900/80 backdrop-blur-md border-b border-white/5 h-14 flex items-center justify-between px-4">
+      <div className="absolute top-0 left-0 w-full z-sticky bg-surface-alt/95 backdrop-blur-md border-b border-border-default h-14 flex items-center justify-between px-page-x">
         <div className="flex items-center gap-3">
           <button
             onClick={() => openSideGNB('partial')}
-            className="text-white p-1 hover:bg-white/10 rounded-full transition-colors"
+            className="text-text-primary p-1 hover:bg-black/5 rounded-full transition-colors"
           >
             <Menu size={24} />
           </button>
-          <H2 className="text-white text-base">{sessionTitle}</H2>
+          <H2 className="text-base">{sessionTitle}</H2>
         </div>
         {/* 우측: 작품 썸네일 → ResultDetail 이동 */}
         <div className="flex items-center gap-2">
           {artwork ? (
             <button
               onClick={() => navigate(ROUTES.RESULT(artwork.id))}
-              className="w-8 h-8 rounded-lg overflow-hidden border border-white/20 hover:border-primary-lime/50 transition-colors"
+              className="w-8 h-8 rounded-lg overflow-hidden border border-border-subtle hover:border-primary-lime/50 transition-colors"
             >
               <img src={artwork.imageUrl} alt="작품" className="w-full h-full object-cover" />
             </button>
           ) : (
             <button
               onClick={() => navigate(ROUTES.APP.CHAT)}
-              className="text-xs bg-white/10 px-3 py-1 rounded-full text-white hover:bg-white/20 transition-colors"
+              className="text-xs bg-surface-tertiary px-3 py-1 rounded-full text-text-primary hover:bg-black/5 transition-colors"
             >
               나가기
             </button>
@@ -190,7 +190,7 @@ export const ChatRoom: React.FC = () => {
 
       {/* 채팅 영역 */}
       <div
-        className="flex-1 overflow-y-auto pt-44 pb-4 px-5 no-scrollbar scroll-smooth"
+        className="flex-1 overflow-y-auto pt-44 pb-page-y px-page-x no-scrollbar scroll-smooth"
         ref={scrollRef}
         onScroll={handleScroll}
       >

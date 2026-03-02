@@ -32,13 +32,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onQuickRe
           className={`rounded-2xl px-4 py-3 ${
             isUser
               ? 'bg-primary-lime text-text-inverse rounded-tr-sm'
-              : 'bg-dark-800 border border-white/5 text-white rounded-tl-sm'
+              : 'bg-surface-alt border border-border-default text-text-primary rounded-tl-sm'
           }`}
         >
           {message.content.startsWith('data:image') || message.content.startsWith('http') ? (
             <img src={message.content} alt="첨부 이미지" className="rounded-lg max-w-full" />
           ) : (
-            <BodyText className={isUser ? 'text-text-inverse' : 'text-white'}>
+            <BodyText className={isUser ? 'text-text-inverse' : 'text-text-primary'}>
               {message.content}
             </BodyText>
           )}
@@ -80,7 +80,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onQuickRe
       </div>
 
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center ml-3 flex-shrink-0 border border-white/10">
+        <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center ml-3 flex-shrink-0 border border-border-default">
           <User size={16} className="text-text-mid" />
         </div>
       )}

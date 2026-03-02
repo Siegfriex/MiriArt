@@ -12,8 +12,8 @@ import React from 'react';
 import { clsx } from 'clsx';
 
 const baseSelectClasses =
-  'bg-dark-800 text-white border border-white/5 appearance-none ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900 ' +
+  'bg-surface-alt text-text-primary border border-border-default appearance-none ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-surface ' +
   'disabled:opacity-50 disabled:cursor-not-allowed ' +
   'transition-[box-shadow,border-color] duration-200';
 

@@ -31,16 +31,16 @@ export const Profile: React.FC = () => {
     <PageContainer className="space-y-8">
       {/* 헤더 */}
       <header className="flex justify-between items-center">
-        <H1 className="text-white">{STRINGS.PROFILE_TITLE}</H1>
-        <button className="text-text-mid hover:text-white transition-colors">
+        <H1 className="text-text-primary">{STRINGS.PROFILE_TITLE}</H1>
+        <button className="text-text-mid hover:text-text-primary transition-colors">
           <Settings size={20} />
         </button>
       </header>
 
       {/* 사용자 정보 */}
       <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-dark-800 border-2 border-primary-lime p-1">
-          <div className="w-full h-full rounded-full bg-dark-700 overflow-hidden">
+        <div className="w-20 h-20 rounded-full bg-surface-alt border-2 border-primary-lime p-1">
+          <div className="w-full h-full rounded-full bg-surface-tertiary overflow-hidden">
             <img
               src="https://picsum.photos/200/200"
               className="w-full h-full object-cover"
@@ -49,7 +49,7 @@ export const Profile: React.FC = () => {
           </div>
         </div>
         <div>
-          <H2 className="text-white text-xl">{profile.nickname}</H2>
+          <H2 className="text-text-primary text-xl">{profile.nickname}</H2>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-text-inverse bg-primary-lime px-2 py-0.5 rounded-full font-bold">
               {profile.plan === 'basic' ? '기본 플랜' : '프리미엄 플랜'}
@@ -60,20 +60,20 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* Subscription Card */}
-      <div className="bg-dark-800 rounded-2xl p-5 border border-white/5 relative overflow-visible group">
+      <div className="bg-surface-alt rounded-2xl p-5 border border-border-default relative overflow-visible group">
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-lime/10 rounded-full blur-2xl group-hover:bg-primary-lime/20 transition-all duration-500" />
         </div>
         <div className="flex justify-between items-start gap-3 mb-4 relative z-10">
           <div className="min-w-0 flex-1">
             <BodyText className="text-sm text-text-mid mb-1">{STRINGS.PROFILE_CREDITS_LABEL}</BodyText>
-            <div className="text-3xl font-sans font-bold text-white">{profile.credits}</div>
+            <div className="text-3xl font-sans font-bold text-text-primary">{profile.credits}</div>
           </div>
           <Button className="flex-shrink-0 h-9 text-xs px-3" onClick={handleUpgrade}>
             {STRINGS.PROFILE_UPGRADE}
           </Button>
         </div>
-        <div className="w-full bg-dark-900 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+        <div className="w-full bg-surface-tertiary h-2 rounded-full overflow-hidden mb-2 relative z-10">
           <div
             className="bg-primary-lime h-full rounded-full transition-all duration-500"
             style={{ width: `${(profile.credits / 20) * 100}%` }}
@@ -85,9 +85,9 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* Academic Info Section */}
-      <section className="bg-dark-800 rounded-2xl p-5 border border-white/5 space-y-4">
+      <section className="bg-surface-alt rounded-2xl p-5 border border-border-default space-y-4">
         <div className="flex justify-between items-center">
-          <H3 className="text-white">{STRINGS.PROFILE_ACADEMIC_TITLE}</H3>
+          <H3 className="text-text-primary">{STRINGS.PROFILE_ACADEMIC_TITLE}</H3>
           <button
             onClick={() => openModal('GRADE_INPUT', {})}
             className="flex items-center gap-1.5 text-xs text-primary-lime hover:text-primary-lime/80 transition-colors"
@@ -97,13 +97,13 @@ export const Profile: React.FC = () => {
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-dark-900 rounded-xl p-3">
+          <div className="bg-surface-tertiary rounded-xl p-3">
             <BodyText className="text-[11px] text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_GRADE}</BodyText>
-            <div className="text-sm text-white font-medium">{profile.grade}</div>
+            <div className="text-sm text-text-primary font-medium">{profile.grade}</div>
           </div>
-          <div className="bg-dark-900 rounded-xl p-3">
+          <div className="bg-surface-tertiary rounded-xl p-3">
             <BodyText className="text-[11px] text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_DOMAIN}</BodyText>
-            <div className="text-sm text-white font-medium">{profile.domain}</div>
+            <div className="text-sm text-text-primary font-medium">{profile.domain}</div>
           </div>
         </div>
       </section>

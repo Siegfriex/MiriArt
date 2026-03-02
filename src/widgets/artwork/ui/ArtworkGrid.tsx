@@ -36,7 +36,7 @@ export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
               <Tooltip key={art.id} content={art.aiSummary ?? art.major}>
                 <div
                   onClick={() => navigate(ROUTES.RESULT(art.id))}
-                  className="relative aspect-[3/4] rounded-lg overflow-hidden bg-dark-800 border border-white/5 cursor-pointer hover:border-primary-lime/40 transition-colors group"
+                  className="relative aspect-[3/4] rounded-lg overflow-hidden bg-surface-alt border border-border-default cursor-pointer hover:border-primary-lime/40 transition-colors group"
                 >
                   <img
                     src={art.imageUrl}

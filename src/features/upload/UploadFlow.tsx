@@ -43,16 +43,29 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const [errorType, setErrorType] = useState<ErrorType | null>(null);
   const [plan, setPlan] = useState<PlanInfo | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const remaining = plan?.remaining ?? 0;
 
-  useEffect(() => {
+  const loadPlan = () => {
+    setPlanLoading(true);
+    setPlanError(false);
     UserApi.getPlan()
-      .then(setPlan)
-      .catch(() => setPlan(null))
+      .then((p) => {
+        setPlan(p);
+        setPlanError(false);
+      })
+      .catch(() => {
+        setPlan(null);
+        setPlanError(true);
+      })
       .finally(() => setPlanLoading(false));
+  };
+
+  useEffect(() => {
+    loadPlan();
   }, []);
 
   // blob URL 메모리 누수 방지
@@ -147,21 +160,21 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   // ─── Step 1: Image Picker ──────────────────────────────────────────────────
   if (step === 1) {
     return (
-      <div className="absolute inset-0 bg-dark-900 flex flex-col">
-        <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
+      <div className="absolute inset-0 bg-surface flex flex-col">
+        <header className="h-14 flex items-center justify-between px-4 border-b border-border-default flex-shrink-0">
           <button onClick={closeModal} className="p-1">
-            <X className="text-white" size={24} />
+            <X className="text-text-primary" size={24} />
           </button>
-          <span className="text-white font-medium">{STRINGS.UPLOAD_TITLE}</span>
+          <span className="text-text-primary font-medium">{STRINGS.UPLOAD_TITLE}</span>
           <div className="w-6" />
         </header>
         <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
           <div className="text-center space-y-2">
-            <H2 className="text-white">{STRINGS.UPLOAD_STEP1_TITLE}</H2>
+            <H2>{STRINGS.UPLOAD_STEP1_TITLE}</H2>
             <BodyText>{STRINGS.UPLOAD_STEP1_DESC}</BodyText>
           </div>
 
-          <label className="w-full max-w-xs aspect-[3/4] rounded-2xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-primary-lime/50 hover:bg-white/5 transition-colors">
+          <label className="w-full max-w-xs aspect-[3/4] rounded-2xl border-2 border-dashed border-border-subtle flex flex-col items-center justify-center cursor-pointer hover:border-primary-lime/50 hover:bg-black/5 transition-colors">
             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
             <div className="w-16 h-16 rounded-full bg-primary-lime/10 flex items-center justify-center mb-4">
               <ImageIcon className="text-primary-lime" size={32} />
@@ -170,7 +183,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
           </label>
 
           {/* 카메라 옵션 */}
-          <label className="flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 border border-white/10 cursor-pointer hover:bg-dark-700 transition-colors">
+          <label className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border-default cursor-pointer hover:bg-surface-tertiary transition-colors">
             <input type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
             <Camera size={18} className="text-text-mid" />
             <span className="text-sm text-text-mid">카메라로 촬영</span>
@@ -183,17 +196,17 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   // ─── Step 2: Optional Info ────────────────────────────────────────────────
   if (step === 2) {
     return (
-      <div className="absolute inset-0 bg-dark-900 flex flex-col">
-        <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
+      <div className="absolute inset-0 bg-surface flex flex-col">
+        <header className="h-14 flex items-center justify-between px-4 border-b border-border-default flex-shrink-0">
           <button onClick={() => setStep(1)} className="p-1">
-            <ArrowLeft className="text-white" size={24} />
+            <ArrowLeft className="text-text-primary" size={24} />
           </button>
-          <span className="text-white font-medium">{STRINGS.UPLOAD_STEP2_TITLE}</span>
+          <span className="text-text-primary font-medium">{STRINGS.UPLOAD_STEP2_TITLE}</span>
           <div className="w-6" />
         </header>
         <div className="flex-1 p-6 space-y-6 overflow-y-auto no-scrollbar">
           {previewUrl && (
-            <div className="w-32 h-32 rounded-xl overflow-hidden border border-white/10 mx-auto">
+            <div className="w-32 h-32 rounded-xl overflow-hidden border border-border-default mx-auto">
               <img
                 src={previewUrl}
                 className="w-full h-full object-cover"
@@ -205,7 +218,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
           <div className="space-y-4">
             <div>
               <label className="text-xs text-text-mid block mb-2">유형 선택</label>
-              <div className="flex bg-dark-800 p-1 rounded-xl">
+              <div className="flex bg-surface-alt p-1 rounded-xl">
                 <button
                   onClick={() => setType('basic')}
                   className={`flex-1 py-2 text-sm rounded-lg transition-colors ${
@@ -240,7 +253,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             </div>
           </div>
         </div>
-        <div className="p-4 border-t border-white/5 flex-shrink-0">
+        <div className="p-4 border-t border-border-default flex-shrink-0">
           <Button className="w-full" onClick={() => setStep(3)}>
             {STRINGS.NEXT}
           </Button>
@@ -253,17 +266,21 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   if (step === 3) {
     return (
       <div className="absolute inset-0 flex items-end justify-center">
-        <div className="bg-dark-800 w-full rounded-t-3xl p-6 space-y-6 border-t border-white/10">
+        <div className="bg-surface-alt w-full rounded-t-3xl p-6 space-y-6 border-t border-border-default">
           <div className="w-12 h-1.5 bg-dark-600 rounded-full mx-auto" />
           <div className="flex flex-col items-center text-center space-y-2">
             <div className="w-12 h-12 rounded-full bg-primary-lime/20 flex items-center justify-center mb-2">
               <AlertCircle className="text-primary-lime" size={24} />
             </div>
-            <H2 className="text-white">{STRINGS.UPLOAD_STEP3_TITLE}</H2>
+            <H2>{STRINGS.UPLOAD_STEP3_TITLE}</H2>
             <BodyText className="text-sm">
-              {planLoading ? '잔여 횟수 확인 중...' : remaining <= 0
-                ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
-                : STRINGS.UPLOAD_STEP3_DESC(remaining)}
+              {planLoading
+                ? '잔여 횟수 확인 중...'
+                : planError
+                  ? '잔여 횟수 정보를 불러오지 못했습니다.'
+                  : remaining <= 0
+                    ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
+                    : STRINGS.UPLOAD_STEP3_DESC(remaining)}
             </BodyText>
           </div>
 
@@ -271,13 +288,19 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             <Button variant="secondary" className="flex-1" onClick={closeModal}>
               {STRINGS.CANCEL}
             </Button>
-            <Button
-              className="flex-1"
-              onClick={handleAnalysisStart}
-              disabled={planLoading || remaining <= 0}
-            >
-              {STRINGS.CONFIRM}
-            </Button>
+            {planError ? (
+              <Button className="flex-1" onClick={loadPlan}>
+                다시 시도
+              </Button>
+            ) : (
+              <Button
+                className="flex-1"
+                onClick={handleAnalysisStart}
+                disabled={planLoading || remaining <= 0}
+              >
+                {STRINGS.CONFIRM}
+              </Button>
+            )}
           </div>
           <div className="h-2" />
         </div>
@@ -288,10 +311,10 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   // ─── Step 4: Analysis Loading ─────────────────────────────────────────────
   if (step === 4) {
     return (
-      <div className="absolute inset-0 bg-dark-900 flex flex-col items-center justify-center p-8 text-center">
+      <div className="absolute inset-0 bg-surface flex flex-col items-center justify-center p-8 text-center">
         {/* CSS 파티클 애니메이션 */}
         <div className="relative w-28 h-28 mb-8">
-          <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
+          <div className="absolute inset-0 border-4 border-border-default rounded-full" />
           <div className="absolute inset-0 border-4 border-primary-lime rounded-full border-t-transparent animate-spin" />
           <div
             className="absolute inset-2 border-2 border-primary-lime/30 rounded-full border-b-transparent animate-spin"
@@ -302,12 +325,12 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
           </div>
         </div>
 
-        <H2 className="text-white mb-2">{STRINGS.UPLOAD_STEP4_TITLE}</H2>
+        <H2 className="mb-2">{STRINGS.UPLOAD_STEP4_TITLE}</H2>
         <BodyText className="mb-6">{STRINGS.UPLOAD_STEP4_DESC}</BodyText>
 
         {/* Progress Bar */}
         <div className="w-full max-w-xs space-y-2">
-          <div className="h-2 bg-dark-800 rounded-full overflow-hidden border border-white/5">
+          <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden border border-border-default">
             <div
               className="h-full bg-primary-lime rounded-full transition-all duration-100"
               style={{ width: `${progress}%` }}
@@ -339,11 +362,11 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
           : '잠시 후 다시 시도해주세요.';
 
     return (
-      <div className="absolute inset-0 bg-dark-900 flex flex-col items-center justify-center p-8 text-center">
+      <div className="absolute inset-0 bg-surface flex flex-col items-center justify-center p-8 text-center">
         <div className="w-16 h-16 rounded-full bg-semantic-error/20 flex items-center justify-center mb-6 border border-semantic-error/30">
           <AlertCircle className="text-semantic-error" size={32} />
         </div>
-        <H2 className="text-white mb-2">{errorTitle}</H2>
+        <H2 className="mb-2">{errorTitle}</H2>
         <BodyText className="mb-8">{errorDesc}</BodyText>
         <div className="flex gap-3 w-full max-w-xs">
           <Button variant="secondary" className="flex-1" onClick={closeModal}>

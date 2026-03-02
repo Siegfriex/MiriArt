@@ -15,6 +15,7 @@ import { ROUTES } from '../../shared/config/routes';
 import { API_BASE } from '../../shared/config/api';
 import { useUserStore } from '../../shared/model/userStore';
 import { useToastStore } from '../../shared/model/toastStore';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 const SESSION_EXPIRED_KEY = 'miriart_session_expired';
 
@@ -53,11 +54,11 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 z-priority">
+    <FullScreenContainer scroll="none">
       <header className="h-14 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-text-mid hover:text-white transition-colors"
+          className="p-2 -ml-2 text-text-mid hover:text-text-primary transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
@@ -65,7 +66,7 @@ export const Login: React.FC = () => {
 
       <div className="flex-1 flex flex-col justify-center space-y-8 max-w-sm mx-auto w-full">
         <div>
-          <H1 className="text-white mb-2">{STRINGS.LOGIN_TITLE}</H1>
+          <H1 className="text-text-primary mb-2">{STRINGS.LOGIN_TITLE}</H1>
           <BodyText className="text-text-mid">{STRINGS.LOGIN_SUBTITLE}</BodyText>
         </div>
 
@@ -96,10 +97,10 @@ export const Login: React.FC = () => {
             className="text-sm text-text-mid hover:text-primary-lime transition-colors p-2"
           >
             {STRINGS.LOGIN_TO_SIGNUP}{' '}
-            <span className="font-bold text-white">{STRINGS.LOGIN_SIGNUP_LINK}</span>
+            <span className="font-bold text-text-primary">{STRINGS.LOGIN_SIGNUP_LINK}</span>
           </button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

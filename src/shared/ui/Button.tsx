@@ -34,8 +34,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary-lime text-text-inverse hover:brightness-110 shadow-glow',
-  secondary: 'bg-dark-800 text-white border border-white/10 hover:bg-dark-700',
-  ghost: 'bg-transparent text-text-mid hover:text-white hover:bg-white/5',
+  secondary: 'bg-surface-alt text-text-primary border border-border-default hover:bg-surface-tertiary',
+  ghost: 'bg-transparent text-text-mid hover:text-text-primary hover:bg-black/5',
   outline: 'bg-transparent border border-primary-lime text-primary-lime hover:bg-primary-lime/10',
 };
 
@@ -46,7 +46,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const focusVisibleClasses =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime focus-visible:ring-offset-2 focus-visible:ring-offset-surface';
 
 /** 버튼 컴포넌트. variant, size, isLoading, fullWidth. @참조 전역 */
 export const Button: React.FC<ButtonProps> = ({

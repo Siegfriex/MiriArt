@@ -25,7 +25,7 @@ export const CreditStatusWidget: React.FC<CreditStatusWidgetProps> = ({
   const percentage = Math.min((credits / maxCredits) * 100, 100);
 
   return (
-    <div className="rounded-xl bg-dark-800 p-4 border border-white/5 flex justify-between items-center gap-3 relative overflow-visible">
+    <div className="rounded-xl bg-surface-alt p-4 border border-border-default flex justify-between items-center gap-3 relative overflow-visible">
       <div
         className="absolute bottom-0 left-0 h-1 bg-primary-lime/20 transition-all duration-700"
         style={{ width: `${percentage}%` }}
@@ -37,7 +37,7 @@ export const CreditStatusWidget: React.FC<CreditStatusWidgetProps> = ({
         </div>
         <div className="min-w-0">
           <div className="text-xs text-text-mid mb-0.5">{STRINGS.PROFILE_CREDITS_LABEL}</div>
-          <div className="text-xl font-bold text-white font-sans leading-none">
+          <div className="text-xl font-bold text-text-primary font-sans leading-none">
             {credits}{' '}
             <span className="text-sm text-text-low font-normal">/ {maxCredits}</span>
           </div>

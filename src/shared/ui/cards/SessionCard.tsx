@@ -29,10 +29,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onClick }) =>
   return (
     <div
       onClick={onClick}
-      className="bg-dark-800 rounded-xl p-4 border border-white/5 flex gap-4 hover:bg-dark-800/80 active:scale-[0.98] transition-all cursor-pointer group"
+      className="bg-surface-alt rounded-xl p-4 border border-border-default flex gap-4 hover:bg-surface-tertiary active:scale-[0.98] transition-all cursor-pointer group"
     >
       {/* 썸네일 */}
-      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-dark-900 flex-shrink-0 border border-white/5">
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-surface-tertiary flex-shrink-0 border border-border-default">
         <img
           src={session.thumbnailUrl}
           alt="세션 썸네일"
@@ -54,7 +54,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onClick }) =>
         </div>
 
         {/* 세션 제목 */}
-        <div className="text-sm text-white font-medium truncate group-hover:text-primary-lime transition-colors">
+        <div className="text-sm text-text-primary font-medium truncate group-hover:text-primary-lime transition-colors">
           {session.title}
         </div>
 

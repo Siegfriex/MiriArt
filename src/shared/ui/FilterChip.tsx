@@ -27,7 +27,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
       className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${
         selected
           ? 'bg-primary-lime text-text-inverse border-primary-lime font-bold'
-          : 'bg-transparent text-text-mid border-white/10 hover:border-white/20 hover:text-white'
+          : 'bg-transparent text-text-mid border-border-default hover:border-border-subtle hover:text-text-primary'
       } ${className}`}
     >
       {label}

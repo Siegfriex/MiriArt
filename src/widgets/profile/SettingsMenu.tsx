@@ -48,11 +48,11 @@ export const SettingsMenu: React.FC = () => {
         <button
           key={item.label}
           onClick={item.action}
-          className="w-full flex items-center justify-between p-4 bg-dark-800/50 rounded-xl hover:bg-dark-800 transition-colors border border-transparent hover:border-white/5 active:scale-[0.99]"
+          className="w-full flex items-center justify-between p-4 bg-surface-alt/50 rounded-xl hover:bg-surface-alt transition-colors border border-transparent hover:border-border-default active:scale-[0.99]"
         >
           <div className="flex items-center gap-3">
             <item.icon size={20} className="text-text-mid" />
-            <span className="text-sm text-white font-medium">{item.label}</span>
+            <span className="text-sm text-text-primary font-medium">{item.label}</span>
           </div>
           <ChevronRight size={16} className="text-text-low" />
         </button>

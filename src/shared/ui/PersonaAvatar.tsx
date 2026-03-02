@@ -37,7 +37,7 @@ export const PersonaAvatar: React.FC<PersonaAvatarProps> = ({
       </div>
       <div className="flex flex-col">
         <div className="flex items-center gap-1">
-          <span className="text-xs text-white font-medium">{displayName}</span>
+          <span className="text-xs text-text-primary font-medium">{displayName}</span>
           {reputationLevel !== undefined && (
             <span className="text-[10px] text-text-mid">
               {getBadge(reputationLevel)} Lv.{reputationLevel}

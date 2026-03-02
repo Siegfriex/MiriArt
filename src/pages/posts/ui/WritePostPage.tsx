@@ -25,6 +25,7 @@ import {
   POST_CONTENT_MAX_LENGTH,
   POST_IMAGES_MAX_COUNT,
 } from '../../../shared/config/community';
+import { FullScreenContainer } from '../../../shared/ui/FullScreenContainer';
 
 /** 글쓰기/질문하기 페이지. */
 export const WritePostPage: React.FC = () => {
@@ -50,16 +51,16 @@ export const WritePostPage: React.FC = () => {
   const pageTitle = isQna ? STRINGS.POST_PAGE_TITLE_QNA : STRINGS.POST_PAGE_TITLE_FREE;
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden">
-      <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
+    <FullScreenContainer scroll="none">
+      <header className="h-14 flex items-center justify-between px-page-x border-b border-border-default flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 text-text-mid hover:text-white transition-colors"
+          className="p-2 text-text-mid hover:text-text-primary transition-colors"
           aria-label={STRINGS.BACK}
         >
           <X size={22} />
         </button>
-        <H2 className="text-white text-sm">{pageTitle}</H2>
+        <H2 className="text-text-primary text-sm">{pageTitle}</H2>
         <Button
           size="sm"
           onClick={submit}
@@ -70,7 +71,7 @@ export const WritePostPage: React.FC = () => {
         </Button>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-5">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-page-x space-y-5">
         <div className="space-y-1.5">
           <label className="text-xs text-text-mid font-medium uppercase tracking-wider">
             {STRINGS.POST_LABEL_TITLE}
@@ -114,7 +115,7 @@ export const WritePostPage: React.FC = () => {
             {formState.images.map((img, i) => (
               <div
                 key={i}
-                className="relative w-20 h-20 rounded-medium overflow-hidden border border-white/10"
+                className="relative w-20 h-20 rounded-medium overflow-hidden border border-border-default"
               >
                 <img src={URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
                 <Button
@@ -130,7 +131,7 @@ export const WritePostPage: React.FC = () => {
               </div>
             ))}
             {formState.images.length < POST_IMAGES_MAX_COUNT && (
-              <label className="w-20 h-20 rounded-medium border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:border-primary-lime/40 transition-colors">
+              <label className="w-20 h-20 rounded-medium border-2 border-dashed border-border-subtle flex items-center justify-center cursor-pointer hover:border-primary-lime/40 transition-colors">
                 <input
                   type="file"
                   accept="image/*"
@@ -176,7 +177,7 @@ export const WritePostPage: React.FC = () => {
           )}
         </div>
 
-        <div className="space-y-2 pt-2 border-t border-white/5">
+        <div className="space-y-2 pt-2 border-t border-border-default">
           <label className="text-xs text-text-mid font-medium uppercase tracking-wider">
             {STRINGS.POST_LABEL_TARGET}
           </label>
@@ -236,13 +237,13 @@ export const WritePostPage: React.FC = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between py-3 border-t border-white/5">
-          <span className="text-sm text-white">{STRINGS.POST_ANONYMOUS}</span>
+        <div className="flex items-center justify-between py-3 border-t border-border-default">
+          <span className="text-sm text-text-primary">{STRINGS.POST_ANONYMOUS}</span>
           <button
             type="button"
             onClick={() => setIsAnonymous(!formState.isAnonymous)}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              formState.isAnonymous ? 'bg-primary-lime' : 'bg-dark-700'
+              formState.isAnonymous ? 'bg-primary-lime' : 'bg-surface-tertiary'
             }`}
             aria-pressed={formState.isAnonymous}
             aria-label={STRINGS.POST_ANONYMOUS}
@@ -255,14 +256,14 @@ export const WritePostPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="rounded-medium border border-white/5 bg-dark-800 p-4 flex items-center gap-3 opacity-50">
+        <div className="rounded-medium border border-border-default bg-surface-alt p-4 flex items-center gap-3 opacity-50">
           <Sparkles size={20} className="text-primary-lime flex-shrink-0" />
           <div>
-            <div className="text-sm font-medium text-white">{STRINGS.POST_AI_ASK_TITLE}</div>
+            <div className="text-sm font-medium text-text-primary">{STRINGS.POST_AI_ASK_TITLE}</div>
             <div className="text-xs text-text-mid">{STRINGS.POST_AI_ASK_PLACEHOLDER}</div>
           </div>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

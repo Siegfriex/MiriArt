@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 /** 회원가입. @참조 AppRouter @상태 formData */
 export const Signup: React.FC = () => {
@@ -35,11 +36,11 @@ export const Signup: React.FC = () => {
     setFormData((prev) => ({ ...prev, [key]: val }));
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 overflow-y-auto no-scrollbar z-priority">
+    <FullScreenContainer scroll="y" className="no-scrollbar">
       <header className="h-14 flex items-center flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-text-mid hover:text-white transition-colors"
+          className="p-2 -ml-2 text-text-mid hover:text-text-primary transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
@@ -47,7 +48,7 @@ export const Signup: React.FC = () => {
 
       <div className="flex-1 flex flex-col justify-center space-y-6 py-4 max-w-sm mx-auto w-full">
         <div>
-          <H1 className="text-white mb-2">{STRINGS.SIGNUP_TITLE}</H1>
+          <H1 className="mb-2">{STRINGS.SIGNUP_TITLE}</H1>
           <BodyText className="text-text-mid">{STRINGS.SIGNUP_SUBTITLE}</BodyText>
         </div>
 
@@ -117,10 +118,10 @@ export const Signup: React.FC = () => {
             className="text-sm text-text-mid hover:text-primary-lime transition-colors p-2"
           >
             {STRINGS.SIGNUP_TO_LOGIN}{' '}
-            <span className="font-bold text-white">{STRINGS.SIGNUP_LOGIN_LINK}</span>
+            <span className="font-bold text-text-primary">{STRINGS.SIGNUP_LOGIN_LINK}</span>
           </button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

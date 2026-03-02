@@ -35,7 +35,7 @@ export const WritePostSheet: React.FC = () => {
   return (
     <div className="absolute inset-0 flex items-end justify-center bg-black/40" onClick={closeModal}>
       <div
-        className="bg-dark-800 w-full rounded-t-3xl p-6 space-y-3 border-t border-white/10"
+        className="bg-surface-alt w-full rounded-t-3xl p-6 space-y-3 border-t border-border-default"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-dark-600 rounded-full mx-auto mb-4" />
@@ -50,7 +50,7 @@ export const WritePostSheet: React.FC = () => {
             <UploadCloud size={20} className="text-primary-lime" />
           </div>
           <div className="text-left flex-1">
-            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_UPLOAD_TITLE}</div>
+            <div className="text-sm font-semibold text-text-primary">{STRINGS.WRITE_SHEET_UPLOAD_TITLE}</div>
             <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_UPLOAD_DESC}</div>
           </div>
         </Button>
@@ -65,7 +65,7 @@ export const WritePostSheet: React.FC = () => {
             <Pencil size={20} className="text-text-mid" />
           </div>
           <div className="text-left flex-1">
-            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_FREE_TITLE}</div>
+            <div className="text-sm font-semibold text-text-primary">{STRINGS.WRITE_SHEET_FREE_TITLE}</div>
             <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_FREE_DESC}</div>
           </div>
         </Button>
@@ -80,7 +80,7 @@ export const WritePostSheet: React.FC = () => {
             <HelpCircle size={20} className="text-text-mid" />
           </div>
           <div className="text-left flex-1">
-            <div className="text-sm font-semibold text-white">{STRINGS.WRITE_SHEET_QNA_TITLE}</div>
+            <div className="text-sm font-semibold text-text-primary">{STRINGS.WRITE_SHEET_QNA_TITLE}</div>
             <div className="text-xs text-text-mid">{STRINGS.WRITE_SHEET_QNA_DESC}</div>
           </div>
         </Button>

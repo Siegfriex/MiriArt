@@ -25,8 +25,8 @@ const plans = [
     period: '/월',
     features: ['월 3 크레딧', '기본 분석', '아카이브 접근'],
     icon: Gift,
-    badgeColor: 'border-white/20 text-text-mid',
-    activeColor: 'border-white text-white',
+    badgeColor: 'border-border-subtle text-text-mid',
+    activeColor: 'border-primary-lime text-text-primary',
   },
   {
     id: 'basic',
@@ -35,8 +35,8 @@ const plans = [
     period: '/월',
     features: ['월 20 크레딧', '표준 분석', '아카이브 접근'],
     icon: Zap,
-    badgeColor: 'border-white/10',
-    activeColor: 'border-white text-white',
+    badgeColor: 'border-border-default',
+    activeColor: 'border-primary-lime text-text-primary',
   },
   {
     id: 'premium',
@@ -93,10 +93,10 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({ currentPla
               onClick={() => !isCurrent && setSelectedPlan(plan.id)}
               className={`relative rounded-2xl p-4 border-2 transition-all cursor-pointer ${
                 isSelected
-                  ? `${plan.activeColor} bg-white/5`
+                  ? `${plan.activeColor} bg-primary-lime/5`
                   : isCurrent
-                    ? 'border-dark-600 bg-dark-800 opacity-50 cursor-default'
-                    : 'border-white/10 bg-dark-900 hover:border-white/20'
+                    ? 'border-border-default bg-surface-alt opacity-50 cursor-default'
+                    : 'border-border-default bg-surface hover:border-border-subtle'
               }`}
             >
               {'badge' in plan && plan.badge && !isCurrent && (
@@ -105,27 +105,27 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({ currentPla
                 </div>
               )}
               {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-surface-tertiary text-text-primary text-[10px] font-bold px-3 py-0.5 rounded-full border border-border-default">
                   {STRINGS.SUBSCRIPTION_CURRENT_PLAN}
                 </div>
               )}
 
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
-                  <div className={`p-2 rounded-lg ${isSelected ? 'bg-white/10' : 'bg-dark-800'}`}>
+                  <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary-lime/10' : 'bg-surface-alt'}`}>
                     <Icon size={18} className={isSelected ? 'text-primary-lime' : 'text-text-mid'} />
                   </div>
-                  <H3 className={isSelected ? 'text-white' : 'text-text-mid'}>{plan.name}</H3>
+                  <H3 className={isSelected ? 'text-text-primary' : 'text-text-mid'}>{plan.name}</H3>
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  isSelected ? 'border-primary-lime bg-primary-lime' : 'border-dark-600'
+                  isSelected ? 'border-primary-lime bg-primary-lime' : 'border-border-default'
                 }`}>
                   {isSelected && <Check size={12} className="text-text-inverse stroke-[3]" />}
                 </div>
               </div>
 
               <div className="flex items-baseline gap-1 mb-3">
-                <span className="text-xl font-bold text-white">{plan.price}</span>
+                <span className="text-xl font-bold text-text-primary">{plan.price}</span>
                 <span className="text-xs text-text-mid">{plan.period}</span>
               </div>
 
@@ -147,7 +147,7 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({ currentPla
       {/* 결제 수단 */}
       {selectedPlan !== 'free' && selectedPlan !== currentPlan && (
         <div className="space-y-2">
-          <H3 className="text-white text-sm">결제 수단</H3>
+          <H3 className="text-sm">결제 수단</H3>
           <div className="flex gap-2">
             {paymentOptions.map(({ id, label }) => (
               <button
@@ -156,7 +156,7 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({ currentPla
                 className={`flex-1 py-2.5 text-xs rounded-xl border transition-colors ${
                   paymentMethod === id
                     ? 'border-primary-lime text-primary-lime bg-primary-lime/5'
-                    : 'border-white/10 text-text-mid hover:border-white/20'
+                    : 'border-border-default text-text-mid hover:border-border-subtle'
                 }`}
               >
                 {label}

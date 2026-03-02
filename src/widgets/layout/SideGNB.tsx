@@ -99,10 +99,10 @@ export const SideGNB: React.FC = () => {
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.1}
             onDragEnd={handleDragEnd}
-            className="fixed top-0 left-0 h-full z-sidebar glass-panel border-r border-white/10 flex flex-col overflow-hidden shadow-2xl"
+            className="fixed top-0 left-0 h-full z-sidebar glass-panel border-r border-border-default flex flex-col overflow-hidden shadow-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-border-default bg-black/5 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <H2>세션 목록</H2>
                 <span className="text-[10px] bg-primary-lime/20 text-primary-lime px-1.5 py-0.5 rounded font-bold">
@@ -112,11 +112,11 @@ export const SideGNB: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={isFullWidth ? handleSetPartial : handleSetFull}
-                  className="p-2 text-text-mid hover:text-white bg-white/5 rounded-full transition-colors"
+                  className="p-2 text-text-mid hover:text-text-primary bg-black/5 rounded-full transition-colors"
                 >
                   {isFullWidth ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
                 </button>
-                <button onClick={handleClose} className="p-2 text-text-mid hover:text-white rounded-full transition-colors">
+                <button onClick={handleClose} className="p-2 text-text-mid hover:text-text-primary rounded-full transition-colors">
                   <X size={24} />
                 </button>
               </div>
@@ -188,9 +188,9 @@ export const SideGNB: React.FC = () => {
                       <div
                         key={session.id}
                         onClick={() => { close(); navigate(ROUTES.CHAT_ROOM(session.id)); }}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-black/5 hover:bg-black/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
                       >
-                        <div className="w-12 h-12 rounded-lg bg-dark-700 flex-shrink-0 overflow-hidden relative">
+                        <div className="w-12 h-12 rounded-lg bg-surface-tertiary flex-shrink-0 overflow-hidden relative">
                           <img
                             src={session.thumbnailUrl}
                             className="w-full h-full object-cover opacity-80"
@@ -201,7 +201,7 @@ export const SideGNB: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-white truncate font-medium">{session.title}</div>
+                          <div className="text-sm text-text-primary truncate font-medium">{session.title}</div>
                           <div className="text-xs text-text-mid truncate flex items-center gap-1">
                             <span>{session.university}</span>
                             <span className="w-1 h-1 bg-dark-600 rounded-full" />
@@ -217,7 +217,7 @@ export const SideGNB: React.FC = () => {
 
             {/* Footer — Partial 모드에서만 표시 */}
             {!isFullWidth && (
-              <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md flex-shrink-0">
+              <div className="p-4 border-t border-border-default bg-black/10 backdrop-blur-md flex-shrink-0">
                 <button
                   onClick={handleNewChat}
                   className="w-full py-3.5 rounded-xl bg-primary-lime text-text-inverse font-bold flex items-center justify-center gap-2 shadow-glow hover:brightness-110 transition-all active:scale-95"

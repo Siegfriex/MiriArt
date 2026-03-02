@@ -28,7 +28,7 @@ export const Section: React.FC<SectionProps> = ({
     <section className={`flex flex-col gap-4 ${className}`}>
       <div className="flex justify-between items-end">
         <div>
-          <H2 className="text-white">{title}</H2>
+          <H2>{title}</H2>
           {subtitle && <p className="text-xs text-text-mid mt-1">{subtitle}</p>}
         </div>
         {action}

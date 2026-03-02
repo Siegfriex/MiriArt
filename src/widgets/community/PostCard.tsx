@@ -51,7 +51,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   return (
     <article
       onClick={handleClick}
-      className="bg-dark-800 rounded-xl border border-white/5 p-4 space-y-3 cursor-pointer hover:border-white/10 transition-colors active:bg-dark-700"
+      className="bg-surface-alt rounded-xl border border-border-default p-4 space-y-3 cursor-pointer hover:border-border-subtle transition-colors active:bg-surface-tertiary"
     >
       {/* 헤더 */}
       <div className="flex items-start justify-between gap-2">
@@ -70,7 +70,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* 제목 */}
       <div>
-        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">
+        <h3 className="text-sm font-semibold text-text-primary leading-snug line-clamp-2">
           {post.type === 'qna' && (
             <span className="text-primary-lime mr-1">[Q]</span>
           )}
@@ -83,7 +83,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* 이미지 썸네일 */}
       {post.imageUrls.length > 0 && (
-        <div className="w-full h-32 rounded-lg overflow-hidden border border-white/5">
+        <div className="w-full h-32 rounded-lg overflow-hidden border border-border-default">
           <img
             src={post.imageUrls[0]}
             alt="첨부 이미지"
