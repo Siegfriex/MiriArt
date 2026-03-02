@@ -7,21 +7,38 @@
 
 // ─── Layer 1: Primitives (raw values) ───────────────────────────────────────
 
-/** 원시 토큰: color, spacing, radius, opacity */
+/** 원시 토큰: color, spacing, radius, opacity. 새 팔레트: Primary #4CAF50, Secondary #124975, BG #18242D/#5C6B75, Neutral #F3F7F9/#E3EDF3 */
 export const primitives = {
   color: {
-    lime400: '#C2F970',
-    lime300: '#D4FB9E',
-    dark900: '#121212',
-    dark800: '#1E1E1E',
-    dark700: '#2C2C2C',
-    dark600: '#3A3A3A',
+    // Primary (green)
+    lime400: '#4CAF50',
+    lime300: '#66BB6A',
+    // Background / dark neutral
+    dark900: '#18242D',
+    dark800: '#1E2D3D',
+    dark700: '#2A3A4A',
+    dark600: '#5C6B75',
     white: '#FFFFFF',
-    gray400: '#A1A1AA',   // 6.3:1 on dark900 — WCAG AA
-    gray500: '#71717A',   // 4.6:1 on dark800 — WCAG AA (경계)
+    gray400: '#9CA8B2',
+    gray500: '#5C6B75',
+    // Status (semantic base)
     red500: '#E53935',
-    blue500: '#1E88E5',
+    blue500: '#124975',
     orange500: '#F97316',
+    successGreen: '#43A047',
+    successGreenMuted: 'rgba(67,160,71,0.15)',
+    errorRed: '#E53935',
+    errorRedMuted: 'rgba(229,57,53,0.15)',
+    warningOrange: '#F97316',
+    warningOrangeMuted: 'rgba(249,115,22,0.15)',
+    infoBlue: '#124975',
+    infoBlueMuted: 'rgba(18,73,117,0.15)',
+    // Primary derived (brand dim / border)
+    primaryMuted: 'rgba(76,175,80,0.10)',
+    primaryBorder: 'rgba(76,175,80,0.30)',
+    // Light neutrals (optional; design/tokens neutral 100/200)
+    neutralLight100: '#F3F7F9',
+    neutralLight200: '#E3EDF3',
   },
   spacing: {
     0: '0px', 1: '4px', 2: '8px', 3: '12px', 4: '16px',
@@ -46,19 +63,23 @@ export const semantic = {
     bgSecondary: primitives.color.dark800,
     bgTertiary: primitives.color.dark700,
     bgOverlay: 'rgba(0,0,0,0.6)',
-    textHigh: primitives.color.white,         // 17.4:1 on dark900
-    textMid: primitives.color.gray400,         // 6.3:1 on dark900
-    textLow: primitives.color.gray500,         // 4.6:1 on dark800
+    textHigh: primitives.color.white,
+    textMid: primitives.color.gray400,
+    textLow: primitives.color.gray500,
     textInverse: primitives.color.dark900,
     brandPrimary: primitives.color.lime400,
-    brandDim: 'rgba(194,249,112,0.10)',
+    brandDim: primitives.color.primaryMuted,
     borderDefault: 'rgba(255,255,255,0.05)',
     borderSubtle: 'rgba(255,255,255,0.10)',
-    borderActive: 'rgba(194,249,112,0.30)',
-    statusError: primitives.color.red500,
-    statusInfo: primitives.color.blue500,
-    statusSuccess: primitives.color.lime400,
-    statusWarning: primitives.color.orange500,
+    borderActive: primitives.color.primaryBorder,
+    statusError: primitives.color.errorRed,
+    statusErrorMuted: primitives.color.errorRedMuted,
+    statusInfo: primitives.color.infoBlue,
+    statusInfoMuted: primitives.color.infoBlueMuted,
+    statusSuccess: primitives.color.successGreen,
+    statusSuccessMuted: primitives.color.successGreenMuted,
+    statusWarning: primitives.color.warningOrange,
+    statusWarningMuted: primitives.color.warningOrangeMuted,
   },
   typography: {
     fontFamily: {
@@ -88,7 +109,7 @@ export const semantic = {
   },
   shadow: {
     soft: '0 4px 12px rgba(0,0,0,0.10)',
-    glow: '0 0 20px rgba(194,249,112,0.30)',
+    glow: '0 0 20px rgba(76,175,80,0.30)',
     elevated: '0 8px 32px rgba(0,0,0,0.40)',
   },
   blur: { glass: '20px' },

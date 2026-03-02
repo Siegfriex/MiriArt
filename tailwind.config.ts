@@ -36,10 +36,10 @@ const config: Config = {
         'text-low': primitives.color.gray500,
         'text-inverse': primitives.color.dark900,
         semantic: {
-          error: primitives.color.red500,
-          info: primitives.color.blue500,
-          success: primitives.color.lime400,
-          warning: primitives.color.orange500,
+          error: semantic.color.statusError,
+          info: semantic.color.statusInfo,
+          success: semantic.color.statusSuccess,
+          warning: semantic.color.statusWarning,
         },
         ...designThemeAdditive.colors,
       },
@@ -70,9 +70,9 @@ const config: Config = {
         ...designThemeAdditive.borderRadius,
       },
       boxShadow: {
-        soft: '0 4px 12px rgba(0,0,0,0.10)',
-        glow: '0 0 20px rgba(194,249,112,0.30)',
-        elevated: '0 8px 32px rgba(0,0,0,0.40)',
+        soft: semantic.shadow.soft,
+        glow: semantic.shadow.glow,
+        elevated: semantic.shadow.elevated,
         ...designThemeAdditive.boxShadow,
       },
       backdropBlur: {

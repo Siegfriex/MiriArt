@@ -1,9 +1,10 @@
 /**
  * MiriArt 디자인 토큰 스켈레톤 v1
+ * - 색 SSOT: shared/ui/tokens (primitives + semantic) 재사용.
  * - Tailwind config 및 컴포넌트에서 import 해서 사용.
- * - 실제 값은 디자인 시스템 오너가 조정 가능.
- * - 타입 정의로 자동완성·타입체크 지원.
  */
+
+import { primitives, semantic } from '../shared/ui/tokens';
 
 // ─── 타입 정의 (자동완성·타입체크) ───────────────────────────────────────────
 
@@ -40,31 +41,31 @@ export interface DesignTokens {
   shadow: Record<'sm' | 'md' | 'lg', ShadowToken>;
 }
 
-// ─── 1. Colors ──────────────────────────────────────────────────────────────
+// ─── 1. Colors (shared primitives/semantic 기반) ─────────────────────────────
 
 const colors = {
   brand: {
-    primary: '#C2F970',
-    primaryHover: '#B8F060',
-    primaryMuted: 'rgba(194, 249, 112, 0.15)',
+    primary: primitives.color.lime400,
+    primaryHover: primitives.color.lime300,
+    primaryMuted: primitives.color.primaryMuted,
   },
   neutral: {
-    0: '#FFFFFF',
-    100: '#F5F5F5',
-    200: '#E5E5E5',
-    300: '#D4D4D4',
-    400: '#A1A1AA',
-    500: '#71717A',
-    600: '#3A3A3A',
-    700: '#2C2C2C',
-    800: '#1E1E1E',
-    900: '#121212',
+    0: primitives.color.white,
+    100: primitives.color.neutralLight100,
+    200: primitives.color.neutralLight200,
+    300: primitives.color.gray400,
+    400: primitives.color.gray400,
+    500: primitives.color.gray500,
+    600: primitives.color.dark600,
+    700: primitives.color.dark700,
+    800: primitives.color.dark800,
+    900: primitives.color.dark900,
   },
   semantic: {
-    success: { default: '#22C55E', muted: 'rgba(34, 197, 94, 0.15)' },
-    warning: { default: '#F97316', muted: 'rgba(249, 115, 22, 0.15)' },
-    error: { default: '#E53935', muted: 'rgba(229, 57, 53, 0.15)' },
-    info: { default: '#1E88E5', muted: 'rgba(30, 136, 229, 0.15)' },
+    success: { default: semantic.color.statusSuccess, muted: semantic.color.statusSuccessMuted },
+    warning: { default: semantic.color.statusWarning, muted: semantic.color.statusWarningMuted },
+    error: { default: semantic.color.statusError, muted: semantic.color.statusErrorMuted },
+    info: { default: semantic.color.statusInfo, muted: semantic.color.statusInfoMuted },
   },
 } as const;
 
