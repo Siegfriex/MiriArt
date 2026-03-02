@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * 가명(페르소나) 엔티티. personas 테이블. (user_id, board_scope) 유일 — 동일 스코프면 같은 가명 반환.
+ * <p><b>P1</b>: 비즈니스 로직 없이 스키마만 존재. Post/Answer의 persona_id FK만 유지. Phase C1에서 사용 예정.</p>
  *
- * <p>연계: {@link PersonaRepository#findByUserIdAndBoardScope}. Post·Answer·Comment에서 persona_id로 표시명 사용. Phase C1 구현 예정.</p>
+ * <p>연계: {@link PersonaRepository#findByUserIdAndBoardScope}. Post·Answer·Comment에서 persona_id로 표시명 사용.</p>
  *
  * @author MiriArt Team
  */

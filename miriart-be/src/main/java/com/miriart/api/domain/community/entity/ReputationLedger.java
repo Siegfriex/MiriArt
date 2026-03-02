@@ -13,8 +13,9 @@ import java.time.LocalDateTime;
 
 /**
  * 평판 포인트 이력 원장. reputation_ledger 테이블. delta·reason·refType·refId. 실제 합계는 User.reputationScore에 반영.
+ * <p><b>P1</b>: 비즈니스 로직 없이 스키마만 존재. Phase C1에서 사용 예정.</p>
  *
- * <p>연계: {@link User#addReputation} 호출 시 원장 기록 + 사용자 점수 갱신. {@link ReputationLedgerRepository} 사용자별 이력 조회. Phase C1 구현 예정.</p>
+ * <p>연계: {@link User#addReputation} 호출 시 원장 기록 + 사용자 점수 갱신. {@link ReputationLedgerRepository} 사용자별 이력 조회.</p>
  *
  * @author MiriArt Team
  */

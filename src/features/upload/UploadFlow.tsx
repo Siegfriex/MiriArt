@@ -15,7 +15,7 @@ import { useToastStore } from '../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
-import { AnalysisApi, ApiError } from '../../shared/api/miriartApi';
+import { AnalysisApi, ApiError, UserApi, type PlanInfo } from '../../shared/api/miriartApi';
 
 const MAX_FILE_SIZE_MB = 10;
 const ANALYSIS_DURATION_SEC = 8;
@@ -41,10 +41,19 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [errorType, setErrorType] = useState<ErrorType | null>(null);
+  const [plan, setPlan] = useState<PlanInfo | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const MOCK_CREDITS = 12;
+  const remaining = plan?.remaining ?? 0;
+
+  useEffect(() => {
+    UserApi.getPlan()
+      .then(setPlan)
+      .catch(() => setPlan(null))
+      .finally(() => setPlanLoading(false));
+  }, []);
 
   // blob URL 메모리 누수 방지
   useEffect(() => {
@@ -77,9 +86,9 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   };
 
   const handleAnalysisStart = async () => {
-    if (MOCK_CREDITS <= 0) {
+    if (remaining <= 0) {
       closeModal();
-      openModal('SUBSCRIPTION', { currentPlan: 'free' });
+      openModal('SUBSCRIPTION', { currentPlan: plan?.plan?.toLowerCase() ?? 'free' });
       return;
     }
 
@@ -252,7 +261,9 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             </div>
             <H2 className="text-white">{STRINGS.UPLOAD_STEP3_TITLE}</H2>
             <BodyText className="text-sm">
-              {STRINGS.UPLOAD_STEP3_DESC(MOCK_CREDITS)}
+              {planLoading ? '잔여 횟수 확인 중...' : remaining <= 0
+                ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
+                : STRINGS.UPLOAD_STEP3_DESC(remaining)}
             </BodyText>
           </div>
 
@@ -260,7 +271,11 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             <Button variant="secondary" className="flex-1" onClick={closeModal}>
               {STRINGS.CANCEL}
             </Button>
-            <Button className="flex-1" onClick={handleAnalysisStart}>
+            <Button
+              className="flex-1"
+              onClick={handleAnalysisStart}
+              disabled={planLoading || remaining <= 0}
+            >
               {STRINGS.CONFIRM}
             </Button>
           </div>

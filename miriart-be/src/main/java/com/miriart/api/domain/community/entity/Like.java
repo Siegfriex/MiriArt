@@ -13,8 +13,9 @@ import java.time.LocalDateTime;
 
 /**
  * 좋아요 엔티티. likes 테이블. user+targetType+targetId 유일 제약(중복 좋아요 방지).
+ * <p><b>P1</b>: 비즈니스 로직 없이 스키마만 존재. Phase C1에서 사용 예정.</p>
  *
- * <p>연계: {@link LikeTargetType} POST/ANSWER/COMMENT, {@link LikeRepository} 존재 여부·개수 조회. Phase C1 구현 예정.</p>
+ * <p>연계: {@link LikeTargetType} POST/ANSWER/COMMENT, {@link LikeRepository} 존재 여부·개수 조회.</p>
  *
  * @author MiriArt Team
  */

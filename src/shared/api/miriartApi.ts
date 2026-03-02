@@ -10,7 +10,7 @@ import { AIModelType } from '../model/types';
 import { tokenManager } from './tokenManager';
 import { tokenExchangeSchema, refreshResponseSchema } from './schemas/auth';
 import { userProfileApiSchema, userPlanSchema } from './schemas/user';
-import { analysisResponseSchema } from './schemas/analysis';
+import { analysisResponseSchema, analysesListResponseSchema } from './schemas/analysis';
 import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
@@ -60,6 +60,7 @@ async function refreshToken(): Promise<void> {
     useUserStore.getState().clearAuth();
     const isDevSkipAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_SKIP_AUTH !== 'false';
     if (!isDevSkipAuth) {
+      sessionStorage.setItem('miriart_session_expired', '1');
       window.location.href = '/auth/login';
     }
     throw new ApiError(401, 'Refresh token expired');
@@ -231,10 +232,19 @@ export const AnalysisApi = {
     }
   },
 
-  getList: async (params?: { page?: number; size?: number; grade?: string }) =>
-    apiFetch('/api/analyses?' + new URLSearchParams(params as Record<string, string>).toString(), {
-      headers: getAuthHeaders(),
-    }),
+  getList: async (params?: { page?: number; size?: number; grade?: string }): Promise<AnalysisResult[]> => {
+    const raw = await apiFetch<unknown>(
+      '/api/analyses?' + new URLSearchParams((params ?? {}) as Record<string, string>).toString(),
+      { headers: getAuthHeaders() }
+    );
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = analysesListResponseSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new ApiError(500, 'Invalid analyses list response');
+    }
+    const list = parsed.data;
+    return list.map((item) => normalizeAnalysisResult(item));
+  },
 
   getById: async (id: string): Promise<AnalysisResult> => {
     const raw = await apiFetch<unknown>(`/api/analyses/${id}`, { headers: getAuthHeaders() });

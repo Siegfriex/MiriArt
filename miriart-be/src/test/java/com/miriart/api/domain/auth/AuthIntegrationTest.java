@@ -76,6 +76,10 @@ class AuthIntegrationTest {
         assertThat(root.path("success").asBoolean()).isTrue();
         assertThat(root.path("data").path("accessToken").isMissingNode()).isFalse();
         assertThat(root.path("data").path("userId").asText()).isEqualTo(String.valueOf(testUser.getId()));
+        // P1: role, planType 필드 필수
+        assertThat(root.path("data").path("role").asText()).isEqualTo("USER");
+        assertThat(root.path("data").path("planType").asText()).isEqualTo("FREE");
+        assertThat(root.path("data").path("needsProfile").asBoolean()).isTrue();
     }
 
     @Test

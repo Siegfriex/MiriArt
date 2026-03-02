@@ -1,6 +1,8 @@
 package com.miriart.api.domain.analysis;
 
 import com.miriart.api.domain.ai.dto.InternalAnalyzeResponse;
+import com.miriart.api.domain.ai.dto.RadarData;
+import com.miriart.api.domain.ai.dto.UniversityPrediction;
 import com.miriart.api.domain.ai.service.AiProxyService;
 import com.miriart.api.domain.analysis.entity.AnalysisGrade;
 import com.miriart.api.domain.analysis.entity.FixScope;
@@ -74,13 +76,19 @@ class AnalysisIntegrationTest {
     @Test
     @DisplayName("POST /api/analyses - 정상 이미지 + analysisType → 202, analysisId")
     void startAnalysis_success() throws Exception {
+        RadarData radar = new RadarData();
+        radar.setDensity(85);
+        radar.setForm(80);
+        radar.setCompletion(78);
+        radar.setRelevance(88);
+        radar.setThinking(79);
         InternalAnalyzeResponse mockResponse = new InternalAnalyzeResponse();
         ReflectionTestUtils.setField(mockResponse, "grade", AnalysisGrade.A.name());
         ReflectionTestUtils.setField(mockResponse, "totalScore", 85.0);
-        ReflectionTestUtils.setField(mockResponse, "radarData", "{}");
+        ReflectionTestUtils.setField(mockResponse, "radarData", radar);
         ReflectionTestUtils.setField(mockResponse, "fixScope", FixScope.DetailTuning.name());
         ReflectionTestUtils.setField(mockResponse, "comment", "테스트 코멘트");
-        ReflectionTestUtils.setField(mockResponse, "universityPredictions", "[]");
+        ReflectionTestUtils.setField(mockResponse, "universityPredictions", java.util.List.<UniversityPrediction>of());
         when(aiProxyService.analyze(anyString(), anyString(), anyString())).thenReturn(mockResponse);
 
         MockMultipartFile image = new MockMultipartFile(

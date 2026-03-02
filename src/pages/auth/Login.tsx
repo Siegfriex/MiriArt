@@ -14,11 +14,23 @@ import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { API_BASE } from '../../shared/config/api';
 import { useUserStore } from '../../shared/model/userStore';
+import { useToastStore } from '../../shared/model/toastStore';
+
+const SESSION_EXPIRED_KEY = 'miriart_session_expired';
 
 /** 로그인. 카카오/구글 OAuth2 리다이렉트. @참조 AppRouter */
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, profile } = useUserStore();
+  const showToast = useToastStore((s) => s.show);
+
+  /** refresh 실패 등으로 리다이렉트된 경우 세션 만료 안내 (1회) */
+  useEffect(() => {
+    if (sessionStorage.getItem(SESSION_EXPIRED_KEY)) {
+      sessionStorage.removeItem(SESSION_EXPIRED_KEY);
+      showToast('세션이 만료되었습니다. 다시 로그인해 주세요.', 'info');
+    }
+  }, [showToast]);
 
   /** 이미 로그인된 사용자는 앱 홈 또는 온보딩으로(루프 방지) */
   useEffect(() => {

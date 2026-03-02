@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * POST /api/auth/token 응답 DTO. Access 토큰·만료초·userId·needsProfile·provider. Refresh는 httpOnly 쿠키로 전달.
+ * POST /api/auth/token 응답 DTO. P1 필수: accessToken, expiresIn, userId, needsProfile, provider, role, planType. Refresh는 httpOnly 쿠키로 전달.
  *
  * <p>연계: {@link OAuth2TokenExchangeService#exchange} 반환 → FE가 accessToken으로 API 호출, needsProfile로 프로필 완료 여부 판단.</p>
  *
@@ -19,4 +19,6 @@ public class TokenExchangeResponse {
     private String userId;
     private boolean needsProfile;
     private String provider;
+    private String role;
+    private String planType;
 }

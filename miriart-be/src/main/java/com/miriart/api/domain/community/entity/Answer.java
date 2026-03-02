@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Q&A 답변 엔티티. answers 테이블 매핑. Post 1:N, 채택 시 is_accepted true.
+ * <p><b>P1 스키마</b>: 공식 스키마(테이블·엔티티만). 답변 목록/채택 API는 Phase C1에서 사용.</p>
  *
- * <p>연계: {@link AnswerRepository}로 게시글별 답변 목록·채택 여부 조회. Post 채택 시 {@link #accept} 호출. Phase C1 구현 예정.</p>
+ * <p>연계: {@link AnswerRepository}로 게시글별 답변 목록·채택 여부 조회. Post 채택 시 {@link #accept} 호출.</p>
  *
  * @author MiriArt Team
  */

@@ -15,7 +15,7 @@ COPY build.gradle settings.gradle ./
 # 소스 전체 복사
 COPY src/ src/
 
-# bootJar 빌드 (build.gradle의 buildDir = build2 반영)
+# bootJar 빌드 (Gradle 기본 출력 build/libs 사용)
 RUN ./gradlew bootJar --no-daemon -x test
 
 # ---- Stage 2: 런타임 ----

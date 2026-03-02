@@ -100,6 +100,7 @@ export const AuthCallback: React.FC = () => {
           errStatus: err?.status,
         }, 'A');
         // #endregion
+        useUserStore.getState().clearAuth();
         navigate('/auth/login');
       });
   }, [navigate, searchParams, setAuth, setProfileFromApi]);
