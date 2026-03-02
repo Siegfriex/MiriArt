@@ -15,6 +15,7 @@ import { ROUTES } from '../../shared/config/routes';
 import { API_BASE } from '../../shared/config/api';
 import { useUserStore } from '../../shared/model/userStore';
 import { useToastStore } from '../../shared/model/toastStore';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 const SESSION_EXPIRED_KEY = 'miriart_session_expired';
 
@@ -53,7 +54,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 z-priority">
+    <FullScreenContainer scroll="none">
       <header className="h-14 flex items-center">
         <button
           onClick={() => navigate(-1)}
@@ -100,6 +101,6 @@ export const Login: React.FC = () => {
           </button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

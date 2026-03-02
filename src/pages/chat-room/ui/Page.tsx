@@ -150,7 +150,7 @@ export const ChatRoom: React.FC = () => {
       )}
 
       {/* 헤더 */}
-      <div className="absolute top-0 left-0 w-full z-sticky bg-dark-900/80 backdrop-blur-md border-b border-white/5 h-14 flex items-center justify-between px-4">
+      <div className="absolute top-0 left-0 w-full z-sticky bg-dark-900/80 backdrop-blur-md border-b border-white/5 h-14 flex items-center justify-between px-page-x">
         <div className="flex items-center gap-3">
           <button
             onClick={() => openSideGNB('partial')}
@@ -190,7 +190,7 @@ export const ChatRoom: React.FC = () => {
 
       {/* 채팅 영역 */}
       <div
-        className="flex-1 overflow-y-auto pt-44 pb-4 px-5 no-scrollbar scroll-smooth"
+        className="flex-1 overflow-y-auto pt-44 pb-page-y px-page-x no-scrollbar scroll-smooth"
         ref={scrollRef}
         onScroll={handleScroll}
       >

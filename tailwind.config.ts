@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss';
 import { primitives, zLayers, semantic } from './src/shared/ui/tokens/index';
-import { contentMaxWidth, grid, pagePadding, sectionGap, cardGap } from './src/shared/ui/tokens/layout';
+import { contentMaxWidth, grid, pagePadding, sectionGap, cardGap, bottomNavHeightPx } from './src/shared/ui/tokens/layout';
 import { themeFromDesignTokensAdditive } from './src/design/tailwindTheme';
 
 const designThemeAdditive = themeFromDesignTokensAdditive();
@@ -90,6 +90,7 @@ const config: Config = {
         'page-y': `${pagePadding.y}px`,
         'section-gap': `${sectionGap}px`,
         'card-gap': `${cardGap}px`,
+        'bottom-nav': `${bottomNavHeightPx}px`,
       },
       gridTemplateColumns: {
         'content-1': `repeat(${grid.columns.narrow}, minmax(0, 1fr))`,

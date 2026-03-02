@@ -15,6 +15,7 @@ import { Button } from '../../../shared/ui/Button';
 import { TextInput } from '../../../shared/ui/TextInput';
 import { useLikeToggle } from '../../../features/community/useLikeToggle';
 import { STRINGS } from '../../../shared/config/strings';
+import { FullScreenContainer } from '../../../shared/ui/FullScreenContainer';
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -45,7 +46,7 @@ export const QnaDetailPage: React.FC = () => {
 
   if (!post) {
     return (
-      <div className="fixed inset-0 bg-dark-900 flex items-center justify-center">
+      <div className="fixed inset-0 bg-dark-900 flex items-center justify-center z-priority">
         <div className="text-text-mid text-sm">{STRINGS.QNA_DETAIL_NOT_FOUND}</div>
       </div>
     );
@@ -54,9 +55,9 @@ export const QnaDetailPage: React.FC = () => {
   const statusInfo = STATUS_LABEL[post.status] ?? STATUS_LABEL.OPEN;
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden pb-20">
+    <FullScreenContainer scroll="none" className="pb-20">
       {/* 헤더 */}
-      <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
+      <header className="h-14 flex items-center justify-between px-page-x border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-white transition-colors">
             <ArrowLeft size={22} />
@@ -70,7 +71,7 @@ export const QnaDetailPage: React.FC = () => {
 
       {/* 본문 */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="p-4 space-y-4">
+        <div className="p-page-x space-y-4">
           {/* 질문 헤더 */}
           <div className="flex items-start justify-between">
             <PersonaAvatar
@@ -198,7 +199,7 @@ export const QnaDetailPage: React.FC = () => {
       </div>
 
       {/* 답변 입력 */}
-      <div className="p-4 border-t border-white/5 flex-shrink-0" data-answer-input>
+      <div className="p-page-x border-t border-white/5 flex-shrink-0" data-answer-input>
         <div className="flex gap-2">
           <TextInput
             value={answerText}
@@ -220,6 +221,6 @@ export const QnaDetailPage: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

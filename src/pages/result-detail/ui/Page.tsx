@@ -93,14 +93,14 @@ export const ResultDetail: React.FC = () => {
   // ─── 로딩 ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24">
-        <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-bottom-nav">
+        <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-page-x h-14 bg-gradient-to-b from-black/80 to-transparent">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
             <ArrowLeft size={20} />
           </button>
         </header>
         <div className="w-full aspect-[3/4] bg-dark-800 animate-pulse" />
-        <div className="px-5 py-6 space-y-6">
+        <div className="px-page-x py-page-y space-y-section-gap">
           <div className="h-24 bg-dark-800 rounded-xl animate-pulse" />
           <div className="h-64 bg-dark-800 rounded-2xl animate-pulse" />
         </div>
@@ -111,8 +111,8 @@ export const ResultDetail: React.FC = () => {
   // ─── 에러 (샘플 미선택 시) ─────────────────────────────────────────────────
   if (error && !showSample) {
     return (
-      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24 flex flex-col items-center justify-center p-6">
-        <header className="fixed top-0 left-0 w-full z-sticky flex items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-bottom-nav flex flex-col items-center justify-center p-page-y">
+        <header className="fixed top-0 left-0 w-full z-sticky flex items-center px-page-x h-14 bg-gradient-to-b from-black/80 to-transparent">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
             <ArrowLeft size={20} />
           </button>
@@ -135,7 +135,7 @@ export const ResultDetail: React.FC = () => {
   // ─── 결과 없음 (artworkId 없음 등) ─────────────────────────────────────────
   if (!displayResult) {
     return (
-      <div className="min-h-dvh bg-dark-900 flex items-center justify-center p-6">
+      <div className="min-h-dvh bg-dark-900 flex items-center justify-center p-page-y">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white" aria-label={STRINGS.BACK}>
           <ArrowLeft size={20} />
         </button>
@@ -146,8 +146,8 @@ export const ResultDetail: React.FC = () => {
 
   // ─── 실제 결과 또는 샘플 결과 렌더 ─────────────────────────────────────────
   return (
-    <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-24">
-      <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-4 h-14 bg-gradient-to-b from-black/80 to-transparent">
+    <div className="min-h-dvh bg-dark-900 overflow-y-auto no-scrollbar pb-bottom-nav">
+      <header className="fixed top-0 left-0 w-full z-sticky flex justify-between items-center px-page-x h-14 bg-gradient-to-b from-black/80 to-transparent">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
           <ArrowLeft size={20} />
         </button>
@@ -179,14 +179,14 @@ export const ResultDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-5 py-6 space-y-8 pb-40">
+      <div className="px-page-x py-page-y space-y-8 pb-40">
         {showSample && (
           <div className="bg-primary-lime/10 border border-primary-lime/30 rounded-xl p-3 text-center">
             <BodyText className="text-sm text-primary-lime">샘플 결과입니다.</BodyText>
             <button
               type="button"
               className="text-xs text-text-mid underline mt-1"
-              onClick={() => { setShowSample(false); setError(RESULT_LOAD_ERROR); }}
+              onClick={() => { setShowSample(false); handleRetry(); }}
             >
               실제 결과 다시 불러오기
             </button>
@@ -249,7 +249,7 @@ export const ResultDetail: React.FC = () => {
         />
       </div>
 
-      <div className="fixed bottom-20 left-0 w-full p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
+      <div className="fixed bottom-20 left-0 w-full p-page-x bg-gradient-to-t from-black via-black/90 to-transparent z-nav flex gap-3">
         <Button variant="secondary" className="flex-1 flex gap-2 items-center justify-center" onClick={handleReanalyze}>
           <RotateCcw size={16} />
           {STRINGS.RESULT_REANALYZE}

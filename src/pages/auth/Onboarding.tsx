@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { useUserStore } from '../../shared/model/userStore';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 const SLIDES = [
   {
@@ -60,7 +61,7 @@ export const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 z-priority">
+    <FullScreenContainer scroll="none">
       <div className="flex justify-end h-12 items-center">
         <button
           onClick={handleSkip}
@@ -110,6 +111,6 @@ export const Onboarding: React.FC = () => {
           {current === SLIDES.length - 1 ? STRINGS.ONBOARDING_GET_STARTED : STRINGS.NEXT}
         </Button>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

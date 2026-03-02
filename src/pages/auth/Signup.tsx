@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
+import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 /** 회원가입. @참조 AppRouter @상태 formData */
 export const Signup: React.FC = () => {
@@ -35,7 +36,7 @@ export const Signup: React.FC = () => {
     setFormData((prev) => ({ ...prev, [key]: val }));
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col px-5 py-6 overflow-y-auto no-scrollbar z-priority">
+    <FullScreenContainer scroll="y" className="no-scrollbar">
       <header className="h-14 flex items-center flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
@@ -121,6 +122,6 @@ export const Signup: React.FC = () => {
           </button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

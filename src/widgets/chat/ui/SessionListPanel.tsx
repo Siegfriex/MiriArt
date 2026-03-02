@@ -57,7 +57,7 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
   return (
     <div className={`flex flex-col ${compact ? 'h-full' : 'min-h-full'} relative`}>
       {!compact && (
-        <header className="flex justify-between items-center px-5 pt-6 pb-2">
+        <header className="flex justify-between items-center px-page-x pt-page-y pb-2">
           <H1 className="text-white">{STRINGS.CHAT_TITLE}</H1>
           <div className="text-xs text-text-mid">
             {STRINGS.CHAT_CREDITS(profile.credits)}
@@ -65,7 +65,7 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
         </header>
       )}
 
-      <div className={`flex flex-col gap-4 ${compact ? 'px-4 pt-4' : 'px-5'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
+      <div className={`flex flex-col gap-4 ${compact ? 'px-page-x pt-4' : 'px-page-x'} flex-1 overflow-y-auto no-scrollbar pb-bottom-nav`}>
         <SearchBar placeholder={STRINGS.CHAT_SEARCH_PLACEHOLDER} />
 
         <div className="flex gap-2 overflow-x-auto no-scrollbar">

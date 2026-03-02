@@ -106,7 +106,7 @@ export const AuthCallback: React.FC = () => {
   }, [navigate, searchParams, setAuth, setProfileFromApi]);
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-priority">
       <div className="text-white text-sm">로그인 처리 중...</div>
     </div>
   );

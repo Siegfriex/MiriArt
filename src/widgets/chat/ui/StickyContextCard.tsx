@@ -31,7 +31,7 @@ export const StickyContextCard: React.FC<StickyContextCardProps> = ({
 
   return (
     <motion.div
-      className="absolute top-14 left-0 w-full z-sticky px-5"
+      className="absolute top-14 left-0 w-full z-sticky px-page-x"
       layout
       transition={springConfig}
     >

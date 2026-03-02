@@ -43,16 +43,29 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const [errorType, setErrorType] = useState<ErrorType | null>(null);
   const [plan, setPlan] = useState<PlanInfo | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const remaining = plan?.remaining ?? 0;
 
-  useEffect(() => {
+  const loadPlan = () => {
+    setPlanLoading(true);
+    setPlanError(false);
     UserApi.getPlan()
-      .then(setPlan)
-      .catch(() => setPlan(null))
+      .then((p) => {
+        setPlan(p);
+        setPlanError(false);
+      })
+      .catch(() => {
+        setPlan(null);
+        setPlanError(true);
+      })
       .finally(() => setPlanLoading(false));
+  };
+
+  useEffect(() => {
+    loadPlan();
   }, []);
 
   // blob URL 메모리 누수 방지
@@ -261,9 +274,13 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             </div>
             <H2 className="text-white">{STRINGS.UPLOAD_STEP3_TITLE}</H2>
             <BodyText className="text-sm">
-              {planLoading ? '잔여 횟수 확인 중...' : remaining <= 0
-                ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
-                : STRINGS.UPLOAD_STEP3_DESC(remaining)}
+              {planLoading
+                ? '잔여 횟수 확인 중...'
+                : planError
+                  ? '잔여 횟수 정보를 불러오지 못했습니다.'
+                  : remaining <= 0
+                    ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
+                    : STRINGS.UPLOAD_STEP3_DESC(remaining)}
             </BodyText>
           </div>
 
@@ -271,13 +288,19 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
             <Button variant="secondary" className="flex-1" onClick={closeModal}>
               {STRINGS.CANCEL}
             </Button>
-            <Button
-              className="flex-1"
-              onClick={handleAnalysisStart}
-              disabled={planLoading || remaining <= 0}
-            >
-              {STRINGS.CONFIRM}
-            </Button>
+            {planError ? (
+              <Button className="flex-1" onClick={loadPlan}>
+                다시 시도
+              </Button>
+            ) : (
+              <Button
+                className="flex-1"
+                onClick={handleAnalysisStart}
+                disabled={planLoading || remaining <= 0}
+              >
+                {STRINGS.CONFIRM}
+              </Button>
+            )}
           </div>
           <div className="h-2" />
         </div>

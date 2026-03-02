@@ -25,6 +25,7 @@ import {
   POST_CONTENT_MAX_LENGTH,
   POST_IMAGES_MAX_COUNT,
 } from '../../../shared/config/community';
+import { FullScreenContainer } from '../../../shared/ui/FullScreenContainer';
 
 /** 글쓰기/질문하기 페이지. */
 export const WritePostPage: React.FC = () => {
@@ -50,8 +51,8 @@ export const WritePostPage: React.FC = () => {
   const pageTitle = isQna ? STRINGS.POST_PAGE_TITLE_QNA : STRINGS.POST_PAGE_TITLE_FREE;
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden">
-      <header className="h-14 flex items-center justify-between px-4 border-b border-white/5 flex-shrink-0">
+    <FullScreenContainer scroll="none">
+      <header className="h-14 flex items-center justify-between px-page-x border-b border-white/5 flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="p-2 text-text-mid hover:text-white transition-colors"
@@ -70,7 +71,7 @@ export const WritePostPage: React.FC = () => {
         </Button>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-5">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-page-x space-y-5">
         <div className="space-y-1.5">
           <label className="text-xs text-text-mid font-medium uppercase tracking-wider">
             {STRINGS.POST_LABEL_TITLE}
@@ -263,6 +264,6 @@ export const WritePostPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };

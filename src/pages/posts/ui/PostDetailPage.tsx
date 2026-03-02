@@ -14,6 +14,7 @@ import { Button } from '../../../shared/ui/Button';
 import { TextInput } from '../../../shared/ui/TextInput';
 import { useLikeToggle } from '../../../features/community/useLikeToggle';
 import { STRINGS } from '../../../shared/config/strings';
+import { FullScreenContainer } from '../../../shared/ui/FullScreenContainer';
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -37,16 +38,16 @@ export const PostDetailPage: React.FC = () => {
 
   if (!post) {
     return (
-      <div className="fixed inset-0 bg-dark-900 flex items-center justify-center">
+      <div className="fixed inset-0 bg-dark-900 flex items-center justify-center z-priority">
         <div className="text-text-mid text-sm">{STRINGS.POST_DETAIL_NOT_FOUND}</div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-dark-900 flex flex-col overflow-hidden">
+    <FullScreenContainer scroll="none">
       {/* 헤더 */}
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-white/5 flex-shrink-0">
+      <header className="h-14 flex items-center gap-3 px-page-x border-b border-white/5 flex-shrink-0">
         <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </button>
@@ -55,7 +56,7 @@ export const PostDetailPage: React.FC = () => {
 
       {/* 본문 */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="p-4 space-y-4">
+        <div className="p-page-x space-y-4">
           {/* 작성자 */}
           <div className="flex items-start justify-between">
             <PersonaAvatar
@@ -134,7 +135,7 @@ export const PostDetailPage: React.FC = () => {
       </div>
 
       {/* 댓글 입력 */}
-      <div className="p-4 border-t border-white/5 flex-shrink-0">
+      <div className="p-page-x border-t border-white/5 flex-shrink-0">
         <div className="flex gap-2">
           <TextInput
             value={commentText}
@@ -156,6 +157,6 @@ export const PostDetailPage: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </FullScreenContainer>
   );
 };
