@@ -85,6 +85,8 @@ public class OAuth2TokenExchangeService {
                 .userId(String.valueOf(user.getId()))
                 .needsProfile(user.isNeedsProfile())
                 .provider(payload.getProvider())
+                .role(user.getRole().name())
+                .planType(user.getPlanType().name())
                 .build();
     }
 }

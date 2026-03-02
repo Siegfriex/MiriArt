@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * 댓글 엔티티. comments 테이블 매핑. parentType+parentId로 게시글 또는 답변에 소속.
+ * <p><b>P1</b>: 비즈니스 로직 없이 스키마만 존재. Phase C1에서 사용 예정.</p>
  *
- * <p>연계: {@link CommentParentType} POST/ANSWER, {@link CommentRepository#findByParentTypeAndParentIdOrderByCreatedAtAsc}. Phase C1 구현 예정.</p>
+ * <p>연계: {@link CommentParentType} POST/ANSWER, {@link CommentRepository#findByParentTypeAndParentIdOrderByCreatedAtAsc}.</p>
  *
  * @author MiriArt Team
  */

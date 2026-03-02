@@ -39,11 +39,11 @@ export function normalizeAnalysisResult(
   };
   return {
     id: api.id,
-    imageUrl: overrides?.imageUrl ?? '',
+    imageUrl: overrides?.imageUrl ?? api.imageUrl ?? '',
     grade: parseGrade(api.grade),
     totalScore: api.totalScore,
-    university: overrides?.university ?? '—',
-    major: overrides?.major ?? '—',
+    university: overrides?.university ?? api.university ?? '—',
+    major: overrides?.major ?? api.major ?? '—',
     timestamp: Date.now(),
     radarData,
     fixScope: api.fixScope as FixScope,

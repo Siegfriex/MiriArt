@@ -23,6 +23,7 @@ public class UserProfileResponse {
     private String domain;
     private String provider;
     private String role;
+    private String planType;
     private int reputationScore;
     private int reputationLevel;
     private boolean needsProfile;
@@ -36,6 +37,7 @@ public class UserProfileResponse {
                 .domain(user.getDomain())
                 .provider(user.getProvider().name().toLowerCase())
                 .role(user.getRole().name())
+                .planType(user.getPlanType().name())
                 .reputationScore(user.getReputationScore())
                 .reputationLevel(user.getReputationLevel())
                 .needsProfile(user.isNeedsProfile())

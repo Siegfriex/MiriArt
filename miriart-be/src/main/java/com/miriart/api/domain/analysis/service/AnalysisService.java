@@ -2,6 +2,8 @@ package com.miriart.api.domain.analysis.service;
 
 import com.miriart.api.domain.ai.dto.InternalAnalyzeResponse;
 import com.miriart.api.domain.ai.service.AiProxyService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miriart.api.domain.analysis.dto.AnalysisDetailResponse;
 import com.miriart.api.domain.analysis.dto.AnalysisStartResponse;
 import com.miriart.api.domain.analysis.entity.*;
@@ -51,6 +53,7 @@ public class AnalysisService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final AiProxyService aiProxyService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 작품 업로드 + AI 분석 시작
@@ -66,13 +69,15 @@ public class AnalysisService {
             throw new BusinessException(ErrorCode.FILE_EMPTY);
         }
 
-        // 2. 크레딧 한도 체크
-        String currentMonth = currentBillingMonth();
-        long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentMonth);
-        int monthlyLimit = user.getPlanType().getMonthlyLimit();
-        if (usedThisMonth >= monthlyLimit) {
-            log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
-            throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
+        // 2. 크레딧 한도 체크 (P1: 온보딩 완료(Full, needsProfile=false)면 한도 체크 스킵)
+        if (user.isNeedsProfile()) {
+            String currentMonth = currentBillingMonth();
+            long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentMonth);
+            int monthlyLimit = user.getPlanType().getMonthlyLimit();
+            if (usedThisMonth >= monthlyLimit) {
+                log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
+                throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
+            }
         }
 
         // 3. GCS 업로드 — FileUploadResult로 publicUrl + gcsUri 동시 확보 (Bug #1 Fix)
@@ -97,14 +102,17 @@ public class AnalysisService {
         try {
             InternalAnalyzeResponse aiResult = aiProxyService.analyze(gcsUrl, analysisType, problemText);
 
-            // 6. analyses UPDATE (COMPLETED)
+            // 6. analyses UPDATE (COMPLETED) — DTO 객체를 JSON 문자열로 직렬화하여 저장
+            String scoresJson = toJson(aiResult.getRadarData());
+            String predictionsJson = toJson(aiResult.getUniversityPredictions() != null ? aiResult.getUniversityPredictions() : java.util.List.of());
+
             analysis.complete(
                     AnalysisGrade.valueOf(aiResult.getGrade()),
                     aiResult.getTotalScore(),
-                    aiResult.getRadarData(),
+                    scoresJson,
                     aiResult.getFixScope() != null ? FixScope.valueOf(aiResult.getFixScope()) : null,
                     aiResult.getComment(),
-                    aiResult.getUniversityPredictions()
+                    predictionsJson
             );
             analysisRepository.save(analysis);
         } catch (BusinessException e) {
@@ -129,7 +137,7 @@ public class AnalysisService {
     public AnalysisDetailResponse getAnalysis(Long userId, Long analysisId) {
         Analysis analysis = analysisRepository.findByIdAndUserId(analysisId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ANALYSIS_NOT_FOUND));
-        return AnalysisDetailResponse.from(analysis);
+        return AnalysisDetailResponse.from(analysis, objectMapper);
     }
 
     /**
@@ -139,7 +147,7 @@ public class AnalysisService {
     @Transactional(readOnly = true)
     public Page<AnalysisDetailResponse> getMyAnalyses(Long userId, Pageable pageable) {
         return analysisRepository.findByUserId(userId, pageable)
-                .map(AnalysisDetailResponse::from);
+                .map(a -> AnalysisDetailResponse.from(a, objectMapper));
     }
 
     /**
@@ -151,5 +159,15 @@ public class AnalysisService {
 
     private String currentBillingMonth() {
         return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+    }
+
+    private String toJson(Object value) {
+        if (value == null) return null;
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            log.warn("JSON 직렬화 실패, null 반환: {}", e.getMessage());
+            return null;
+        }
     }
 }
