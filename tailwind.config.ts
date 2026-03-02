@@ -29,6 +29,7 @@ const config: Config = {
         'text-secondary': semantic.color.textMid,
         'text-mid': semantic.color.textMid,
         'text-low': semantic.color.textLow,
+        'text-disabled': semantic.color.textDisabled,
         'text-inverse': semantic.color.textInverse,
         surface: semantic.color.bgPrimary,
         'surface-alt': semantic.color.bgSecondary,
