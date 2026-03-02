@@ -23,6 +23,7 @@ export function getRootVarsObject(): Record<string, string> {
     '--color-text-high': semantic.color.textHigh,
     '--color-text-mid': semantic.color.textMid,
     '--color-text-low': semantic.color.textLow,
+    '--color-text-disabled': semantic.color.textDisabled,
     '--color-brand': primitives.color.lime400,
     '--color-brand-dim': semantic.color.brandDim,
     '--color-border-default': semantic.color.borderDefault,

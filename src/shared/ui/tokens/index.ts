@@ -21,6 +21,8 @@ export const primitives = {
     white: '#FFFFFF',
     gray400: '#8B9CA8',
     gray500: '#9CA8B2',
+    /** disabled 전용 (textLow보다 한 단계 옅게, opacity 꼬임 방지) */
+    textDisabled: '#8B9CA8',
     // Status (semantic base + muted 0.12 라이트용)
     red500: '#E53935',
     blue500: '#124975',
@@ -69,6 +71,8 @@ export const semantic = {
     textHigh: primitives.color.dark900,
     textMid: primitives.color.dark600,
     textLow: primitives.color.gray500,
+    /** disabled 전용 (컴포넌트별 opacity 대신 일관 값) */
+    textDisabled: primitives.color.textDisabled,
     textInverse: primitives.color.white,
     brandPrimary: primitives.color.lime400,
     brandDim: primitives.color.primaryMuted,
