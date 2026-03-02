@@ -42,13 +42,13 @@ body {
 
 /* ─── Utility Classes ─────────────────────────────────────────────────────── */
 @layer utilities {
-  /* Glassmorphism */
+  /* Glassmorphism (라이트 스킴: 어두운 톤 border) */
   .glass {
-    @apply bg-white/5 backdrop-blur-[20px] border border-white/10;
+    @apply bg-black/5 backdrop-blur-[20px] border border-border-default;
   }
 
   .glass-panel {
-    @apply bg-dark-800/80 backdrop-blur-[20px] border border-white/5;
+    @apply bg-surface-alt/80 backdrop-blur-[20px] border border-border-default;
   }
 
   /* Scrollbar Hiding */

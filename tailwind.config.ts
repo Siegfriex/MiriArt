@@ -13,7 +13,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 브랜드 & 기본 팔레트 (토큰 derive)
+        // design additive 먼저 spread 후 shared(semantic)로 덮어써서 SSOT 유지
+        ...designThemeAdditive.colors,
+        // 브랜드 & 기본 팔레트 (primitives)
         'primary-lime': primitives.color.lime400,
         'primary-lime-dim': primitives.color.lime300,
         dark: {
@@ -22,26 +24,38 @@ const config: Config = {
           700: primitives.color.dark700,
           600: primitives.color.dark600,
         },
-        // 디자인 시스템 별칭 (인벤토리·리팩터 계획 v1)
-        surface: primitives.color.dark900,
-        'surface-alt': primitives.color.dark800,
-        'surface-tertiary': primitives.color.dark700,
-        muted: primitives.color.gray400,
-        'muted-alt': primitives.color.gray500,
+        // 라이트 스킴: text/surface = semantic 기반
+        'text-primary': semantic.color.textHigh,
+        'text-secondary': semantic.color.textMid,
+        'text-mid': semantic.color.textMid,
+        'text-low': semantic.color.textLow,
+        'text-inverse': semantic.color.textInverse,
+        surface: semantic.color.bgPrimary,
+        'surface-alt': semantic.color.bgSecondary,
+        'surface-tertiary': semantic.color.bgTertiary,
+        muted: semantic.color.textMid,
+        'muted-alt': semantic.color.textLow,
         'border-default': semantic.color.borderDefault,
         'border-subtle': semantic.color.borderSubtle,
-        'text-primary': primitives.color.white,
-        'text-secondary': primitives.color.gray400,
-        'text-mid': primitives.color.gray400,
-        'text-low': primitives.color.gray500,
-        'text-inverse': primitives.color.dark900,
         semantic: {
           error: semantic.color.statusError,
+          'error-muted': semantic.color.statusErrorMuted,
           info: semantic.color.statusInfo,
+          'info-muted': semantic.color.statusInfoMuted,
           success: semantic.color.statusSuccess,
+          'success-muted': semantic.color.statusSuccessMuted,
           warning: semantic.color.statusWarning,
+          'warning-muted': semantic.color.statusWarningMuted,
         },
-        ...designThemeAdditive.colors,
+        // semantic-* 캐밥 키 (shared 우선)
+        'semantic-error': semantic.color.statusError,
+        'semantic-error-muted': semantic.color.statusErrorMuted,
+        'semantic-info': semantic.color.statusInfo,
+        'semantic-info-muted': semantic.color.statusInfoMuted,
+        'semantic-success': semantic.color.statusSuccess,
+        'semantic-success-muted': semantic.color.statusSuccessMuted,
+        'semantic-warning': semantic.color.statusWarning,
+        'semantic-warning-muted': semantic.color.statusWarningMuted,
       },
       fontFamily: {
         sans: ['Rubik', 'SUITE', 'sans-serif'],

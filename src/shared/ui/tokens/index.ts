@@ -7,38 +7,41 @@
 
 // ─── Layer 1: Primitives (raw values) ───────────────────────────────────────
 
-/** 원시 토큰: color, spacing, radius, opacity. 새 팔레트: Primary #4CAF50, Secondary #124975, BG #18242D/#5C6B75, Neutral #F3F7F9/#E3EDF3 */
+/** 원시 토큰: color, spacing, radius, opacity. 라이트 스킴: Primary #4CAF50, Secondary #124975, BG #F3F7F9/#E3EDF3/#FFF, 텍스트 #18242D/#5C6B75/#8B9CA8 */
 export const primitives = {
   color: {
     // Primary (green)
     lime400: '#4CAF50',
     lime300: '#66BB6A',
-    // Background / dark neutral
+    // Text / dark neutral (라이트 스킴에서 본문·헤더)
     dark900: '#18242D',
     dark800: '#1E2D3D',
     dark700: '#2A3A4A',
     dark600: '#5C6B75',
     white: '#FFFFFF',
-    gray400: '#9CA8B2',
-    gray500: '#5C6B75',
-    // Status (semantic base)
+    gray400: '#8B9CA8',
+    gray500: '#9CA8B2',
+    // Status (semantic base + muted 0.12 라이트용)
     red500: '#E53935',
     blue500: '#124975',
     orange500: '#F97316',
     successGreen: '#43A047',
-    successGreenMuted: 'rgba(67,160,71,0.15)',
+    successGreenMuted: 'rgba(67,160,71,0.12)',
     errorRed: '#E53935',
-    errorRedMuted: 'rgba(229,57,53,0.15)',
+    errorRedMuted: 'rgba(229,57,53,0.12)',
     warningOrange: '#F97316',
-    warningOrangeMuted: 'rgba(249,115,22,0.15)',
+    warningOrangeMuted: 'rgba(249,115,22,0.12)',
     infoBlue: '#124975',
-    infoBlueMuted: 'rgba(18,73,117,0.15)',
+    infoBlueMuted: 'rgba(18,73,117,0.12)',
     // Primary derived (brand dim / border)
     primaryMuted: 'rgba(76,175,80,0.10)',
     primaryBorder: 'rgba(76,175,80,0.30)',
-    // Light neutrals (optional; design/tokens neutral 100/200)
+    // Light neutrals (페이지/섹션 배경)
     neutralLight100: '#F3F7F9',
     neutralLight200: '#E3EDF3',
+    // Light scheme border (dark900 기반)
+    borderDefaultLight: 'rgba(24,36,45,0.08)',
+    borderSubtleLight: 'rgba(24,36,45,0.12)',
   },
   spacing: {
     0: '0px', 1: '4px', 2: '8px', 3: '12px', 4: '16px',
@@ -59,18 +62,18 @@ export const primitives = {
 /** 시맨틱 토큰: color, typography, spacing, radius, shadow, blur, motion */
 export const semantic = {
   color: {
-    bgPrimary: primitives.color.dark900,
-    bgSecondary: primitives.color.dark800,
-    bgTertiary: primitives.color.dark700,
-    bgOverlay: 'rgba(0,0,0,0.6)',
-    textHigh: primitives.color.white,
-    textMid: primitives.color.gray400,
+    bgPrimary: primitives.color.neutralLight100,
+    bgSecondary: primitives.color.neutralLight200,
+    bgTertiary: primitives.color.white,
+    bgOverlay: 'rgba(0,0,0,0.4)',
+    textHigh: primitives.color.dark900,
+    textMid: primitives.color.dark600,
     textLow: primitives.color.gray500,
-    textInverse: primitives.color.dark900,
+    textInverse: primitives.color.white,
     brandPrimary: primitives.color.lime400,
     brandDim: primitives.color.primaryMuted,
-    borderDefault: 'rgba(255,255,255,0.05)',
-    borderSubtle: 'rgba(255,255,255,0.10)',
+    borderDefault: primitives.color.borderDefaultLight,
+    borderSubtle: primitives.color.borderSubtleLight,
     borderActive: primitives.color.primaryBorder,
     statusError: primitives.color.errorRed,
     statusErrorMuted: primitives.color.errorRedMuted,

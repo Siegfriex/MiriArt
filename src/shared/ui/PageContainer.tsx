@@ -22,7 +22,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   return (
     <div 
       className={`
-        flex flex-col min-h-full px-page-x py-page-y space-y-section-gap relative
+        flex flex-col min-h-full bg-surface px-page-x py-page-y space-y-section-gap relative
         ${hasBottomNav ? 'pb-bottom-nav' : 'pb-page-y'}
         ${className}
       `}

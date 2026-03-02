@@ -52,7 +52,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
   const isEditMode = modelType === AIModelType.IMAGE_EDIT;
 
   return (
-    <div className="p-4 bg-dark-900 border-t border-white/10 pb-safe">
+    <div className="p-4 bg-surface-alt border-t border-border-default pb-safe">
       <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
         {AI_MODELS.map((m) => {
           const Icon = ICON_MAP[m.iconName];
@@ -64,7 +64,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${
                 isActive
                   ? 'bg-primary-lime/10 border-primary-lime text-primary-lime'
-                  : 'bg-dark-800 border-white/10 text-text-mid hover:border-white/20'
+                  : 'bg-surface-tertiary border-border-default text-text-mid hover:border-border-subtle'
               }`}
             >
               <Icon size={12} />
@@ -79,7 +79,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
           <img
             src={previewUrl}
             alt="첨부 미리보기"
-            className="h-16 w-16 object-cover rounded-lg border border-white/10"
+            className="h-16 w-16 object-cover rounded-lg border border-border-default"
           />
           <button
             onClick={() => setSelectedImage(null)}
@@ -91,7 +91,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
       )}
 
       <div className="flex items-center gap-2">
-        <label className="p-2 text-text-mid hover:text-white cursor-pointer transition-colors">
+        <label className="p-2 text-text-mid hover:text-text-primary cursor-pointer transition-colors">
           <input
             type="file"
             className="hidden"
@@ -109,7 +109,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={isEditMode ? STRINGS.CHATROOM_PLACEHOLDER_EDIT : STRINGS.CHATROOM_PLACEHOLDER_CHAT}
-            className="w-full bg-dark-800 text-white rounded-xl px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime placeholder-text-low pr-12 border border-white/5"
+            className="w-full bg-surface-alt text-text-primary rounded-xl px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime placeholder-text-low pr-12 border border-border-default"
             maxLength={500}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
           />
@@ -123,7 +123,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
           disabled={isLoading || (!message.trim() && !selectedImage)}
           className={`p-3 rounded-full transition-colors ${
             !message.trim() && !selectedImage
-              ? 'bg-dark-800 text-text-low'
+              ? 'bg-surface-tertiary text-text-low'
               : 'bg-primary-lime text-text-inverse shadow-glow'
           }`}
         >

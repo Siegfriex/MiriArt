@@ -46,7 +46,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <div className="p-6 text-center space-y-4">
       <div>
-        <H2 className={isDestructive ? 'text-semantic-error' : 'text-white'}>{title}</H2>
+        <H2 className={isDestructive ? 'text-semantic-error' : 'text-text-primary'}>{title}</H2>
         <BodyText className="mt-2 text-sm text-text-mid">{message}</BodyText>
       </div>
       <div className="flex gap-3 pt-2">

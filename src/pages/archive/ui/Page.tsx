@@ -84,7 +84,7 @@ export const Archive: React.FC = () => {
   return (
     <PageContainer>
       <header className="flex justify-between items-center">
-        <H1 className="text-white">{STRINGS.ARCHIVE_TITLE}</H1>
+        <H1>{STRINGS.ARCHIVE_TITLE}</H1>
       </header>
 
       <div className="flex justify-between items-center gap-3">
@@ -100,11 +100,11 @@ export const Archive: React.FC = () => {
             onClick={() => setSort('school')}
           />
         </div>
-        <div className="flex bg-dark-800 rounded-lg p-1 border border-white/5">
+        <div className="flex bg-surface-alt rounded-lg p-1 border border-border-default">
           <button
             onClick={() => setView('grid')}
             className={`p-1.5 rounded-md transition-all ${
-              view === 'grid' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
+              view === 'grid' ? 'bg-primary-lime/10 text-text-primary shadow-sm' : 'text-text-mid hover:text-text-secondary'
             }`}
           >
             <GridIcon size={16} />
@@ -112,7 +112,7 @@ export const Archive: React.FC = () => {
           <button
             onClick={() => setView('list')}
             className={`p-1.5 rounded-md transition-all ${
-              view === 'list' ? 'bg-white/10 text-white shadow-sm' : 'text-text-mid hover:text-text-secondary'
+              view === 'list' ? 'bg-primary-lime/10 text-text-primary shadow-sm' : 'text-text-mid hover:text-text-secondary'
             }`}
           >
             <List size={16} />
@@ -127,7 +127,7 @@ export const Archive: React.FC = () => {
       {loading ? (
         <div className="grid grid-cols-5 gap-1.5 py-4">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-            <div key={i} className="aspect-[3/4] bg-dark-800 rounded-lg animate-pulse" />
+            <div key={i} className="aspect-[3/4] bg-surface-alt rounded-lg animate-pulse" />
           ))}
         </div>
       ) : error ? (
@@ -147,7 +147,7 @@ export const Archive: React.FC = () => {
             <AnalysisCarousel artworks={sortedArtworks} />
           )}
           <div className="pt-4 pb-2">
-            <Button variant="secondary" fullWidth onClick={handleUpload} className="border-dashed border-white/20">
+            <Button variant="secondary" fullWidth onClick={handleUpload} className="border-dashed border-border-subtle">
               {STRINGS.ARCHIVE_UPLOAD_MORE}
             </Button>
           </div>

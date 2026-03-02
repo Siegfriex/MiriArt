@@ -46,7 +46,7 @@ export const BottomNav: React.FC = () => {
     <motion.nav
       animate={{ y: isBottomNavVisible ? 0 : '100%' }}
       transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-      className="fixed bottom-0 w-full z-nav bg-dark-900/90 backdrop-blur-xl border-t border-white/5 pb-safe"
+      className="fixed bottom-0 w-full z-nav bg-surface-alt/95 backdrop-blur-xl border-t border-border-default pb-safe"
     >
       <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => {

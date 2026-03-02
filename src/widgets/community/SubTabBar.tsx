@@ -21,7 +21,7 @@ const TABS: { key: FeedTab; labelKey: 'FEED_TAB_TIMELINE' | 'FEED_TAB_QNA' | 'FE
 
 /** 서브탭 바. 본문 흐름 내 블록(스크롤 시 함께 올라감). */
 export const SubTabBar: React.FC<SubTabBarProps> = ({ activeTab, onTabChange }) => (
-  <div className="bg-dark-900 flex border-b border-white/5 w-full">
+  <div className="bg-surface flex border-b border-border-default w-full">
     {TABS.map(({ key, labelKey }) => (
       <button
         key={key}
@@ -29,8 +29,8 @@ export const SubTabBar: React.FC<SubTabBarProps> = ({ activeTab, onTabChange }) 
         onClick={() => onTabChange(key)}
         className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
           activeTab === key
-            ? 'text-white border-primary-lime'
-            : 'text-text-mid border-transparent hover:text-white'
+            ? 'text-text-primary border-primary-lime'
+            : 'text-text-mid border-transparent hover:text-text-primary'
         }`}
       >
         {STRINGS[labelKey]}

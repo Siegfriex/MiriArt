@@ -58,7 +58,7 @@ export const GradeInputSheet: React.FC = () => {
     subject: keyof Pick<GradeData, 'korean' | 'math' | 'english' | 'inquiry1' | 'inquiry2'>;
     disabled?: boolean;
   }) => (
-    <div className={`bg-dark-900/50 rounded-xl p-3 space-y-2 ${disabled ? 'opacity-40' : ''}`}>
+    <div className={`bg-surface-alt/80 rounded-xl p-3 space-y-2 ${disabled ? 'opacity-40' : ''}`}>
       <span className="text-xs text-text-mid font-medium">{label}</span>
       <div className="flex gap-2">
         <div className="flex-1">
@@ -70,7 +70,7 @@ export const GradeInputSheet: React.FC = () => {
             value={(data[subject] as SubjectGrade).grade}
             onChange={(e) => setSubject(subject, 'grade', parseInt(e.target.value) || 1)}
             disabled={disabled}
-            className="w-full bg-dark-800 h-10 text-center rounded-lg text-white font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-white/5"
+            className="w-full bg-surface-alt h-10 text-center rounded-lg text-text-primary font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-border-default"
           />
         </div>
         <div className="flex-1">
@@ -82,7 +82,7 @@ export const GradeInputSheet: React.FC = () => {
             value={(data[subject] as SubjectGrade).percentile}
             onChange={(e) => setSubject(subject, 'percentile', parseInt(e.target.value) || 1)}
             disabled={disabled}
-            className="w-full bg-dark-800 h-10 text-center rounded-lg text-white font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-white/5"
+            className="w-full bg-surface-alt h-10 text-center rounded-lg text-text-primary font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-lime border border-border-default"
           />
         </div>
       </div>
@@ -106,7 +106,7 @@ export const GradeInputSheet: React.FC = () => {
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               data.mathNA
                 ? 'bg-primary-lime/10 border-primary-lime text-primary-lime'
-                : 'border-white/10 text-text-mid hover:border-white/20'
+                : 'border-border-default text-text-mid hover:border-border-subtle'
             }`}
           >
             {STRINGS.GRADE_INPUT_MATH_NA}

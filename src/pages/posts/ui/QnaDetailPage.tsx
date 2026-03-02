@@ -46,7 +46,7 @@ export const QnaDetailPage: React.FC = () => {
 
   if (!post) {
     return (
-      <div className="fixed inset-0 bg-dark-900 flex items-center justify-center z-priority">
+      <div className="fixed inset-0 bg-surface flex items-center justify-center z-priority">
         <div className="text-text-mid text-sm">{STRINGS.QNA_DETAIL_NOT_FOUND}</div>
       </div>
     );
@@ -57,12 +57,12 @@ export const QnaDetailPage: React.FC = () => {
   return (
     <FullScreenContainer scroll="none" className="pb-20">
       {/* 헤더 */}
-      <header className="h-14 flex items-center justify-between px-page-x border-b border-white/5 flex-shrink-0">
+      <header className="h-14 flex items-center justify-between px-page-x border-b border-border-default flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-white transition-colors">
+          <button onClick={() => navigate(-1)} className="p-1 text-text-mid hover:text-text-primary transition-colors">
             <ArrowLeft size={22} />
           </button>
-          <span className="text-sm font-medium text-white">{STRINGS.QNA_DETAIL_HEADER}</span>
+          <span className="text-sm font-medium text-text-primary">{STRINGS.QNA_DETAIL_HEADER}</span>
         </div>
         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusInfo.cls}`}>
           {statusInfo.text}
@@ -86,7 +86,7 @@ export const QnaDetailPage: React.FC = () => {
 
           {/* 제목 + 본문 */}
           <div className="space-y-2">
-            <h1 className="text-base font-bold text-white leading-snug">
+            <h1 className="text-base font-bold text-text-primary leading-snug">
               <span className="text-primary-lime mr-1">[Q]</span>
               {post.title}
             </h1>
@@ -95,7 +95,7 @@ export const QnaDetailPage: React.FC = () => {
 
           {/* 이미지 */}
           {post.imageUrls.map((url, i) => (
-            <img key={i} src={url} alt="첨부 이미지" className="w-full rounded-xl border border-white/5" />
+            <img key={i} src={url} alt="첨부 이미지" className="w-full rounded-xl border border-border-default" />
           ))}
 
           {/* 태그 + 마감 */}
@@ -107,7 +107,7 @@ export const QnaDetailPage: React.FC = () => {
           </div>
 
           {/* 반응 */}
-          <div className="flex items-center gap-4 pt-2 border-t border-white/5">
+          <div className="flex items-center gap-4 pt-2 border-t border-border-default">
             <button
               onClick={toggle}
               className={`flex items-center gap-1.5 text-sm transition-colors ${isLiked ? 'text-semantic-error' : 'text-text-mid hover:text-semantic-error'}`}
@@ -118,7 +118,7 @@ export const QnaDetailPage: React.FC = () => {
             <span className="text-sm text-text-mid">
               📝 {STRINGS.QNA_ANSWERS_COUNT(answers.length)}
             </span>
-            <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-white transition-colors ml-auto">
+            <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-text-primary transition-colors ml-auto">
               <Bookmark size={16} />
             </button>
           </div>
@@ -144,7 +144,7 @@ export const QnaDetailPage: React.FC = () => {
 
           {/* 답변 목록 */}
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-white pt-2">
+            <h2 className="text-sm font-semibold text-text-primary pt-2">
               {STRINGS.QNA_ANSWERS_COUNT(answers.length)}
             </h2>
             {answers.map((answer) => (
@@ -153,7 +153,7 @@ export const QnaDetailPage: React.FC = () => {
                 className={`rounded-xl border p-4 space-y-3 ${
                   answer.isAccepted
                     ? 'border-primary-lime/30 bg-primary-lime/5'
-                    : 'border-white/5 bg-dark-800'
+                    : 'border-border-default bg-surface-alt'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -188,10 +188,10 @@ export const QnaDetailPage: React.FC = () => {
           </div>
 
           {/* AI 요약 카드 (Phase C4 자리) */}
-          <div className="rounded-medium border border-white/5 bg-dark-800 p-4 flex items-center gap-3 opacity-50">
+          <div className="rounded-medium border border-border-default bg-surface-alt p-4 flex items-center gap-3 opacity-50">
             <Sparkles size={18} className="text-primary-lime flex-shrink-0" />
             <div>
-              <div className="text-sm font-medium text-white">{STRINGS.QNA_AI_SUMMARY_TITLE}</div>
+              <div className="text-sm font-medium text-text-primary">{STRINGS.QNA_AI_SUMMARY_TITLE}</div>
               <div className="text-xs text-text-mid">{STRINGS.QNA_AI_SUMMARY_PLACEHOLDER}</div>
             </div>
           </div>
@@ -199,7 +199,7 @@ export const QnaDetailPage: React.FC = () => {
       </div>
 
       {/* 답변 입력 */}
-      <div className="p-page-x border-t border-white/5 flex-shrink-0" data-answer-input>
+      <div className="p-page-x border-t border-border-default flex-shrink-0" data-answer-input>
         <div className="flex gap-2">
           <TextInput
             value={answerText}

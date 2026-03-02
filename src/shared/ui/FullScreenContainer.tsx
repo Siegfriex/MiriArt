@@ -55,7 +55,7 @@ export const FullScreenContainer: React.FC<FullScreenContainerProps> = ({
   return (
     <div
       className={`
-        fixed inset-0 flex flex-col bg-dark-900
+        fixed inset-0 flex flex-col bg-surface
         px-page-x py-page-y
         ${hasBottomNav ? 'pb-bottom-nav' : ''}
         ${overflowClass}

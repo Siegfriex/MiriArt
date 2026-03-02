@@ -88,10 +88,10 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
             className={`
               relative z-10 w-full overflow-hidden shadow-2xl
               ${isBottomSheet
-                ? 'rounded-t-large bg-dark-800 border-t border-white/10 max-h-[90vh]'
+                ? 'rounded-t-large bg-surface-alt border-t border-border-default max-h-[90vh]'
                 : isFull
-                  ? 'h-full bg-dark-900'
-                  : 'max-w-sm rounded-large bg-dark-800 border border-white/10 m-4'
+                  ? 'h-full bg-surface'
+                  : 'max-w-sm rounded-large bg-surface-alt border border-border-default m-4'
               }
             `}
           >
@@ -106,7 +106,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ modalRegistry, layoutC
             {!isBottomSheet && !isFull && (
               <button
                 onClick={closeModal}
-                className="absolute top-4 right-4 text-text-mid hover:text-white z-20 transition-colors"
+                className="absolute top-4 right-4 text-text-mid hover:text-text-primary z-20 transition-colors"
               >
                 <X size={20} />
               </button>

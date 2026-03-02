@@ -36,9 +36,9 @@ export const StickyContextCard: React.FC<StickyContextCardProps> = ({
       transition={springConfig}
     >
       <motion.div
-        className="glass rounded-xl overflow-hidden border border-white/10 shadow-soft"
+        className="glass rounded-xl overflow-hidden border border-border-default shadow-soft"
         animate={{
-          backgroundColor: isCollapsed ? 'rgba(30, 30, 30, 0.6)' : 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: isCollapsed ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.6)',
           backdropFilter: 'blur(20px)',
         }}
         layout
@@ -58,7 +58,7 @@ export const StickyContextCard: React.FC<StickyContextCardProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-text-mid leading-none">점수</span>
-                  <span className="text-sm font-bold text-white leading-none">{score}</span>
+                  <span className="text-sm font-bold text-text-primary leading-none">{score}</span>
                 </div>
               </div>
 
@@ -88,14 +88,14 @@ export const StickyContextCard: React.FC<StickyContextCardProps> = ({
                   </div>
                   <div>
                     <div className="text-xs text-text-mid font-medium">총점</div>
-                    <div className="text-2xl font-bold text-white tracking-tight">
+                    <div className="text-2xl font-bold text-text-primary tracking-tight">
                       {score}
                       <span className="text-sm text-text-low font-normal">/100</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10">
+                <div className="w-12 h-12 bg-black/5 rounded-full flex items-center justify-center border border-border-default">
                   <Radar size={20} className="text-text-mid" />
                 </div>
               </div>

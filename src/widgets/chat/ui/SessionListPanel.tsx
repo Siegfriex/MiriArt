@@ -55,10 +55,10 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
   };
 
   return (
-    <div className={`flex flex-col ${compact ? 'h-full' : 'min-h-full'} relative`}>
+    <div className={`flex flex-col ${compact ? 'h-full' : 'min-h-full'} relative bg-surface`}>
       {!compact && (
         <header className="flex justify-between items-center px-page-x pt-page-y pb-2">
-          <H1 className="text-white">{STRINGS.CHAT_TITLE}</H1>
+          <H1 className="text-text-primary">{STRINGS.CHAT_TITLE}</H1>
           <div className="text-xs text-text-mid">
             {STRINGS.CHAT_CREDITS(profile.credits)}
           </div>

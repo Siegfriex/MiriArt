@@ -58,7 +58,7 @@ export const Login: React.FC = () => {
       <header className="h-14 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-text-mid hover:text-white transition-colors"
+          className="p-2 -ml-2 text-text-mid hover:text-text-primary transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
@@ -66,7 +66,7 @@ export const Login: React.FC = () => {
 
       <div className="flex-1 flex flex-col justify-center space-y-8 max-w-sm mx-auto w-full">
         <div>
-          <H1 className="text-white mb-2">{STRINGS.LOGIN_TITLE}</H1>
+          <H1 className="text-text-primary mb-2">{STRINGS.LOGIN_TITLE}</H1>
           <BodyText className="text-text-mid">{STRINGS.LOGIN_SUBTITLE}</BodyText>
         </div>
 
@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
             className="text-sm text-text-mid hover:text-primary-lime transition-colors p-2"
           >
             {STRINGS.LOGIN_TO_SIGNUP}{' '}
-            <span className="font-bold text-white">{STRINGS.LOGIN_SIGNUP_LINK}</span>
+            <span className="font-bold text-text-primary">{STRINGS.LOGIN_SIGNUP_LINK}</span>
           </button>
         </div>
       </div>

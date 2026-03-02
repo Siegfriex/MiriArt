@@ -20,7 +20,7 @@ interface ContextBarProps {
 export const ContextBar: React.FC<ContextBarProps> = ({
   grade, domain, onGradeChange, onDomainChange,
 }) => (
-  <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
+  <div className="flex items-center justify-between px-4 py-2 border-b border-border-default">
     <div className="flex items-center gap-2">
       <Select
         size="sm"
@@ -44,10 +44,10 @@ export const ContextBar: React.FC<ContextBarProps> = ({
       </Select>
     </div>
     <div className="flex items-center gap-3">
-      <button className="text-text-mid hover:text-white transition-colors p-1" aria-label="알림">
+      <button className="text-text-mid hover:text-text-primary transition-colors p-1" aria-label="알림">
         <Bell size={18} />
       </button>
-      <button className="text-text-mid hover:text-white transition-colors p-1" aria-label="검색">
+      <button className="text-text-mid hover:text-text-primary transition-colors p-1" aria-label="검색">
         <Search size={18} />
       </button>
     </div>

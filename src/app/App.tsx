@@ -20,7 +20,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <div
-        className={`relative w-full h-dvh bg-black flex flex-col font-sans ${activeModal ? 'overflow-hidden' : ''}`}
+        className={`relative w-full h-dvh bg-surface flex flex-col font-sans ${activeModal ? 'overflow-hidden' : ''}`}
       >
         {/* 전역 모달 시스템 */}
         <ModalProvider />

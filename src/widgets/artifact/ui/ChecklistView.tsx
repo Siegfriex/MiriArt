@@ -37,7 +37,7 @@ export const ChecklistView: React.FC<{ items: ChecklistItem[] }> = ({ items: ini
              <span className="text-text-mid">진행률</span>
              <span className="text-primary-lime font-bold">{progress}%</span>
           </div>
-          <div className="h-2 bg-dark-900 rounded-full overflow-hidden border border-white/5">
+          <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden border border-border-default">
              <div className="h-full bg-primary-lime transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
           </div>
        </div>
@@ -51,7 +51,7 @@ export const ChecklistView: React.FC<{ items: ChecklistItem[] }> = ({ items: ini
                className={`group flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
                  item.checked 
                    ? 'bg-primary-lime/5 border-primary-lime/20' 
-                   : 'bg-dark-800/50 border-white/5 hover:bg-dark-800'
+                   : 'bg-surface-alt/50 border-border-default hover:bg-surface-alt'
                }`}
              >
                 <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
@@ -61,7 +61,7 @@ export const ChecklistView: React.FC<{ items: ChecklistItem[] }> = ({ items: ini
                 }`}>
                    {item.checked && <Check size={14} className="text-text-inverse stroke-[3]" />}
                 </div>
-                <BodyText className={`${item.checked ? 'text-text-mid line-through' : 'text-white'} text-sm`}>
+                <BodyText className={`${item.checked ? 'text-text-mid line-through' : 'text-text-primary'} text-sm`}>
                    {item.label}
                 </BodyText>
              </div>

@@ -19,7 +19,7 @@ const ICONS = {
 const STYLES = {
   success: 'bg-primary-lime text-text-inverse',
   error: 'bg-semantic-error text-white',
-  info: 'bg-dark-800 text-white border border-white/10',
+  info: 'bg-surface-alt text-text-primary border border-border-default',
 };
 
 /** 토스트 컨테이너. useToastStore toasts 렌더링. @참조 App.tsx @상태 useToastStore */

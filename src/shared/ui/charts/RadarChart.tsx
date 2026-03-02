@@ -133,7 +133,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 220 }) => {
       {/* Tooltip */}
       {hoveredKey && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-          <div className="bg-dark-800 border border-white/10 rounded-lg px-3 py-1.5 text-center shadow-elevated">
+          <div className="bg-surface-alt border border-border-default rounded-lg px-3 py-1.5 text-center shadow-elevated">
             <div className="text-[10px] text-text-mid">{LABELS[hoveredKey]}</div>
             <div className="text-lg font-bold text-primary-lime">{data[hoveredKey]}</div>
           </div>

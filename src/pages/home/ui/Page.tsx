@@ -96,7 +96,7 @@ export const Home: React.FC = () => {
       />
 
       <header className="flex justify-between items-center mb-2 mt-2">
-        <H1 className="text-white">{STRINGS.APP_NAME}</H1>
+        <H1 className="text-text-primary">{STRINGS.APP_NAME}</H1>
         <div className="px-3 py-1 bg-primary-lime/10 rounded-full border border-primary-lime/20">
           <span className="text-xs text-primary-lime font-medium">{STRINGS.HOME_PLAN_BADGE}</span>
         </div>
@@ -104,12 +104,12 @@ export const Home: React.FC = () => {
 
       <LiveTicker />
 
-      <section className="relative overflow-visible rounded-large bg-dark-800 border border-white/5">
+      <section className="relative overflow-visible rounded-large bg-surface-alt border border-border-default">
         <div className="rounded-large bg-gradient-to-br from-primary-lime/5 to-transparent p-6 min-h-[200px] flex flex-col justify-center items-center text-center group">
-          <div className="w-16 h-16 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+          <div className="w-16 h-16 rounded-full bg-surface-tertiary border border-border-subtle flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <UploadCloud className="text-primary-lime" size={32} />
           </div>
-          <H2 className="mb-2 text-white">{STRINGS.HOME_UPLOAD_CTA_TITLE}</H2>
+          <H2 className="mb-2 text-text-primary">{STRINGS.HOME_UPLOAD_CTA_TITLE}</H2>
           <BodyText className="mb-6">{STRINGS.HOME_UPLOAD_CTA_DESC}</BodyText>
           <Button className="w-full max-w-[200px]" onClick={handleUpload}>
             {STRINGS.HOME_UPLOAD_BUTTON}
@@ -122,7 +122,7 @@ export const Home: React.FC = () => {
         action={
           <button
             onClick={() => navigate(ROUTES.APP.ARCHIVE)}
-            className="text-xs text-text-mid flex items-center hover:text-white transition-colors"
+            className="text-xs text-text-mid flex items-center hover:text-text-primary transition-colors"
           >
             {STRINGS.HOME_RECENT_VIEW_ALL} <ChevronRight size={14} />
           </button>
@@ -131,7 +131,7 @@ export const Home: React.FC = () => {
         {recentLoading ? (
           <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="min-w-[140px] aspect-[4/5] bg-dark-800 rounded-xl animate-pulse" />
+              <div key={i} className="min-w-[140px] aspect-[4/5] bg-surface-alt rounded-xl animate-pulse" />
             ))}
           </div>
         ) : recentError ? (
@@ -146,7 +146,7 @@ export const Home: React.FC = () => {
                 onClick={() => navigate(ROUTES.RESULT(art.id))}
                 className="min-w-[140px] flex flex-col space-y-2 group cursor-pointer"
               >
-                <div className="w-full aspect-[4/5] bg-dark-800 rounded-xl border border-white/5 overflow-hidden relative group-hover:border-primary-lime/30 transition-colors">
+                <div className="w-full aspect-[4/5] bg-surface-alt rounded-xl border border-border-default overflow-hidden relative group-hover:border-primary-lime/30 transition-colors">
                   <img
                     src={art.imageUrl || 'https://via.placeholder.com/140x175?text=작품'}
                     alt="작품"
@@ -157,7 +157,7 @@ export const Home: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-white font-medium truncate">{art.university}</div>
+                  <div className="text-sm text-text-primary font-medium truncate">{art.university}</div>
                   <div className="text-xs text-text-mid truncate">{art.major}</div>
                 </div>
               </div>

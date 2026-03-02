@@ -16,23 +16,23 @@ import {
 /** :root에 넣을 CSS 변수명 → 값 맵. 진입점에서 setProperty로 주입 */
 export function getRootVarsObject(): Record<string, string> {
   return {
-    // 배경·텍스트·브랜드
-    '--color-bg-primary': primitives.color.dark900,
-    '--color-bg-secondary': primitives.color.dark800,
-    '--color-bg-tertiary': primitives.color.dark700,
-    '--color-text-high': primitives.color.white,
-    '--color-text-mid': primitives.color.gray400,
-    '--color-text-low': primitives.color.gray500,
+    // 배경·텍스트·브랜드 (semantic = 라이트 스킴)
+    '--color-bg-primary': semantic.color.bgPrimary,
+    '--color-bg-secondary': semantic.color.bgSecondary,
+    '--color-bg-tertiary': semantic.color.bgTertiary,
+    '--color-text-high': semantic.color.textHigh,
+    '--color-text-mid': semantic.color.textMid,
+    '--color-text-low': semantic.color.textLow,
     '--color-brand': primitives.color.lime400,
     '--color-brand-dim': semantic.color.brandDim,
     '--color-border-default': semantic.color.borderDefault,
     '--color-border-subtle': semantic.color.borderSubtle,
     // 별칭 (globals.css에서 var(--color-*) 참조 유지)
-    '--color-surface': primitives.color.dark900,
-    '--color-surface-alt': primitives.color.dark800,
-    '--color-surface-tertiary': primitives.color.dark700,
-    '--color-muted': primitives.color.gray400,
-    '--color-muted-alt': primitives.color.gray500,
+    '--color-surface': semantic.color.bgPrimary,
+    '--color-surface-alt': semantic.color.bgSecondary,
+    '--color-surface-tertiary': semantic.color.bgTertiary,
+    '--color-muted': semantic.color.textMid,
+    '--color-muted-alt': semantic.color.textLow,
     // radius, blur
     '--radius-card': semantic.radius.card,
     '--radius-button': semantic.radius.button,

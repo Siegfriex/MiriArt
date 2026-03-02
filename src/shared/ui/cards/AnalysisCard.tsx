@@ -22,20 +22,20 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
     return (
       <div
         onClick={onClick}
-        className="group relative aspect-[4/5] bg-dark-800 rounded-xl overflow-hidden border border-white/5 cursor-pointer hover:border-primary-lime/30 transition-colors"
+        className="group relative aspect-[4/5] bg-surface-alt rounded-xl overflow-hidden border border-border-default cursor-pointer hover:border-primary-lime/30 transition-colors"
       >
         <img
           src={artwork.imageUrl}
           alt="작품"
           className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
         />
-        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
-          <span className={`font-bold text-sm ${artwork.grade === Grade.A ? 'text-primary-lime' : 'text-white'}`}>
+        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-border-default">
+          <span className={`font-bold text-sm ${artwork.grade === Grade.A ? 'text-primary-lime' : 'text-text-primary'}`}>
             {artwork.grade}
           </span>
         </div>
         <div className="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/80 to-transparent">
-          <div className="text-xs text-white font-medium truncate">{artwork.major}</div>
+          <div className="text-xs text-text-primary font-medium truncate">{artwork.major}</div>
           <div className="text-[10px] text-text-mid truncate">
             {new Date(artwork.timestamp).toLocaleDateString('ko-KR')}
           </div>
@@ -47,12 +47,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-4 p-3 rounded-xl bg-dark-800 border border-white/5 hover:border-primary-lime/30 transition-all cursor-pointer group active:scale-[0.99]"
+      className="flex items-center gap-4 p-3 rounded-xl bg-surface-alt border border-border-default hover:border-primary-lime/30 transition-all cursor-pointer group active:scale-[0.99]"
     >
-      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-white/5">
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border-default">
         <img src={artwork.imageUrl} className="w-full h-full object-cover opacity-80" alt="작품" />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <span className={`font-bold ${artwork.grade === Grade.A ? 'text-primary-lime' : 'text-white'}`}>
+          <span className={`font-bold ${artwork.grade === Grade.A ? 'text-primary-lime' : 'text-text-primary'}`}>
             {artwork.grade}
           </span>
         </div>
@@ -63,13 +63,13 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
           <span className="text-xs text-text-mid">{new Date(artwork.timestamp).toLocaleDateString('ko-KR')}</span>
           <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-text-secondary">{artwork.university}</span>
         </div>
-        <div className="text-sm text-white font-medium truncate mt-0.5">{artwork.major} 분석</div>
+        <div className="text-sm text-text-primary font-medium truncate mt-0.5">{artwork.major} 분석</div>
         {artwork.aiSummary && (
           <div className="text-xs text-text-mid truncate mt-0.5">{artwork.aiSummary}</div>
         )}
       </div>
 
-      <ChevronRight size={16} className="text-text-low group-hover:text-white" />
+      <ChevronRight size={16} className="text-text-low group-hover:text-text-primary" />
     </div>
   );
 };
