@@ -62,7 +62,8 @@
       "Bash(docker-compose up:*)",
       "Bash(docker run:*)",
       "Bash(docker ps:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(docker:*)"
     ]
   }
 }
