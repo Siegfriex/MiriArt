@@ -21,7 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -47,6 +47,8 @@ class AnalysisIntegrationTest {
 
     @MockBean
     AiProxyService aiProxyService;
+    @MockBean
+    com.miriart.api.global.storage.FileStorageService fileStorageService;
 
     private User user1;
     private User user2;
@@ -89,7 +91,9 @@ class AnalysisIntegrationTest {
         ReflectionTestUtils.setField(mockResponse, "fixScope", FixScope.DetailTuning.name());
         ReflectionTestUtils.setField(mockResponse, "comment", "테스트 코멘트");
         ReflectionTestUtils.setField(mockResponse, "universityPredictions", java.util.List.<UniversityPrediction>of());
-        when(aiProxyService.analyze(anyString(), anyString(), anyString())).thenReturn(mockResponse);
+        when(fileStorageService.upload(any(), any())).thenReturn(
+                new com.miriart.api.global.storage.FileUploadResult("https://example.com/test.jpg", "gs://miriart-bucket/test.jpg"));
+        when(aiProxyService.analyze(anyString(), anyString(), any())).thenReturn(mockResponse);
 
         MockMultipartFile image = new MockMultipartFile(
                 "image", "test.jpg", "image/jpeg", "fake-image-bytes".getBytes());

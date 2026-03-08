@@ -62,7 +62,7 @@ export const GradeInputSheet: React.FC = () => {
       <span className="text-xs text-text-mid font-medium">{label}</span>
       <div className="flex gap-2">
         <div className="flex-1">
-          <div className="text-[10px] text-text-low mb-1">등급</div>
+          <div className="text-micro text-text-low mb-1">등급</div>
           <input
             type="number"
             min="1"
@@ -74,7 +74,7 @@ export const GradeInputSheet: React.FC = () => {
           />
         </div>
         <div className="flex-1">
-          <div className="text-[10px] text-text-low mb-1">{STRINGS.GRADE_INPUT_PERCENTILE}</div>
+          <div className="text-micro text-text-low mb-1">{STRINGS.GRADE_INPUT_PERCENTILE}</div>
           <input
             type="number"
             min="1"

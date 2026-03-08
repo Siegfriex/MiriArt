@@ -1,5 +1,5 @@
 /**
- * @fileoverview 커뮤니티 홈 피드. SubTabBar + PostCard 목록 + 무한스크롤 준비.
+ * @fileoverview 커뮤니티 홈 피드. SubTabBar + PostCard 목록 + 무한스크롤.
  * tab/grade/domain은 useFeedQuery에서 전달해 URL과 동기화.
  * @참조 Home Page, useFeedQuery
  */
@@ -8,8 +8,9 @@ import React, { useRef, useEffect } from 'react';
 import { SubTabBar } from './SubTabBar';
 import { PostCard } from './PostCard';
 import { EmptyState } from '../common/EmptyState';
-import { usePostsFeed, FeedTab } from '../../features/community/usePostsFeed';
-import { STRINGS } from '../../shared/config/strings';
+import { usePostsFeed } from '@/features/community/usePostsFeed';
+import { FEED_TAB_PARAMS, type FeedTab } from '@/entities/community/lib/feedTabToParams';
+import { STRINGS } from '@/shared/config/strings';
 
 interface HomeFeedProps {
   tab: FeedTab;
@@ -31,37 +32,33 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   setDomain,
   onTabChange,
 }) => {
-  const { posts, activeTab, setActiveTab, isLoading, loadMore } = usePostsFeed('', '', {
-    tab,
-    setTab,
+  const { posts, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = usePostsFeed({
+    ...FEED_TAB_PARAMS[tab],
     grade,
-    setGrade,
     domain,
-    setDomain,
   });
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // 무한스크롤 트리거 (Phase C1 전은 noop)
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      (entries) => { if (entries[0].isIntersecting && hasNextPage) fetchNextPage(); },
       { threshold: 0.1 }
     );
     const el = bottomRef.current;
     if (el) observer.observe(el);
     return () => { if (el) observer.unobserve(el); };
-  }, [loadMore]);
+  }, [fetchNextPage, hasNextPage]);
 
   const handleTabChange = (tab: FeedTab) => {
-    setActiveTab(tab);
+    setTab(tab);
     onTabChange?.(tab);
   };
 
   return (
     <div>
-      <SubTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <SubTabBar activeTab={tab} onTabChange={handleTabChange} />
       <div className="space-y-3 p-4">
-        {isLoading ? (
+        {isPending ? (
           <div className="flex justify-center py-8">
             <div className="w-5 h-5 border-2 border-primary-lime border-t-transparent rounded-full animate-spin" />
           </div>
@@ -72,6 +69,11 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           />
         ) : (
           posts.map((post) => <PostCard key={post.id} post={post} />)
+        )}
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-4">
+            <div className="w-5 h-5 border-2 border-primary-lime border-t-transparent rounded-full animate-spin" />
+          </div>
         )}
         <div ref={bottomRef} className="h-1" />
       </div>

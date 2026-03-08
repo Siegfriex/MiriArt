@@ -9,13 +9,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { H2, H3, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
 import { TextInput } from '../../shared/ui/TextInput';
-import { X, Image as ImageIcon, AlertCircle, ArrowLeft, Camera } from 'lucide-react';
+import { X, Image as ImageIcon, ArrowLeft, Camera } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
 import { useToastStore } from '../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { AnalysisApi, ApiError, UserApi, type PlanInfo } from '../../shared/api/miriartApi';
+import { AiLoadingState, AiErrorState } from '@/shared/ui/ai';
 
 const MAX_FILE_SIZE_MB = 10;
 const ANALYSIS_DURATION_SEC = 8;
@@ -249,7 +250,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
                 placeholder={STRINGS.UPLOAD_STEP2_CONTEXT_PLACEHOLDER}
                 maxLength={500}
               />
-              <div className="text-right text-[11px] text-text-mid mt-1">{text.length}/500</div>
+              <div className="text-right text-tiny text-text-mid mt-1">{text.length}/500</div>
             </div>
           </div>
         </div>
@@ -311,36 +312,14 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   // ─── Step 4: Analysis Loading ─────────────────────────────────────────────
   if (step === 4) {
     return (
-      <div className="absolute inset-0 bg-surface flex flex-col items-center justify-center p-8 text-center">
-        {/* CSS 파티클 애니메이션 */}
-        <div className="relative w-28 h-28 mb-8">
-          <div className="absolute inset-0 border-4 border-border-default rounded-full" />
-          <div className="absolute inset-0 border-4 border-primary-lime rounded-full border-t-transparent animate-spin" />
-          <div
-            className="absolute inset-2 border-2 border-primary-lime/30 rounded-full border-b-transparent animate-spin"
-            style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center text-primary-lime font-extrabold text-xl">
-            AI
-          </div>
-        </div>
-
-        <H2 className="mb-2">{STRINGS.UPLOAD_STEP4_TITLE}</H2>
-        <BodyText className="mb-6">{STRINGS.UPLOAD_STEP4_DESC}</BodyText>
-
-        {/* Progress Bar */}
-        <div className="w-full max-w-xs space-y-2">
-          <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden border border-border-default">
-            <div
-              className="h-full bg-primary-lime rounded-full transition-all duration-100"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-[11px] text-text-mid">
-            <span>{Math.round(progress)}%</span>
-            <span>{Math.max(0, ANALYSIS_DURATION_SEC - Math.floor(elapsed))}초 남음</span>
-          </div>
-        </div>
+      <div className="absolute inset-0 bg-surface">
+        <AiLoadingState
+          title={STRINGS.UPLOAD_STEP4_TITLE}
+          description={STRINGS.UPLOAD_STEP4_DESC}
+          progress={progress}
+          estimatedTime={`${Math.max(0, ANALYSIS_DURATION_SEC - Math.floor(elapsed))}초 남음`}
+          variant="fullscreen"
+        />
       </div>
     );
   }
@@ -362,32 +341,28 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
           : '잠시 후 다시 시도해주세요.';
 
     return (
-      <div className="absolute inset-0 bg-surface flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-semantic-error/20 flex items-center justify-center mb-6 border border-semantic-error/30">
-          <AlertCircle className="text-semantic-error" size={32} />
-        </div>
-        <H2 className="mb-2">{errorTitle}</H2>
-        <BodyText className="mb-8">{errorDesc}</BodyText>
-        <div className="flex gap-3 w-full max-w-xs">
-          <Button variant="secondary" className="flex-1" onClick={closeModal}>
+      <div className="absolute inset-0 bg-surface">
+        <AiErrorState
+          title={errorTitle}
+          description={errorDesc}
+          variant="fullscreen"
+          onRetry={errorType !== 'credits' ? handleRetry : undefined}
+          secondaryAction={
+            errorType === 'credits'
+              ? {
+                  label: '플랜 업그레이드',
+                  onClick: () => {
+                    closeModal();
+                    openModal('SUBSCRIPTION', { currentPlan: 'free' });
+                  },
+                }
+              : undefined
+          }
+        />
+        <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
+          <Button variant="secondary" onClick={closeModal}>
             {STRINGS.CANCEL}
           </Button>
-          {errorType !== 'credits' && (
-            <Button className="flex-1" onClick={handleRetry}>
-              {STRINGS.RETRY}
-            </Button>
-          )}
-          {errorType === 'credits' && (
-            <Button
-              className="flex-1"
-              onClick={() => {
-                closeModal();
-                openModal('SUBSCRIPTION', { currentPlan: 'free' });
-              }}
-            >
-              플랜 업그레이드
-            </Button>
-          )}
         </div>
       </div>
     );

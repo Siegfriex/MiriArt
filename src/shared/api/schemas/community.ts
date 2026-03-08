@@ -8,6 +8,7 @@ const personaSchema = z.object({
   displayName: z.string(),
   colorToken: z.string(),
 });
+export { personaSchema };
 
 export const postSchema = z.object({
   id: z.string(),
@@ -30,8 +31,41 @@ export const postSchema = z.object({
 });
 export type PostApi = z.infer<typeof postSchema>;
 
-/** 단일 Post 상세 응답. 현재는 Post와 동일 shape. BE에서 확장 시 스키마만 수정 */
-export const postDetailResponseSchema = postSchema;
+/** Answer (Q&A 답변). BE 상세 응답용 */
+export const answerSchema = z.object({
+  id: z.string(),
+  postId: z.string(),
+  persona: personaSchema,
+  reputationLevel: z.number(),
+  content: z.string(),
+  imageUrls: z.array(z.string()),
+  likeCount: z.number(),
+  isAccepted: z.boolean(),
+  commentCount: z.number(),
+  createdAt: z.string(),
+});
+export type AnswerApi = z.infer<typeof answerSchema>;
+
+/** Comment. 게시글/답변 하위 댓글 */
+export const commentSchema = z.object({
+  id: z.string(),
+  parentType: z.enum(['post', 'answer']),
+  parentId: z.string(),
+  persona: personaSchema,
+  content: z.string(),
+  createdAt: z.string(),
+});
+export type CommentApi = z.infer<typeof commentSchema>;
+
+/** 단일 Post 상세(답변·댓글 포함). BE 확장 시 사용 */
+export const postDetailSchema = postSchema.extend({
+  answers: z.array(answerSchema).optional(),
+  comments: z.array(commentSchema).optional(),
+});
+export type PostDetailApi = z.infer<typeof postDetailSchema>;
+
+/** 단일 Post 상세 응답(답변·댓글 포함). BE 확장 시 스키마만 수정 */
+export const postDetailResponseSchema = postDetailSchema;
 export type PostDetailResponseApi = z.infer<typeof postDetailResponseSchema>;
 
 export const postsResponseSchema = z.object({
@@ -54,3 +88,24 @@ export const createPostRequestSchema = z.object({
   deadlineHours: z.union([z.literal(24), z.literal(48), z.literal(72)]).optional(),
 });
 export type CreatePostRequestApi = z.infer<typeof createPostRequestSchema>;
+
+// BE 계약: POST /api/likes/toggle — targetType 'POST'|'ANSWER', targetId number. FE 어댑터에서 Number(id) 변환.
+export const toggleLikeRequestSchema = z.object({
+  targetType: z.enum(['POST', 'ANSWER']),
+  targetId: z.number(),
+});
+export const toggleLikeResponseSchema = z.object({
+  liked: z.boolean(),
+  likeCount: z.number(),
+});
+
+// BE 계약: content 필수, imageUrls 선택. personaId는 FE 옵션, BE 전송 시 제외 또는 서버에서 무시.
+export const createAnswerRequestSchema = z.object({
+  content: z.string().min(1),
+  imageUrls: z.array(z.string()).optional(),
+  personaId: z.string().optional(),
+});
+
+export type ToggleLikeRequestApi = z.infer<typeof toggleLikeRequestSchema>;
+export type ToggleLikeResponseApi = z.infer<typeof toggleLikeResponseSchema>;
+export type CreateAnswerRequestApi = z.infer<typeof createAnswerRequestSchema>;

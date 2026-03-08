@@ -100,12 +100,12 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({ currentPla
               }`}
             >
               {'badge' in plan && plan.badge && !isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-lime text-text-inverse text-[10px] font-bold px-3 py-0.5 rounded-full shadow-glow">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-lime text-text-inverse text-micro font-bold px-3 py-0.5 rounded-full shadow-glow">
                   {plan.badge}
                 </div>
               )}
               {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-surface-tertiary text-text-primary text-[10px] font-bold px-3 py-0.5 rounded-full border border-border-default">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-surface-tertiary text-text-primary text-micro font-bold px-3 py-0.5 rounded-full border border-border-default">
                   {STRINGS.SUBSCRIPTION_CURRENT_PLAN}
                 </div>
               )}

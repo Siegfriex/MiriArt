@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { FeedTab } from '../../features/community/usePostsFeed';
+import { FeedTab } from '@/entities/community/lib/feedTabToParams';
 import { STRINGS } from '../../shared/config/strings';
 
 interface SubTabBarProps {

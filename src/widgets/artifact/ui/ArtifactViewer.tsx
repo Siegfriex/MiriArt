@@ -38,7 +38,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, onClos
                {artifact.type === 'checklist' ? <CheckSquare size={20} /> : <Grid size={20} />}
              </div>
              <div>
-               <div className="text-[10px] text-text-mid font-bold uppercase tracking-wider">
+               <div className="text-micro text-text-mid font-bold uppercase tracking-wider">
                  {artifact.type === 'checklist' ? '체크리스트' : '갤러리'} Artifact
                </div>
                <H2 className="text-lg">{artifact.title}</H2>

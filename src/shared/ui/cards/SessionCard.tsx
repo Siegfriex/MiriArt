@@ -47,10 +47,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onClick }) =>
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         {/* 상단 행: 학교·전공 + 시간 */}
         <div className="flex justify-between items-start">
-          <div className="text-[11px] text-primary-lime font-bold uppercase tracking-wide truncate max-w-[65%]">
+          <div className="text-tiny text-primary-lime font-bold uppercase tracking-wide truncate max-w-[65%]">
             {session.university} · {session.major}
           </div>
-          <span className="text-[10px] text-text-mid flex-shrink-0 ml-2">{relativeTime()}</span>
+          <span className="text-micro text-text-mid flex-shrink-0 ml-2">{relativeTime()}</span>
         </div>
 
         {/* 세션 제목 */}
@@ -60,7 +60,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onClick }) =>
 
         {/* 하단 행: 마지막 메시지 + fixScope 태그 */}
         <div className="flex justify-between items-end gap-2">
-          <div className="text-[11px] text-text-mid truncate flex-1">
+          <div className="text-tiny text-text-mid truncate flex-1">
             {session.lastMessage}
           </div>
           {session.fixScope && (

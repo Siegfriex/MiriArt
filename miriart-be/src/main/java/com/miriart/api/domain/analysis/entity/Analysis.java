@@ -45,7 +45,7 @@ public class Analysis extends BaseEntity {
     @Column(name = "image_url", nullable = false, columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(name = "analysis_type", nullable = false, length = 10)
+    @Column(name = "analysis_type", nullable = false, length = 50)
     private String analysisType;
 
     @Column(name = "problem_text", length = 500)

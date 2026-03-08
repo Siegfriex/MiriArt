@@ -152,7 +152,7 @@ export const Home: React.FC = () => {
                     alt="작품"
                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-colors"
                   />
-                  <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-primary-lime font-bold border border-primary-lime/30">
+                  <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-micro text-primary-lime font-bold border border-primary-lime/30">
                     {art.grade}등급
                   </div>
                 </div>

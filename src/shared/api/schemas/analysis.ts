@@ -1,8 +1,17 @@
 /**
  * @fileoverview Analysis API 응답 Zod 스키마. BE 계약 검증용.
+ * P0: POST /api/analyses 202 응답용 analysisStartResponseSchema 추가.
  */
 
 import { z } from 'zod';
+
+/** POST /api/analyses 202 Accepted 응답. analysisId로 GET 단건 조회 후 전체 결과 사용. */
+export const analysisStartResponseSchema = z.object({
+  analysisId: z.string(),
+  status: z.string().optional(),
+  message: z.string().optional(),
+});
+export type AnalysisStartResponse = z.infer<typeof analysisStartResponseSchema>;
 
 const radarDataSchema = z.object({
   density: z.number(),

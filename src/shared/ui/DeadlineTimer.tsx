@@ -37,7 +37,7 @@ export const DeadlineTimer: React.FC<DeadlineTimerProps> = ({ deadlineAt, classN
   const text = formatRemaining(remaining);
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] ${isExpired ? 'text-text-low' : 'text-semantic-warning'} ${className}`}>
+    <span className={`inline-flex items-center gap-1 text-tiny ${isExpired ? 'text-text-low' : 'text-semantic-warning'} ${className}`}>
       <Clock size={11} />
       {text}
     </span>

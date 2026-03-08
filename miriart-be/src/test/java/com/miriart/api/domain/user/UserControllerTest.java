@@ -91,12 +91,11 @@ class UserControllerTest {
     @Test
     @DisplayName("PATCH /api/users/me/profile - 완료 후 needsProfile=false, planType 유지")
     void updateProfile_thenMe_hasNeedsProfileFalse() throws Exception {
+        String uniqueNick = "테스트닉-" + UUID.randomUUID().toString().substring(0, 8);
         mockMvc.perform(patch("/api/users/me/profile")
                         .header(HttpHeaders.AUTHORIZATION, bearer())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nickname":"테스트닉","grade":"고3","domain":"기초디자인"}
-                                """))
+                        .content("{\"nickname\":\"" + uniqueNick + "\",\"grade\":\"고3\",\"domain\":\"기초디자인\"}"))
                 .andExpect(status().isOk());
 
         ResultActions me = mockMvc.perform(get("/api/users/me")

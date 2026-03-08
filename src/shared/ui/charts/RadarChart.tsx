@@ -122,7 +122,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 220 }) => {
             y={y.toFixed(2)}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-text-mid text-[10px] font-medium select-none"
+            className="fill-text-mid text-micro font-medium select-none"
             style={{ fontSize: '10px', fill: hoveredKey === key ? '#C2F970' : '#A1A1AA' }}
           >
             {LABELS[key]}
@@ -134,7 +134,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 220 }) => {
       {hoveredKey && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
           <div className="bg-surface-alt border border-border-default rounded-lg px-3 py-1.5 text-center shadow-elevated">
-            <div className="text-[10px] text-text-mid">{LABELS[hoveredKey]}</div>
+            <div className="text-micro text-text-mid">{LABELS[hoveredKey]}</div>
             <div className="text-lg font-bold text-primary-lime">{data[hoveredKey]}</div>
           </div>
         </div>

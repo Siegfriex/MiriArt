@@ -1,8 +1,9 @@
 /**
- * @fileoverview 회원가입 페이지. 이메일, 비밀번호, 닉네임, 학년, 전공. 제출 시 Tutorial로 이동.
+ * @fileoverview 회원가입 페이지. 이메일, 비밀번호, 닉네임, 학년, 전공. 제출 시 로그인된 경우 PATCH 프로필 후 앱 홈으로.
+ * P0: 로그인 시 UserApi.updateProfile 호출, 성공 시 setProfileFromApi(needsProfile=false) 후 /app/home 이동.
  * @참조 AppRouter
  * @라우팅 /auth/signup
- * @상태 useState (formData)
+ * @상태 useState (formData, isSubmitting)
  */
 
 import React, { useState } from 'react';
@@ -15,21 +16,77 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
 import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
+import { useUserStore } from '../../shared/model/userStore';
+import { useToastStore } from '../../shared/model/toastStore';
+import { UserApi, handleApiError } from '../../shared/api/miriartApi';
 
-/** 회원가입. @참조 AppRouter @상태 formData */
+/** BE PATCH /api/users/me/profile 허용값. value=API 전송값, label=표시용. */
+const GRADE_OPTIONS = [
+  { value: '고1', label: STRINGS.GRADE_HS1 },
+  { value: '고2', label: STRINGS.GRADE_HS2 },
+  { value: '고3', label: STRINGS.GRADE_HS3 },
+  { value: '재수', label: STRINGS.GRADE_GAP },
+  { value: 'N수', label: 'N수' },
+] as const;
+
+const DOMAIN_OPTIONS = [
+  { value: '기초디자인', label: '기초디자인' },
+  { value: '기초소양', label: '기초소양' },
+  { value: '수채화', label: '수채화' },
+  { value: '소묘', label: '소묘' },
+  { value: '사고의전환', label: '사고의전환' },
+  { value: '만화·애니', label: '만화·애니' },
+] as const;
+
+/** 회원가입. @참조 AppRouter @상태 formData, isSubmitting */
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, setProfileFromApi } = useUserStore();
+  const showToast = useToastStore((s) => s.show);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     nickname: '',
-    grade: STRINGS.GRADE_HS3,
-    domain: STRINGS.MAJOR_VISUAL,
+    grade: '고3',
+    domain: '기초디자인',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(ROUTES.TUTORIAL);
+    if (isSubmitting) return;
+
+    if (isAuthenticated) {
+      const nickname = formData.nickname.trim();
+      if (nickname.length < 2) {
+        showToast('닉네임은 2자 이상 입력해주세요.', 'error');
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        const { needsProfile } = await UserApi.updateProfile({
+          nickname,
+          grade: formData.grade,
+          domain: formData.domain,
+        });
+        setProfileFromApi({
+          nickname,
+          grade: formData.grade,
+          domain: formData.domain,
+          needsProfile: !!needsProfile,
+        });
+        showToast('프로필이 저장되었습니다.', 'success');
+        navigate(ROUTES.APP.HOME, { replace: true });
+      } catch (err) {
+        const msg = handleApiError(err);
+        showToast(msg, 'error');
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      navigate(ROUTES.TUTORIAL);
+    }
   };
 
   const update = (key: string, val: string) =>
@@ -75,16 +132,8 @@ export const Signup: React.FC = () => {
 
           <div className="flex gap-3">
             {[
-              {
-                label: STRINGS.SIGNUP_GRADE,
-                key: 'grade',
-                options: [STRINGS.GRADE_HS1, STRINGS.GRADE_HS2, STRINGS.GRADE_HS3, STRINGS.GRADE_GAP],
-              },
-              {
-                label: STRINGS.SIGNUP_MAJOR,
-                key: 'domain',
-                options: [STRINGS.MAJOR_VISUAL, STRINGS.MAJOR_INDUSTRIAL, STRINGS.MAJOR_FINE, STRINGS.MAJOR_CRAFT],
-              },
+              { label: STRINGS.SIGNUP_GRADE, key: 'grade' as const, options: GRADE_OPTIONS },
+              { label: STRINGS.SIGNUP_MAJOR, key: 'domain' as const, options: DOMAIN_OPTIONS },
             ].map(({ label, key, options }) => (
               <div key={key} className="flex-1 space-y-1.5">
                 <label htmlFor={key} className="text-xs text-text-mid ml-1 font-medium uppercase tracking-wider">
@@ -94,11 +143,13 @@ export const Signup: React.FC = () => {
                   id={key}
                   size="md"
                   fullWidth
-                  value={(formData as Record<string, string>)[key]}
+                  value={formData[key]}
                   onChange={(e) => update(key, e.target.value)}
                 >
                   {options.map((o) => (
-                    <option key={o}>{o}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </Select>
               </div>
@@ -106,8 +157,14 @@ export const Signup: React.FC = () => {
           </div>
 
           <div className="pt-6">
-            <Button fullWidth type="submit" size="lg" className="rounded-2xl h-14 text-base font-bold">
-              {STRINGS.SIGNUP_BUTTON}
+            <Button
+              fullWidth
+              type="submit"
+              size="lg"
+              className="rounded-2xl h-14 text-base font-bold"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '저장 중...' : STRINGS.SIGNUP_BUTTON}
             </Button>
           </div>
         </form>

@@ -64,7 +64,7 @@ export const BottomNav: React.FC = () => {
               }`}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <span className="text-micro font-medium">{tab.label}</span>
             </button>
           );
         })}

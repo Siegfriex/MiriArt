@@ -36,9 +36,9 @@ export const AnalysisCarousel: React.FC<AnalysisCarouselProps> = ({ artworks }) 
           {/* 정보 */}
           <div className="px-1">
             <div className="text-xs font-medium text-text-primary truncate">{art.university}</div>
-            <div className="text-[11px] text-text-mid truncate">{art.major}</div>
+            <div className="text-tiny text-text-mid truncate">{art.major}</div>
             {art.aiSummary && (
-              <div className="text-[10px] text-text-mid mt-1 line-clamp-2 leading-relaxed">
+              <div className="text-micro text-text-mid mt-1 line-clamp-2 leading-relaxed">
                 {art.aiSummary}
               </div>
             )}

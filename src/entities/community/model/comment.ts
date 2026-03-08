@@ -1,17 +1,8 @@
 /**
- * @fileoverview 커뮤니티 Comment 도메인 타입. 게시글/답변 하위 댓글.
+ * @fileoverview 커뮤니티 Comment 도메인 타입. Zod SSOT — types.ts에서 추출한 타입 재export.
  * @참조 PostDetailPage, QnaDetailPage
  */
 
-import { Persona } from './post';
+export type { Comment } from './types';
 
 export type CommentParentType = 'post' | 'answer';
-
-export interface Comment {
-  id: string;
-  parentType: CommentParentType;
-  parentId: string;
-  persona: Persona;
-  content: string;
-  createdAt: string;
-}

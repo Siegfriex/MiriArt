@@ -25,9 +25,9 @@ miriart-be/.env.*
 miriart-be/build/
 miriart-be/build2/
 miriart-be/.gradle/
-miriart-ai/.venv/
-miriart-ai/.env
-miriart-ai/__pycache__/
+
+# AI 레거시 (독립 레포로 분리 — 모노레포에서 제외)
+miriart-ai-legacy/
 **/__pycache__/
 *.pyc
 service-account*.json

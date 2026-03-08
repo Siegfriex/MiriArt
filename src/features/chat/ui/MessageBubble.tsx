@@ -52,7 +52,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onQuickRe
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[10px] text-primary-lime bg-primary-lime/10 px-2 py-1 rounded-md border border-primary-lime/20 hover:bg-primary-lime/20 truncate max-w-[200px]"
+                className="text-micro text-primary-lime bg-primary-lime/10 px-2 py-1 rounded-md border border-primary-lime/20 hover:bg-primary-lime/20 truncate max-w-[200px]"
               >
                 출처 {idx + 1}
               </a>
@@ -74,7 +74,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onQuickRe
           </div>
         )}
 
-        <span className="text-[10px] text-text-mid mt-1">
+        <span className="text-micro text-text-mid mt-1">
           {new Date(message.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>

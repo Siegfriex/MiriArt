@@ -52,7 +52,7 @@ const TierSection: React.FC<{ tier: ComparisonTier }> = ({ tier }) => {
           <div className={`w-1.5 h-8 rounded-full ${style.bar}`} />
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${style.badge}`}>
+              <span className={`text-micro font-bold px-2 py-0.5 rounded-full ${style.badge}`}>
                 {style.badgeText}
               </span>
               <span className="text-xs text-text-mid">{tier.threshold}</span>
@@ -78,12 +78,12 @@ const TierSection: React.FC<{ tier: ComparisonTier }> = ({ tier }) => {
                 <div key={idx} className="pt-3 flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-text-primary">{item.university}</div>
-                    <div className="text-[11px] text-text-mid">{item.major}</div>
+                    <div className="text-tiny text-text-mid">{item.major}</div>
                     <BodyText className="text-xs text-text-mid mt-1 line-clamp-2">{item.description}</BodyText>
                   </div>
                   <div className="flex flex-col items-end flex-shrink-0">
                     <div className="text-lg font-bold text-primary-lime">{item.probability}%</div>
-                    <div className="text-[10px] text-text-mid">유사 합격 {item.similarAcceptedCount}명</div>
+                    <div className="text-micro text-text-mid">유사 합격 {item.similarAcceptedCount}명</div>
                   </div>
                 </div>
               ))}
@@ -104,7 +104,7 @@ export const ComparisonAccordion: React.FC<ComparisonAccordionProps> = ({
     <section>
       <div className="flex justify-between items-center mb-4">
         <H2>{STRINGS.RESULT_COMPARISON_TITLE}</H2>
-        <span className="text-[10px] text-text-mid">{STRINGS.RESULT_YEAR_LABEL}</span>
+        <span className="text-micro text-text-mid">{STRINGS.RESULT_YEAR_LABEL}</span>
       </div>
 
       <div className="relative">

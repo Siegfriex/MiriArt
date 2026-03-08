@@ -57,13 +57,13 @@ export const StickyContextCard: React.FC<StickyContextCardProps> = ({
                   {grade}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-text-mid leading-none">점수</span>
+                  <span className="text-micro text-text-mid leading-none">점수</span>
                   <span className="text-sm font-bold text-text-primary leading-none">{score}</span>
                 </div>
               </div>
 
               <div
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wide ${
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-micro font-bold uppercase tracking-wide ${
                   isRebuild
                     ? 'border-semantic-error/30 text-semantic-error bg-semantic-error/10'
                     : 'border-primary-lime/30 text-primary-lime bg-primary-lime/10'

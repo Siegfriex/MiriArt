@@ -98,11 +98,11 @@ export const Profile: React.FC = () => {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-tertiary rounded-xl p-3">
-            <BodyText className="text-[11px] text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_GRADE}</BodyText>
+            <BodyText className="text-tiny text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_GRADE}</BodyText>
             <div className="text-sm text-text-primary font-medium">{profile.grade}</div>
           </div>
           <div className="bg-surface-tertiary rounded-xl p-3">
-            <BodyText className="text-[11px] text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_DOMAIN}</BodyText>
+            <BodyText className="text-tiny text-text-mid mb-1">{STRINGS.PROFILE_ACADEMIC_DOMAIN}</BodyText>
             <div className="text-sm text-text-primary font-medium">{profile.domain}</div>
           </div>
         </div>

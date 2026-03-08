@@ -2,15 +2,12 @@ package com.miriart.api.domain.analysis.service;
 
 import com.miriart.api.domain.ai.dto.InternalAnalyzeResponse;
 import com.miriart.api.domain.ai.service.AiProxyService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miriart.api.domain.analysis.dto.AnalysisDetailResponse;
 import com.miriart.api.domain.analysis.dto.AnalysisStartResponse;
-import com.miriart.api.domain.analysis.entity.*;
+import com.miriart.api.domain.analysis.entity.Analysis;
 import com.miriart.api.domain.analysis.repository.AnalysisRepository;
 import com.miriart.api.domain.analysis.repository.AnalysisUsageLogRepository;
-import com.miriart.api.domain.user.entity.User;
-import com.miriart.api.domain.user.repository.UserRepository;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.storage.FileCategory;
@@ -29,19 +26,18 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 작품 분석 오케스트레이션 서비스. GCS 업로드 → FastAPI 분석 호출 → DB 저장·크레딧 차감.
+ * 작품 분석 오케스트레이션 서비스.
  *
- * <p>연계 구조:</p>
- * <ul>
- *   <li>{@link FileStorageService}로 이미지 업로드 후 gcsUri 획득 → {@link AiProxyService#analyze}로 FastAPI /internal/ai/analyze 호출</li>
- *   <li>{@link AnalysisRepository}에 PENDING으로 저장 후 AI 응답으로 complete/fail 업데이트</li>
- *   <li>{@link AnalysisUsageLogRepository}로 월별 사용량 집계, {@link User} 플랜 한도 초과 시 CREDIT_LIMIT_EXCEEDED</li>
- *   <li>{@link AnalysisController}에서 startAnalysis, getAnalysis, getMyAnalyses 호출</li>
- * </ul>
+ * <p>트랜잭션 전략 (3단계 분리):</p>
+ * <ol>
+ *   <li>파일 검증 + GCS 업로드 (트랜잭션 외부 — I/O)</li>
+ *   <li>크레딧 체크 + PENDING INSERT ({@link AnalysisFailHandler#savePending} — 트랜잭션 1)</li>
+ *   <li>FastAPI AI 호출 (트랜잭션 외부 — 네트워크 I/O)</li>
+ *   <li>성공 → COMPLETED UPDATE + usage log ({@link AnalysisFailHandler#complete} — 트랜잭션 2)</li>
+ *   <li>실패 → FAILED UPDATE ({@link AnalysisFailHandler#markFailed} — 독립 트랜잭션)</li>
+ * </ol>
  *
- * <p>AGENT_BE Task 3 기반.</p>
- *
- * @author MiriArt Team
+ * <p>AI 호출 실패 시에도 FAILED 레코드가 DB에 남아 운영 모니터링이 가능하다.</p>
  */
 @Slf4j
 @Service
@@ -50,81 +46,48 @@ public class AnalysisService {
 
     private final AnalysisRepository analysisRepository;
     private final AnalysisUsageLogRepository usageLogRepository;
-    private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final AiProxyService aiProxyService;
+    private final AnalysisFailHandler analysisFailHandler;
     private final ObjectMapper objectMapper;
 
     /**
-     * 작품 업로드 + AI 분석 시작
+     * 작품 업로드 + AI 분석 시작 (3단계 트랜잭션)
      * POST /api/analyses
      */
-    @Transactional
     public AnalysisStartResponse startAnalysis(Long userId, MultipartFile image,
                                                String analysisType, String problemText) throws IOException {
-        User user = userRepository.findByIdOrThrow(userId);
-
-        // 1. 파일 검증
+        // 1. 파일 검증 (트랜잭션 불필요)
         if (image == null || image.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_EMPTY);
         }
 
-        // 2. 크레딧 한도 체크 (P1: 온보딩 완료(Full, needsProfile=false)면 한도 체크 스킵)
-        if (user.isNeedsProfile()) {
-            String currentMonth = currentBillingMonth();
-            long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentMonth);
-            int monthlyLimit = user.getPlanType().getMonthlyLimit();
-            if (usedThisMonth >= monthlyLimit) {
-                log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
-                throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
-            }
-        }
-
-        // 3. GCS 업로드 — FileUploadResult로 publicUrl + gcsUri 동시 확보 (Bug #1 Fix)
+        // 2. GCS 업로드 (트랜잭션 불필요 — 파일 I/O)
         FileUploadResult uploadResult = fileStorageService.upload(image, FileCategory.ARTWORK);
-        String imageUrl = uploadResult.publicUrl();
-        String gcsUrl = uploadResult.gcsUri();
 
-        // 4. analyses INSERT (PENDING)
-        Analysis analysis = analysisRepository.save(
-                Analysis.builder()
-                        .user(user)
-                        .gcsUrl(gcsUrl)
-                        .imageUrl(imageUrl)
-                        .analysisType(analysisType)
-                        .problemText(problemText)
-                        .build()
-        );
-        log.debug("분석 생성 - analysisId: {}, userId: {}", analysis.getId(), userId);
+        // 3. 크레딧 체크 + PENDING INSERT (트랜잭션 1)
+        Analysis analysis = analysisFailHandler.savePending(userId, uploadResult, analysisType, problemText);
         log.info("분석 시작 - analysisId: {}, userId: {}, status: PENDING", analysis.getId(), userId);
 
-        // 5. FastAPI WebClient 호출
+        // 4. FastAPI AI 호출 (트랜잭션 외부)
         try {
-            InternalAnalyzeResponse aiResult = aiProxyService.analyze(gcsUrl, analysisType, problemText);
+            InternalAnalyzeResponse aiResult = aiProxyService.analyze(
+                    analysis.getGcsUrl(), analysisType, problemText);
 
-            // 6. analyses UPDATE (COMPLETED) — DTO 객체를 JSON 문자열로 직렬화하여 저장
-            String scoresJson = toJson(aiResult.getRadarData());
-            String predictionsJson = toJson(aiResult.getUniversityPredictions() != null ? aiResult.getUniversityPredictions() : java.util.List.of());
+            // 5. COMPLETED UPDATE + usage log (트랜잭션 2)
+            analysisFailHandler.complete(analysis.getId(), userId, aiResult);
+            log.info("분석 완료 - analysisId: {}, userId: {}, status: COMPLETED", analysis.getId(), userId);
 
-            analysis.complete(
-                    AnalysisGrade.valueOf(aiResult.getGrade()),
-                    aiResult.getTotalScore(),
-                    scoresJson,
-                    aiResult.getFixScope() != null ? FixScope.valueOf(aiResult.getFixScope()) : null,
-                    aiResult.getComment(),
-                    predictionsJson
-            );
-            analysisRepository.save(analysis);
-        } catch (BusinessException e) {
-            analysis.fail();
-            analysisRepository.save(analysis);
-            log.info("분석 실패 - analysisId: {}, userId: {}, status: FAILED", analysis.getId(), userId);
-            throw e;
+        } catch (Exception e) {
+            // 6. FAILED UPDATE (PENDING이 이미 커밋되어 있으므로 조회·업데이트 가능)
+            analysisFailHandler.markFailed(analysis.getId());
+            log.info("분석 실패 - analysisId: {}, userId: {}, cause: {}", analysis.getId(), userId, e.getMessage());
+
+            if (e instanceof BusinessException) {
+                throw e;
+            }
+            throw new BusinessException(ErrorCode.AI_ANALYSIS_FAILED);
         }
-
-        // 7. usage_logs INSERT
-        usageLogRepository.save(AnalysisUsageLog.create(user, analysis.getId()));
-        log.info("분석 완료 - analysisId: {}, userId: {}, status: COMPLETED", analysis.getId(), userId);
 
         return AnalysisStartResponse.from(analysis);
     }
@@ -151,7 +114,7 @@ public class AnalysisService {
     }
 
     /**
-     * 현재 월 청구 기간 문자열 (YYYY-MM)
+     * 현재 월 사용량 조회
      */
     public long getUsedThisMonth(Long userId) {
         return usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentBillingMonth());
@@ -159,15 +122,5 @@ public class AnalysisService {
 
     private String currentBillingMonth() {
         return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
-    }
-
-    private String toJson(Object value) {
-        if (value == null) return null;
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            log.warn("JSON 직렬화 실패, null 반환: {}", e.getMessage());
-            return null;
-        }
     }
 }
