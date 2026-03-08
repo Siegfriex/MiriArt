@@ -83,7 +83,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
           />
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute -top-1 -right-1 bg-semantic-error rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white"
+            className="absolute -top-1 -right-1 bg-semantic-error rounded-full w-4 h-4 flex items-center justify-center text-micro text-white"
           >
             ✕
           </button>
@@ -113,7 +113,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
             maxLength={500}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-text-low pointer-events-none">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-micro text-text-low pointer-events-none">
             {message.length}/500
           </div>
         </div>

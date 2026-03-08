@@ -22,7 +22,7 @@ spring:
     hibernate:
       # none: 시작 시 DB 연결 불필요 (MySQL 없이도 기동 가능)
       # MySQL 실행 중일 때 스키마 자동 생성이 필요하면 'update'로 변경
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:

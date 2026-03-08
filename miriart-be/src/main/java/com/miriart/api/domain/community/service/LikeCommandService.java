@@ -1,10 +1,8 @@
 package com.miriart.api.domain.community.service;
 
 import com.miriart.api.domain.community.dto.LikeToggleResult;
-import com.miriart.api.domain.community.entity.Answer;
 import com.miriart.api.domain.community.entity.Like;
 import com.miriart.api.domain.community.entity.LikeTargetType;
-import com.miriart.api.domain.community.entity.Post;
 import com.miriart.api.domain.community.repository.AnswerRepository;
 import com.miriart.api.domain.community.repository.LikeRepository;
 import com.miriart.api.domain.community.repository.PostRepository;
@@ -12,7 +10,7 @@ import com.miriart.api.domain.user.entity.User;
 import com.miriart.api.domain.user.repository.UserRepository;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
-import jakarta.persistence.ConstraintViolationException;
+import org.hibernate.exception.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -82,32 +80,16 @@ public class LikeCommandService {
 
     private void incrementTargetLikeCount(LikeTargetType targetType, Long targetId) {
         switch (targetType) {
-            case POST -> {
-                Post post = postRepository.findById(targetId).orElseThrow();
-                post.incrementLikeCount(1);
-                postRepository.save(post);
-            }
-            case ANSWER -> {
-                Answer answer = answerRepository.findById(targetId).orElseThrow();
-                answer.incrementLikeCount(1);
-                answerRepository.save(answer);
-            }
+            case POST -> postRepository.incrementLikeCount(targetId, 1);
+            case ANSWER -> answerRepository.incrementLikeCount(targetId, 1);
             case COMMENT -> { /* 확장 시 */ }
         }
     }
 
     private void decrementTargetLikeCount(LikeTargetType targetType, Long targetId) {
         switch (targetType) {
-            case POST -> {
-                Post post = postRepository.findById(targetId).orElseThrow();
-                post.incrementLikeCount(-1);
-                postRepository.save(post);
-            }
-            case ANSWER -> {
-                Answer answer = answerRepository.findById(targetId).orElseThrow();
-                answer.incrementLikeCount(-1);
-                answerRepository.save(answer);
-            }
+            case POST -> postRepository.incrementLikeCount(targetId, -1);
+            case ANSWER -> answerRepository.incrementLikeCount(targetId, -1);
             case COMMENT -> { /* 확장 시 */ }
         }
     }

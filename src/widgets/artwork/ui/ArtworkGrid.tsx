@@ -27,7 +27,7 @@ export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
     <div className="space-y-6">
       {grouped.map(({ university, artworks: arts }) => (
         <div key={university}>
-          <div className="text-[10px] font-bold text-text-mid uppercase tracking-wide mb-2 px-0.5">
+          <div className="text-micro font-bold text-text-mid uppercase tracking-wide mb-2 px-0.5">
             {university}
           </div>
           {/* 5컬럼 그리드 */}

@@ -1,13 +1,17 @@
 /**
- * @fileoverview 글 작성 훅. Phase C1 전: console.log + navigate(-1).
- * @참조 WritePostPage
+ * @fileoverview 글 작성 훅. useMutation + communityApi.createPost, 성공 시 피드 invalidation.
+ * @참조 WritePostPage, communityApi, communityQueries
  */
 
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PostType } from '../../entities/community/model/post';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PostType } from '@/entities/community/model/post';
+import { communityApi } from '@/entities/community/api/communityApi';
+import { communityKeys } from '@/entities/community/api/communityQueries';
+import type { CreatePostRequest } from '@/entities/community/model/types';
 
-interface CreatePostForm {
+export interface CreatePostForm {
   type: PostType;
   title: string;
   content: string;
@@ -19,7 +23,7 @@ interface CreatePostForm {
   domainScope?: string;
 }
 
-interface UseCreatePostReturn {
+export interface UseCreatePostReturn {
   formState: CreatePostForm;
   setTitle: (v: string) => void;
   setContent: (v: string) => void;
@@ -32,6 +36,8 @@ interface UseCreatePostReturn {
   removeImage: (index: number) => void;
   isSubmitting: boolean;
   submit: () => Promise<void>;
+  isError: boolean;
+  error: Error | null;
 }
 
 export function useCreatePost(
@@ -40,7 +46,7 @@ export function useCreatePost(
   initialDomain?: string
 ): UseCreatePostReturn {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [formState, setFormState] = useState<CreatePostForm>({
     type: initialType,
     title: '',
@@ -51,6 +57,14 @@ export function useCreatePost(
     images: [],
     gradeScope: initialGrade ?? undefined,
     domainScope: initialDomain ?? undefined,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (body: CreatePostRequest) => communityApi.createPost(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.posts() });
+      navigate(-1);
+    },
   });
 
   const setTitle = (v: string) => setFormState((s) => ({ ...s, title: v }));
@@ -67,28 +81,41 @@ export function useCreatePost(
     }));
 
   const addImage = (file: File) =>
-    setFormState((s) => s.images.length < 5 ? { ...s, images: [...s.images, file] } : s);
+    setFormState((s) => (s.images.length < 5 ? { ...s, images: [...s.images, file] } : s));
 
   const removeImage = (index: number) =>
     setFormState((s) => ({ ...s, images: s.images.filter((_, i) => i !== index) }));
 
   const submit = useCallback(async () => {
     if (!formState.title.trim() || !formState.content.trim()) return;
-    setIsSubmitting(true);
-    try {
-      // Phase C1 전: 로컬 처리만
-      console.log('POST 작성:', formState);
-      // Phase C1 후: await CommunityApi.createPost({ ... })
-      navigate(-1);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [formState, navigate]);
+    const body: CreatePostRequest = {
+      type: formState.type,
+      title: formState.title.trim(),
+      content: formState.content.trim(),
+      tags: formState.tags.length ? formState.tags : undefined,
+      gradeScope: formState.gradeScope || undefined,
+      domainScope: formState.domainScope || undefined,
+      isAnonymous: formState.isAnonymous,
+      deadlineHours: formState.deadlineHours,
+      imageUrls: [], // TODO: 업로드 후 URL 전달
+    };
+    await mutation.mutateAsync(body);
+  }, [formState, mutation]);
 
   return {
-    formState, setTitle, setContent, toggleTag,
-    setIsAnonymous, setDeadlineHours, setGradeScope, setDomainScope,
-    addImage, removeImage,
-    isSubmitting, submit,
+    formState,
+    setTitle,
+    setContent,
+    toggleTag,
+    setIsAnonymous,
+    setDeadlineHours,
+    setGradeScope,
+    setDomainScope,
+    addImage,
+    removeImage,
+    isSubmitting: mutation.isPending,
+    submit,
+    isError: mutation.isError,
+    error: mutation.error instanceof Error ? mutation.error : null,
   };
 }

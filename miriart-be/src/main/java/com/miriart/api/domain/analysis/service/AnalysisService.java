@@ -69,16 +69,8 @@ public class AnalysisService {
             throw new BusinessException(ErrorCode.FILE_EMPTY);
         }
 
-        // 2. 크레딧 한도 체크 (P1: 온보딩 완료(Full, needsProfile=false)면 한도 체크 스킵)
-        if (user.isNeedsProfile()) {
-            String currentMonth = currentBillingMonth();
-            long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentMonth);
-            int monthlyLimit = user.getPlanType().getMonthlyLimit();
-            if (usedThisMonth >= monthlyLimit) {
-                log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
-                throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
-            }
-        }
+        // 2. 크레딧 한도 체크
+        checkCreditLimitIfEligible(user, userId);
 
         // 3. GCS 업로드 — FileUploadResult로 publicUrl + gcsUri 동시 확보 (Bug #1 Fix)
         FileUploadResult uploadResult = fileStorageService.upload(image, FileCategory.ARTWORK);
@@ -155,6 +147,22 @@ public class AnalysisService {
      */
     public long getUsedThisMonth(Long userId) {
         return usageLogRepository.countByUserIdAndBillingYearMonth(userId, currentBillingMonth());
+    }
+
+    /**
+     * 온보딩 완료 유저는 플랜에 따른 월 한도 제한을 적용한다.
+     * needsProfile=true(온보딩 전)는 P1에서는 체험용으로 한도 미적용.
+     */
+    private void checkCreditLimitIfEligible(User user, Long userId) {
+        if (!user.isNeedsProfile()) {
+            String billingYearMonth = currentBillingMonth();
+            long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, billingYearMonth);
+            int monthlyLimit = user.getPlanType().getMonthlyLimit();
+            if (usedThisMonth >= monthlyLimit) {
+                log.warn("분석 크레딧 한도 초과 - userId: {}, usedThisMonth: {}, limit: {}", userId, usedThisMonth, monthlyLimit);
+                throw new BusinessException(ErrorCode.CREDIT_LIMIT_EXCEEDED);
+            }
+        }
     }
 
     private String currentBillingMonth() {

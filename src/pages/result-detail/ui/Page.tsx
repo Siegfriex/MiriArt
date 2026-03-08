@@ -19,6 +19,7 @@ import { ComparisonAccordion } from '../../../widgets/result/ComparisonAccordion
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { buildSampleResult } from '../../../entities/analysis/sampleResult';
+import { AiSkeleton, AiErrorState } from '@/shared/ui/ai';
 
 const RESULT_LOAD_ERROR = '분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 
@@ -99,10 +100,10 @@ export const ResultDetail: React.FC = () => {
             <ArrowLeft size={20} />
           </button>
         </header>
-        <div className="w-full aspect-[3/4] bg-surface-alt animate-pulse" />
+        <div className="w-full aspect-[3/4] bg-surface-alt" />
         <div className="px-page-x py-page-y space-y-section-gap">
-          <div className="h-24 bg-surface-alt rounded-xl animate-pulse" />
-          <div className="h-64 bg-surface-alt rounded-2xl animate-pulse" />
+          <AiSkeleton className="h-24 rounded-xl" />
+          <AiSkeleton lines={8} className="rounded-2xl" />
         </div>
       </div>
     );
@@ -111,22 +112,19 @@ export const ResultDetail: React.FC = () => {
   // ─── 에러 (샘플 미선택 시) ─────────────────────────────────────────────────
   if (error && !showSample) {
     return (
-      <div className="min-h-dvh bg-surface overflow-y-auto no-scrollbar pb-bottom-nav flex flex-col items-center justify-center p-page-y">
+      <div className="min-h-dvh bg-surface overflow-y-auto no-scrollbar pb-bottom-nav flex flex-col">
         <header className="fixed top-0 left-0 w-full z-sticky flex items-center px-page-x h-14 bg-gradient-to-b from-black/60 to-transparent">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/40 text-white backdrop-blur-md" aria-label={STRINGS.BACK}>
             <ArrowLeft size={20} />
           </button>
         </header>
-        <div className="flex flex-col items-center text-center space-y-4 max-w-sm">
-          <p className="text-text-mid">{error}</p>
-          <div className="flex flex-col gap-3 w-full">
-            <Button className="w-full" onClick={handleRetry}>
-              {STRINGS.RETRY}
-            </Button>
-            <Button variant="secondary" className="w-full" onClick={() => setShowSample(true)}>
-              샘플 분석 결과 보기
-            </Button>
-          </div>
+        <div className="flex-1 flex items-center justify-center p-page-y">
+          <AiErrorState
+            title={RESULT_LOAD_ERROR}
+            variant="fullscreen"
+            onRetry={handleRetry}
+            secondaryAction={{ label: '샘플 분석 결과 보기', onClick: () => setShowSample(true) }}
+          />
         </div>
       </div>
     );
@@ -200,7 +198,7 @@ export const ResultDetail: React.FC = () => {
             }`}
           />
           <div>
-            <div className="text-[10px] text-text-mid uppercase tracking-wider font-bold">fixScope 분석</div>
+            <div className="text-micro text-text-mid uppercase tracking-wider font-bold">fixScope 분석</div>
             <H3>
               {displayResult.fixScope === 'StructureRebuild' ? STRINGS.RESULT_FIXSCOPE_REBUILD : STRINGS.RESULT_FIXSCOPE_TUNING}
             </H3>

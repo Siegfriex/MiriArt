@@ -105,7 +105,7 @@ export const SideGNB: React.FC = () => {
             <div className="flex items-center justify-between p-4 border-b border-border-default bg-black/5 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <H2>세션 목록</H2>
-                <span className="text-[10px] bg-primary-lime/20 text-primary-lime px-1.5 py-0.5 rounded font-bold">
+                <span className="text-micro bg-primary-lime/20 text-primary-lime px-1.5 py-0.5 rounded font-bold">
                   {isFullWidth ? '전체' : '빠른보기'}
                 </span>
               </div>
@@ -143,7 +143,7 @@ export const SideGNB: React.FC = () => {
               >
                 {/* 등급별 퀵필터 */}
                 <div>
-                  <span className="text-[10px] text-text-mid font-bold uppercase tracking-wide block mb-2">
+                  <span className="text-micro text-text-mid font-bold uppercase tracking-wide block mb-2">
                     등급별
                   </span>
                   <div className="flex gap-2 flex-wrap">
@@ -160,7 +160,7 @@ export const SideGNB: React.FC = () => {
 
                 {/* 학교별 퀵필터 */}
                 <div>
-                  <span className="text-[10px] text-text-mid font-bold uppercase tracking-wide block mb-2">
+                  <span className="text-micro text-text-mid font-bold uppercase tracking-wide block mb-2">
                     학교별
                   </span>
                   <div className="flex gap-2 flex-wrap">
@@ -177,7 +177,7 @@ export const SideGNB: React.FC = () => {
 
                 {/* 최근 기록 */}
                 <div>
-                  <span className="text-[10px] text-text-mid font-bold uppercase tracking-wide block mb-2">
+                  <span className="text-micro text-text-mid font-bold uppercase tracking-wide block mb-2">
                     최근 세션
                   </span>
                   {MOCK_SESSIONS.slice(0, 5).map((session) => {

@@ -45,6 +45,8 @@ export const WritePostPage: React.FC = () => {
     removeImage,
     isSubmitting,
     submit,
+    isError,
+    error,
   } = useCreatePost(type, initialGrade || undefined, initialDomain || undefined);
 
   const isQna = formState.type === 'qna';
@@ -72,6 +74,11 @@ export const WritePostPage: React.FC = () => {
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar p-page-x space-y-5">
+        {isError && error && (
+          <div className="rounded-medium bg-semantic-error/10 border border-semantic-error/30 px-3 py-2 text-sm text-semantic-error">
+            {error.message}
+          </div>
+        )}
         <div className="space-y-1.5">
           <label className="text-xs text-text-mid font-medium uppercase tracking-wider">
             {STRINGS.POST_LABEL_TITLE}

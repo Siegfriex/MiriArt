@@ -4,10 +4,11 @@
  */
 
 import { z } from 'zod';
-import { useEnumQueryParam } from '../../shared/lib/router/useEnumQueryParam';
-import { useStringQueryParam } from '../../shared/lib/router/useStringQueryParam';
+import { useEnumQueryParam } from '@/shared/lib/router/useEnumQueryParam';
+import { useStringQueryParam } from '@/shared/lib/router/useStringQueryParam';
+import type { FeedTab } from '@/entities/community/lib/feedTabToParams';
 
-export type FeedTab = 'timeline' | 'qna' | 'popular';
+export type { FeedTab };
 
 const tabSchema = z.enum(['timeline', 'qna', 'popular']).catch('timeline');
 

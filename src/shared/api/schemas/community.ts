@@ -8,6 +8,7 @@ const personaSchema = z.object({
   displayName: z.string(),
   colorToken: z.string(),
 });
+export { personaSchema };
 
 export const postSchema = z.object({
   id: z.string(),
@@ -30,8 +31,8 @@ export const postSchema = z.object({
 });
 export type PostApi = z.infer<typeof postSchema>;
 
-/** 단일 Post 상세 응답. 현재는 Post와 동일 shape. BE에서 확장 시 스키마만 수정 */
-export const postDetailResponseSchema = postSchema;
+/** 단일 Post 상세 응답(답변·댓글 포함). BE 확장 시 스키마만 수정 */
+export const postDetailResponseSchema = postDetailSchema;
 export type PostDetailResponseApi = z.infer<typeof postDetailResponseSchema>;
 
 export const postsResponseSchema = z.object({
@@ -54,3 +55,36 @@ export const createPostRequestSchema = z.object({
   deadlineHours: z.union([z.literal(24), z.literal(48), z.literal(72)]).optional(),
 });
 export type CreatePostRequestApi = z.infer<typeof createPostRequestSchema>;
+
+/** Answer (Q&A 답변). BE 상세 응답용 */
+export const answerSchema = z.object({
+  id: z.string(),
+  postId: z.string(),
+  persona: personaSchema,
+  reputationLevel: z.number(),
+  content: z.string(),
+  imageUrls: z.array(z.string()),
+  likeCount: z.number(),
+  isAccepted: z.boolean(),
+  commentCount: z.number(),
+  createdAt: z.string(),
+});
+export type AnswerApi = z.infer<typeof answerSchema>;
+
+/** Comment. 게시글/답변 하위 댓글 */
+export const commentSchema = z.object({
+  id: z.string(),
+  parentType: z.enum(['post', 'answer']),
+  parentId: z.string(),
+  persona: personaSchema,
+  content: z.string(),
+  createdAt: z.string(),
+});
+export type CommentApi = z.infer<typeof commentSchema>;
+
+/** 단일 Post 상세(답변·댓글 포함). BE 확장 시 사용 */
+export const postDetailSchema = postSchema.extend({
+  answers: z.array(answerSchema).optional(),
+  comments: z.array(commentSchema).optional(),
+});
+export type PostDetailApi = z.infer<typeof postDetailSchema>;

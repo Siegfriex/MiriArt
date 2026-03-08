@@ -21,6 +21,7 @@ import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { ChatApi, fileToBase64 } from '../../../shared/api/miriartApi';
 import { useToastStore } from '../../../shared/model/toastStore';
+import { AiThinkingDots } from '@/shared/ui/ai';
 
 /** 채팅방 페이지. @참조 AppRouter @상태 useSideGNBStore, useNavStore, useToastStore, messages 등 */
 export const ChatRoom: React.FC = () => {
@@ -203,10 +204,8 @@ export const ChatRoom: React.FC = () => {
         ))}
         {isLoading && (
           <div className="flex items-center gap-2 text-text-mid text-xs ml-4 mb-4">
-            <div className="w-2 h-2 bg-primary-lime rounded-full animate-bounce" />
-            <div className="w-2 h-2 bg-primary-lime rounded-full animate-bounce delay-100" />
-            <div className="w-2 h-2 bg-primary-lime rounded-full animate-bounce delay-200" />
-            AI가 생각 중...
+            <AiThinkingDots />
+            <span>AI가 생각 중...</span>
           </div>
         )}
       </div>

@@ -1,19 +1,6 @@
 /**
- * @fileoverview 커뮤니티 Answer 도메인 타입. Q&A 전용.
+ * @fileoverview 커뮤니티 Answer 도메인 타입. Zod SSOT — types.ts에서 추출한 타입 재export.
  * @참조 QnaDetailPage, communityApi
  */
 
-import { Persona } from './post';
-
-export interface Answer {
-  id: string;
-  postId: string;
-  persona: Persona;
-  reputationLevel: number;
-  content: string;
-  imageUrls: string[];
-  likeCount: number;
-  isAccepted: boolean;
-  commentCount: number;
-  createdAt: string;
-}
+export type { Answer } from './types';

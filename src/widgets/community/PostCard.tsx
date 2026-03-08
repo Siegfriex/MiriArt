@@ -30,10 +30,10 @@ function relativeTime(iso: string): string {
 /** 피드 카드. PostDetail 또는 QnaDetail로 이동. */
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const navigate = useNavigate();
-  const { isLiked, count: likeCount, toggle } = useLikeToggle(
-    post.isLiked ?? false,
-    post.likeCount
-  );
+  const { isLiked, count: likeCount, toggle } = useLikeToggle('post', post.id, {
+    initialLiked: post.isLiked ?? false,
+    initialCount: post.likeCount ?? 0,
+  });
 
   const handleClick = () => {
     if (post.type === 'qna') {

@@ -36,7 +36,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
         </div>
         <div className="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/80 to-transparent">
           <div className="text-xs text-text-primary font-medium truncate">{artwork.major}</div>
-          <div className="text-[10px] text-text-mid truncate">
+          <div className="text-micro text-text-mid truncate">
             {new Date(artwork.timestamp).toLocaleDateString('ko-KR')}
           </div>
         </div>
@@ -61,7 +61,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start">
           <span className="text-xs text-text-mid">{new Date(artwork.timestamp).toLocaleDateString('ko-KR')}</span>
-          <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-text-secondary">{artwork.university}</span>
+          <span className="text-micro bg-white/10 px-1.5 py-0.5 rounded text-text-secondary">{artwork.university}</span>
         </div>
         <div className="text-sm text-text-primary font-medium truncate mt-0.5">{artwork.major} 분석</div>
         {artwork.aiSummary && (

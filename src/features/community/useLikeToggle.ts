@@ -1,25 +1,70 @@
 /**
- * @fileoverview 좋아요 토글 훅. 낙관적 업데이트 (Phase C1 전: 로컬 상태만).
+ * @fileoverview 좋아요 토글 훅. useMutation + 낙관적 업데이트, 실패 시 롤백.
  * @참조 PostCard, PostDetailPage, QnaDetailPage
  */
 
-import { useState, useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { communityApi } from '@/entities/community/api/communityApi';
+import { communityKeys } from '@/entities/community/api/communityQueries';
 
-interface LikeState {
-  isLiked: boolean;
-  count: number;
+export type LikeTargetType = 'post' | 'answer';
+
+export interface UseLikeToggleOptions {
+  /** 답변일 때 상세 invalidation용 부모 post id (type이 'post'면 생략 가능) */
+  postIdForInvalidation?: string;
+  /** 초기 표시값 (낙관적 UI용) */
+  initialLiked?: boolean;
+  initialCount?: number;
 }
 
-export function useLikeToggle(initialLiked: boolean, initialCount: number) {
-  const [state, setState] = useState<LikeState>({ isLiked: initialLiked, count: initialCount });
+/**
+ * @param type - 'post' | 'answer'
+ * @param id - 대상 엔티티 id (post id 또는 answer id)
+ */
+export function useLikeToggle(
+  type: LikeTargetType,
+  id: string,
+  options: UseLikeToggleOptions = {}
+) {
+  const { postIdForInvalidation, initialLiked = false, initialCount = 0 } = options;
+  const queryClient = useQueryClient();
+  const queryKey = communityKeys.postDetail(postIdForInvalidation ?? id);
 
-  const toggle = useCallback(() => {
-    setState((prev) => ({
-      isLiked: !prev.isLiked,
-      count: prev.isLiked ? prev.count - 1 : prev.count + 1,
-    }));
-    // Phase C1 후: await CommunityApi.likePost('post', postId)
-  }, []);
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const result = await communityApi.likePost(type, id);
+      return result;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        if (type === 'post') {
+          const o = old as { isLiked?: boolean; likeCount?: number };
+          return { ...old, isLiked: !o.isLiked, likeCount: (o.likeCount ?? 0) + (o.isLiked ? -1 : 1) };
+        }
+        const o = old as { answers?: Array<{ id: string; isLiked?: boolean; likeCount?: number }> };
+        const answers = o.answers?.map((a) => (a.id === id ? { ...a, isLiked: !a.isLiked, likeCount: (a.likeCount ?? 0) + (a.isLiked ? -1 : 1) } : a)) ?? [];
+        return { ...o, answers };
+      });
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous != null) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: communityKeys.posts() });
+    },
+  });
 
-  return { ...state, toggle };
+  const isLiked = mutation.isPending ? !initialLiked : initialLiked;
+  const count = mutation.isPending ? initialCount + (initialLiked ? -1 : 1) : initialCount;
+  return {
+    isLiked,
+    count,
+    toggle: () => mutation.mutate(),
+    mutation,
+  };
 }

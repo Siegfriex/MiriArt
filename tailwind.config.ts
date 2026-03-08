@@ -69,6 +69,7 @@ const config: Config = {
         body:    ['14px', { lineHeight: '22px', letterSpacing: '0px' }],
         caption: ['12px', { lineHeight: '16px', letterSpacing: '0.2px' }],
         micro:   ['10px', { lineHeight: '14px', letterSpacing: '0.3px' }],
+        tiny:    ['11px', { lineHeight: '14px', letterSpacing: '0.2px' }],
       },
       fontWeight: {
         light: '300',
@@ -131,6 +132,7 @@ const config: Config = {
         'spring-up': 'springUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'ticker': 'ticker 20s linear infinite',
+        'shimmer': 'shimmer 2s infinite',
       },
       keyframes: {
         fadeIn: {
@@ -149,6 +151,9 @@ const config: Config = {
         ticker: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },

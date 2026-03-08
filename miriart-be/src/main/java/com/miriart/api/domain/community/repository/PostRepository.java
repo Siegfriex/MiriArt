@@ -43,7 +43,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     int incrementAnswerCount(@Param("id") Long id);
 
     /** likeCount 증감 (delta: +1 또는 -1). */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("update Post p set p.likeCount = p.likeCount + :delta where p.id = :id")
     int incrementLikeCount(@Param("id") Long id, @Param("delta") int delta);
 }
