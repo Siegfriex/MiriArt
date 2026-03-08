@@ -26,7 +26,7 @@ CREATE TABLE `analyses` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
-  `analysis_type` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `analysis_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `comment` text COLLATE utf8mb4_unicode_ci,
   `completed_at` datetime(6) DEFAULT NULL,
   `fix_scope` enum('DetailTuning','StructureRebuild') COLLATE utf8mb4_unicode_ci DEFAULT NULL,

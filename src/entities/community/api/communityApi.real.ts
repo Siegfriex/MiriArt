@@ -7,8 +7,18 @@ import {
   postsResponseSchema,
   postDetailResponseSchema,
   createPostRequestSchema,
+  toggleLikeResponseSchema,
+  createAnswerRequestSchema,
 } from '@/shared/api/schemas/community';
-import type { Post, PostDetail, CreatePostRequest, PostsResponse } from '@/entities/community/model/types';
+import type {
+  Post,
+  PostDetail,
+  CreatePostRequest,
+  CreateAnswerRequest,
+  PostsResponse,
+  ToggleLikeRequest,
+  ToggleLikeResponse,
+} from '@/entities/community/model/types';
 
 export type { CreatePostRequest, PostsResponse };
 
@@ -22,8 +32,10 @@ export interface CommunityApiSurface {
     size?: number;
   }) => Promise<PostsResponse>;
   getPost: (id: string) => Promise<PostDetail>;
-  createPost: (data: CreatePostRequest) => Promise<Post>;
+  createPost: (data: CreatePostRequest) => Promise<PostDetail>;
   likePost: (targetType: string, id: string) => Promise<{ liked: boolean; likeCount: number }>;
+  toggleLike: (payload: ToggleLikeRequest) => Promise<ToggleLikeResponse>;
+  createAnswer: (postId: string, body: CreateAnswerRequest) => Promise<number>;
   acceptAnswer: (postId: string, answerId: string) => Promise<void>;
   report: (targetType: string, targetId: string, reason: string) => Promise<void>;
   getReputation: (userId: string) => Promise<{ score: number; level: number; badge: string }>;
@@ -69,15 +81,39 @@ export const communityApiReal: CommunityApiSurface = {
   },
 
   likePost: async (targetType: string, id: string) => {
-    const raw = await apiFetch<unknown>(`/api/${targetType}/${id}/like`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
+    return communityApiReal.toggleLike({
+      targetType: targetType === 'post' ? 'POST' : 'ANSWER',
+      targetId: Number(id),
     });
-    const payload = (raw as { data?: unknown }).data ?? raw;
-    if (payload && typeof payload === 'object' && 'liked' in payload && 'likeCount' in payload) {
-      return payload as { liked: boolean; likeCount: number };
+  },
+
+  toggleLike: async (payload: ToggleLikeRequest) => {
+    const raw = await apiFetch<unknown>('/api/likes/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(payload),
+    });
+    const responsePayload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = toggleLikeResponseSchema.safeParse(responsePayload);
+    if (!parsed.success) throw new ApiError(500, 'Invalid like toggle response');
+    return parsed.data;
+  },
+
+  createAnswer: async (postId: string, body: CreateAnswerRequest) => {
+    const parsed = createAnswerRequestSchema.parse(body);
+    const sendBody = { content: parsed.content, imageUrls: parsed.imageUrls };
+    const raw = await apiFetch<unknown>(`/api/posts/${postId}/answers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(sendBody),
+    });
+    const responsePayload = (raw as { data?: unknown }).data ?? raw;
+    if (typeof responsePayload === 'number') return responsePayload;
+    if (typeof responsePayload === 'object' && responsePayload !== null && 'id' in responsePayload) {
+      const id = (responsePayload as { id: number }).id;
+      return typeof id === 'number' ? id : Number(id);
     }
-    return { liked: true, likeCount: 0 };
+    throw new ApiError(500, 'Invalid create answer response');
   },
 
   acceptAnswer: async (postId: string, answerId: string) => {

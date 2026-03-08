@@ -1,7 +1,7 @@
 /**
  * 중앙 Mock 데이터 — Artwork
  * 학교별 7개씩, 5개 학교 = 35개
- * 모든 소비처는 이 파일에서 import합니다.
+ * 모든 소비처는 이 파일에서 import합니다. 지금 이게 되는거 맞아? 
  */
 
 import { Artwork } from '../entities/artwork/model';

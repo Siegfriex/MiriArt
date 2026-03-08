@@ -91,6 +91,21 @@ export const communityApiMock: CommunityApiSurface = {
     return { liked: true, likeCount: 1 };
   },
 
+  toggleLike: async (payload) => {
+    const id = String(payload.targetId);
+    const post = MOCK_POSTS.find((p) => p.id === id);
+    if (post) {
+      const newLiked = !post.isLiked;
+      const newCount = newLiked ? post.likeCount + 1 : post.likeCount - 1;
+      return { liked: newLiked, likeCount: Math.max(0, newCount) };
+    }
+    return { liked: true, likeCount: 1 };
+  },
+
+  createAnswer: async (_postId: string, _body) => {
+    return Number(Date.now());
+  },
+
   acceptAnswer: async (_postId: string, _answerId: string) => {
     // no-op in mock
   },

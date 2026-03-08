@@ -79,7 +79,7 @@ public class AnswerCommandService {
      */
     @Transactional
     public void acceptAnswer(Long actorUserId, Long postId, Long answerId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdForUpdate(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         Answer answer = answerRepository.findByIdAndPostId(answerId, postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));

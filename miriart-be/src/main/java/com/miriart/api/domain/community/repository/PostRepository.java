@@ -31,7 +31,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     /**
      * 채택 시 동시성 제어용. PESSIMISTIC_WRITE → SELECT ... FOR UPDATE.
-     * 초기에는 사용하지 않고 acceptedAnswerId null 체크만 해도 됨.
+     * AnswerCommandService.acceptAnswer()에서 사용 중.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Post p where p.id = :id")

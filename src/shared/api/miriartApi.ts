@@ -309,6 +309,17 @@ export const ChatApi = {
 };
 
 // ─── ErrorCode 처리 ────────────────────────────────────────────────────────────
+/** BE 커뮤니티 ErrorCode(CM001~CM007) → 사용자 메시지. FE 메시지 우선. BE가 한국어 메시지를 내려주면 정책 결정 후 body.message 우선 가능. */
+const COMMUNITY_MESSAGES: Record<string, string> = {
+  CM001: '게시글을 찾을 수 없어요.',
+  CM002: '답변이 달린 질문은 수정/삭제할 수 없어요.',
+  CM003: '이미 채택된 답변이 있어요.',
+  CM004: '채택은 질문 작성자만 가능해요.',
+  CM005: '마감된 질문이에요.',
+  CM006: '이미 좋아요를 눌렀어요.',
+  CM007: '이미 신고한 컨텐츠예요.',
+};
+
 /** API 계약서 §9 기반 ErrorCode → 한국어 메시지 변환. 스키마 검증 실패 메시지도 친절한 문구로 매핑 */
 export function handleApiError(error: unknown): string {
   if (!(error instanceof ApiError)) return '알 수 없는 오류가 발생했습니다.';
@@ -334,6 +345,7 @@ export function handleApiError(error: unknown): string {
       AI002: 'AI 응답 시간이 초과됐습니다.',
       M002: '이미 사용 중인 닉네임입니다.',
       AUTH002: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.',
+      ...COMMUNITY_MESSAGES,
     };
     return messages[code] || body?.message || '오류가 발생했습니다.';
   } catch {
