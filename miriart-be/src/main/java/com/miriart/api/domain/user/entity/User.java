@@ -68,10 +68,11 @@ public class User extends BaseEntity {
     private int reputationLevel = 1;
 
     @Builder
-    public User(LoginProvider provider, String providerUserId, String email) {
+    public User(LoginProvider provider, String providerUserId, String email, String nickname) {
         this.provider = provider;
         this.providerUserId = providerUserId;
         this.email = email;
+        this.nickname = nickname;
     }
 
     /**

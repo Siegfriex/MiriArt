@@ -49,23 +49,26 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String providerUserId;
         String email;
+        String displayName = null;
 
         if ("kakao".equals(registrationId)) {
             // 카카오: attributes 구조 = { id: 123, kakao_account: { email, profile: { nickname } } }
             providerUserId = String.valueOf(attributes.get("id"));
             email = extractKakaoEmail(attributes);
+            displayName = extractKakaoNickname(attributes);
 
         } else if ("google".equals(registrationId)) {
             // 구글: attributes 구조 = { sub: "...", email: "...", name: "..." }
             providerUserId = (String) attributes.get("sub");
             email = (String) attributes.get("email");
+            displayName = (String) attributes.get("name");
 
         } else {
             throw new BusinessException(ErrorCode.OAUTH_PROVIDER_UNSUPPORTED);
         }
 
         LoginProvider provider = LoginProvider.valueOf(registrationId.toUpperCase());
-        User user = findOrCreateUser(provider, providerUserId, email);
+        User user = findOrCreateUser(provider, providerUserId, email, displayName);
 
         log.debug("OAuth2 사용자 로드 완료 - userId: {}, provider: {}", user.getId(), registrationId);
         return new MiriartOAuth2User(user, attributes);
@@ -85,17 +88,47 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return (String) kakaoAccount.get("email");
     }
 
-    private User findOrCreateUser(LoginProvider provider, String providerUserId, String email) {
+    @SuppressWarnings("unchecked")
+    private String extractKakaoNickname(Map<String, Object> attributes) {
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if (kakaoAccount == null) return null;
+        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+        if (profile == null) return null;
+        return (String) profile.get("nickname");
+    }
+
+    private User findOrCreateUser(LoginProvider provider, String providerUserId,
+                                  String email, String displayName) {
         return userRepository.findByProviderAndProviderUserId(provider, providerUserId)
                 .orElseGet(() -> {
-                    log.info("신규 사용자 생성 - provider: {}, providerUserId: {}", provider, providerUserId);
+                    String nickname = resolveUniqueNickname(displayName);
+                    log.info("신규 사용자 생성 - provider: {}, providerUserId: {}, nickname: {}",
+                            provider, providerUserId, nickname);
                     return userRepository.save(
                             User.builder()
                                     .provider(provider)
                                     .providerUserId(providerUserId)
                                     .email(email)
+                                    .nickname(nickname)
                                     .build()
                     );
                 });
+    }
+
+    /**
+     * nickname UNIQUE 제약 대응. 중복 시 숫자 suffix 부여.
+     * displayName이 null이면 null 반환 (온보딩에서 설정).
+     */
+    private String resolveUniqueNickname(String displayName) {
+        if (displayName == null || displayName.isBlank()) return null;
+        String candidate = displayName.length() > 30 ? displayName.substring(0, 30) : displayName;
+        if (!userRepository.existsByNickname(candidate)) return candidate;
+        for (int i = 1; i <= 99; i++) {
+            String suffixed = candidate.length() > 27
+                    ? candidate.substring(0, 27) + "_" + i
+                    : candidate + "_" + i;
+            if (!userRepository.existsByNickname(suffixed)) return suffixed;
+        }
+        return null; // 극단적 중복 시 온보딩에서 설정
     }
 }
