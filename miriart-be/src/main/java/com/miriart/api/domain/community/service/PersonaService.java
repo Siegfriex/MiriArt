@@ -5,6 +5,8 @@ import com.miriart.api.domain.community.repository.PersonaRepository;
 import com.miriart.api.domain.user.entity.User;
 import com.miriart.api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +15,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 페르소나(가명) 서비스. 동일 (userId, boardScope)에 대해 하나의 페르소나 보장.
+ * UNIQUE(uq_user_scope) 경쟁 시 DataIntegrityViolation → 재조회로 방어.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PersonaService {
@@ -34,14 +38,21 @@ public class PersonaService {
     public Persona getOrCreatePersona(Long userId, String boardScope) {
         return personaRepository.findByUserIdAndBoardScope(userId, boardScope)
                 .orElseGet(() -> {
-                    User user = userRepository.findByIdOrThrow(userId);
-                    Persona persona = Persona.builder()
-                            .user(user)
-                            .boardScope(boardScope)
-                            .displayName(generateRandomName())
-                            .colorToken(generateRandomColor())
-                            .build();
-                    return personaRepository.save(persona);
+                    try {
+                        User user = userRepository.findByIdOrThrow(userId);
+                        Persona persona = Persona.builder()
+                                .user(user)
+                                .boardScope(boardScope)
+                                .displayName(generateRandomName())
+                                .colorToken(generateRandomColor())
+                                .build();
+                        return personaRepository.save(persona);
+                    } catch (DataIntegrityViolationException e) {
+                        // 동시 생성 경쟁 시 UNIQUE(uq_user_scope) 위반 → 기존 persona 재조회
+                        log.debug("Persona UNIQUE race condition, userId={}, scope={}", userId, boardScope);
+                        return personaRepository.findByUserIdAndBoardScope(userId, boardScope)
+                                .orElseThrow(() -> e);
+                    }
                 });
     }
 

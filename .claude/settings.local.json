@@ -224,7 +224,12 @@
       "Bash(git commit:*)",
       "Bash(gh repo:*)",
       "Bash(git:*)",
-      "Bash(mysql:*)"
+      "Bash(mysql:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(curl:*)",
+      "Bash(pip3 install:*)",
+      "Bash(echo === B-4: 답변 작성 \\(user 111 → post 60\\) ===:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

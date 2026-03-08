@@ -41,7 +41,12 @@ public class PostQueryService {
 
         Page<Post> postPage;
         if (type != null && !type.isBlank()) {
-            PostType postType = PostType.valueOf(type.toUpperCase());
+            PostType postType;
+            try {
+                postType = PostType.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
             postPage = postRepository.findByTypeAndStatus(postType, PostStatus.OPEN, pageable);
         } else {
             postPage = postRepository.findAll(pageable);

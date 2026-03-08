@@ -1,5 +1,6 @@
 package com.miriart.api.domain.community.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.miriart.api.domain.community.entity.Answer;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,7 +23,8 @@ public class AnswerResponse {
     private String content;
     private List<String> imageUrls;
     private int likeCount;
-    private boolean isAccepted;
+    @JsonProperty("isAccepted")
+    private boolean accepted;
     private int commentCount;
     private String createdAt;
 
@@ -35,7 +37,7 @@ public class AnswerResponse {
                 .content(a.getContent())
                 .imageUrls(parseJsonArray(a.getImageUrls()))
                 .likeCount(a.getLikeCount())
-                .isAccepted(a.isAccepted())
+                .accepted(a.isAccepted())
                 .commentCount(commentCount)
                 .createdAt(a.getCreatedAt().toString())
                 .build();

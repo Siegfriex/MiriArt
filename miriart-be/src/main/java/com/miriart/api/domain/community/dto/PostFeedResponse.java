@@ -1,5 +1,6 @@
 package com.miriart.api.domain.community.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,9 +13,11 @@ import java.util.List;
 
 /**
  * 피드 목록 응답 DTO. FE postSchema (community.ts:13-31) 전체 17필드 매핑.
+ * NON_NULL: null 필드(isLiked, deadlineAt)를 JSON에서 제외 → FE Zod .optional()과 정합.
  */
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostFeedResponse {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

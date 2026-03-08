@@ -42,8 +42,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.answerCount = p.answerCount + 1 where p.id = :id")
     int incrementAnswerCount(@Param("id") Long id);
 
-    /** likeCount 증감 (delta: +1 또는 -1). */
-    @Modifying(clearAutomatically = true)
+    /** likeCount 증감 (delta: +1 또는 -1). flushAutomatically로 pending delete/insert 반영 보장. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Post p set p.likeCount = p.likeCount + :delta where p.id = :id")
     int incrementLikeCount(@Param("id") Long id, @Param("delta") int delta);
 }
