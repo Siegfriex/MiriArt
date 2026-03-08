@@ -54,13 +54,4 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Post p set p.likeCount = p.likeCount + :delta where p.id = :id")
     int incrementLikeCount(@Param("id") Long id, @Param("delta") int delta);
-
-    /** commentCount 증가. */
-    @Modifying(clearAutomatically = true)
-    @Query("update Post p set p.commentCount = p.commentCount + 1 where p.id = :id")
-    int incrementCommentCount(@Param("id") Long id);
-
-    /** type + grade + domain 복합 필터. */
-    Page<Post> findByTypeAndStatusAndGradeScopeAndDomainScope(
-            PostType type, PostStatus status, String gradeScope, String domainScope, Pageable pageable);
 }
