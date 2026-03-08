@@ -106,6 +106,14 @@ export const createAnswerRequestSchema = z.object({
   personaId: z.string().optional(),
 });
 
+// BE 계약: POST /api/comments — parentType 'post'|'answer', parentId number(BE), content. FE는 parentId string으로 다루고 Real에서 Number 변환.
+export const createCommentRequestSchema = z.object({
+  parentType: z.enum(['post', 'answer']),
+  parentId: z.string(),
+  content: z.string().min(1),
+});
+export type CreateCommentRequestApi = z.infer<typeof createCommentRequestSchema>;
+
 export type ToggleLikeRequestApi = z.infer<typeof toggleLikeRequestSchema>;
 export type ToggleLikeResponseApi = z.infer<typeof toggleLikeResponseSchema>;
 export type CreateAnswerRequestApi = z.infer<typeof createAnswerRequestSchema>;

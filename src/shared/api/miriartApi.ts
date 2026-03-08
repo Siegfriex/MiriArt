@@ -337,6 +337,7 @@ export function handleApiError(error: unknown): string {
     const body = JSON.parse(error.message);
     const code = body?.code;
     const messages: Record<string, string> = {
+      C001: '입력값을 확인해 주세요.',
       CR001: '이번 달 분석 한도를 초과했습니다. 플랜을 업그레이드해주세요.',
       CR002: 'Basic 플랜 이상에서 사용 가능한 기능입니다.',
       AN001: 'AI 분석 서비스 연결에 실패했습니다.',

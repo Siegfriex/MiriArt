@@ -39,8 +39,20 @@ CREATE INDEX idx_scope_created ON posts (grade_scope, domain_scope, created_at);
 CREATE INDEX idx_popularity ON posts (like_count, answer_count, created_at);
 
 -- ===========================================
+-- 4. posts.content, answers.content → TEXT 변경
+--    @Lob → tinytext(255B) 매핑 이슈. ERD 설계는 TEXT(64KB).
+--    255바이트 초과 게시글/답변 작성 시 DataTruncation 발생.
+--    확인: SHOW COLUMNS FROM posts WHERE Field = 'content';
+--    → Type이 이미 text이면 스킵
+-- ===========================================
+ALTER TABLE posts MODIFY COLUMN content text NOT NULL;
+ALTER TABLE answers MODIFY COLUMN content text NOT NULL;
+
+-- ===========================================
 -- 검증 쿼리 (적용 후 실행)
 -- ===========================================
 -- SHOW COLUMNS FROM analyses WHERE Field = 'analysis_type';
 -- SHOW COLUMNS FROM posts WHERE Field = 'comment_count';
+-- SHOW COLUMNS FROM posts WHERE Field = 'content';
+-- SHOW COLUMNS FROM answers WHERE Field = 'content';
 -- SHOW INDEX FROM posts;

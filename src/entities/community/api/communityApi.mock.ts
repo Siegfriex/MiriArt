@@ -110,6 +110,17 @@ export const communityApiMock: CommunityApiSurface = {
     // no-op in mock
   },
 
+  createComment: async (params) => {
+    return {
+      id: `c-${Date.now()}`,
+      parentType: params.parentType,
+      parentId: params.parentId,
+      persona: { displayName: '익명', colorToken: '#888888' },
+      content: params.content,
+      createdAt: new Date().toISOString(),
+    };
+  },
+
   report: async (_targetType: string, _targetId: string, _reason: string) => {
     // no-op in mock
   },

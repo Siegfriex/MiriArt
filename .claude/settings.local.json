@@ -229,7 +229,11 @@
       "Bash(curl:*)",
       "Bash(pip3 install:*)",
       "Bash(echo === B-4: 답변 작성 \\(user 111 → post 60\\) ===:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(gcloud secrets:*)",
+      "Bash(gcloud sql:*)",
+      "Bash(gcloud components:*)",
+      "Bash(gcloud builds:*)"
     ]
   }
 }

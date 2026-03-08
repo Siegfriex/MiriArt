@@ -1,5 +1,5 @@
 /**
- * @fileoverview 자유글 상세 페이지. useQuery + CommentSection, LikeButton.
+ * @fileoverview 자유글 상세 페이지. useQuery + CommentSection, LikeButton, 신고 시트.
  * @참조 AppRouter, communityQueries
  * @라우팅 /posts/:id
  */
@@ -14,12 +14,15 @@ import { TagChip } from '@/shared/ui/TagChip';
 import { Button } from '@/shared/ui/Button';
 import { TextInput } from '@/shared/ui/TextInput';
 import { useLikeToggle } from '@/features/community/useLikeToggle';
+import { useCreateComment } from '@/features/community/useCreateComment';
+import { useReport } from '@/features/community/useReport';
 import { LikeButton } from '@/shared/ui/LikeButton';
 import { CommentSection } from '@/widgets/community/CommentSection';
 import { AiSkeleton } from '@/shared/ui/ai';
 import { AiErrorState } from '@/shared/ui/ai';
 import { STRINGS } from '@/shared/config/strings';
 import { FullScreenContainer } from '@/shared/ui/FullScreenContainer';
+import { useToastStore } from '@/shared/model/toastStore';
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -38,7 +41,10 @@ export const PostDetailPage: React.FC = () => {
     initialLiked: post?.isLiked ?? false,
     initialCount: post?.likeCount ?? 0,
   });
-  const [commentText, setCommentText] = useState('');
+  const createComment = useCreateComment(id ?? '');
+  const reportMutation = useReport();
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   if (id == null) {
     return (
@@ -126,7 +132,7 @@ export const PostDetailPage: React.FC = () => {
             <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-text-primary transition-colors ml-auto">
               <Bookmark size={16} />
             </button>
-            <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-semantic-error transition-colors">
+            <button className="flex items-center gap-1.5 text-sm text-text-mid hover:text-semantic-error transition-colors" onClick={() => setReportOpen(true)} aria-label="신고">
               <Flag size={16} />
             </button>
           </div>
@@ -135,32 +141,59 @@ export const PostDetailPage: React.FC = () => {
             comments={comments}
             parentType="post"
             parentId={post.id}
+            onSubmit={(content) =>
+              createComment.mutateAsync({ parentType: 'post', parentId: post.id, content })
+            }
           />
         </div>
       </div>
 
-      <div className="p-page-x border-t border-border-default flex-shrink-0">
-        <div className="flex gap-2">
-          <TextInput
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={STRINGS.POST_DETAIL_PLACEHOLDER}
-            size="md"
-            className="flex-1"
-          />
-          <Button
-            onClick={() => {
-              console.log('댓글 작성:', commentText);
-              setCommentText('');
-            }}
-            disabled={!commentText.trim()}
-            size="md"
-            className="shrink-0"
-          >
-            {STRINGS.POST_DETAIL_SEND}
-          </Button>
+      {reportOpen && (
+        <div className="fixed inset-0 z-modal bg-black/50 flex items-end justify-center p-4">
+          <div className="w-full max-w-md bg-surface border border-border-default rounded-t-xl p-4 space-y-3 shadow-elevated">
+            <h3 className="text-sm font-semibold text-text-primary">신고하기</h3>
+            <TextInput
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="신고 사유 (선택)"
+              size="md"
+              className="w-full"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  setReportOpen(false);
+                  setReportReason('');
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={reportMutation.isPending}
+                onClick={async () => {
+                  try {
+                    await reportMutation.mutateAsync({
+                      type: 'post',
+                      id: post.id,
+                      reason: reportReason,
+                    });
+                    useToastStore.getState().show('신고가 접수되었습니다.', 'success');
+                    setReportOpen(false);
+                    setReportReason('');
+                  } catch {
+                    /* onError에서 이미 토스트 표시 */
+                  }
+                }}
+              >
+                제출
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </FullScreenContainer>
   );
 };

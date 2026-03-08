@@ -9,6 +9,8 @@ import {
   createPostRequestSchema,
   toggleLikeResponseSchema,
   createAnswerRequestSchema,
+  createCommentRequestSchema,
+  commentSchema,
 } from '@/shared/api/schemas/community';
 import type {
   Post,
@@ -18,7 +20,9 @@ import type {
   PostsResponse,
   ToggleLikeRequest,
   ToggleLikeResponse,
+  Comment,
 } from '@/entities/community/model/types';
+import type { CommentParentType } from '@/entities/community/model/comment';
 
 export type { CreatePostRequest, PostsResponse };
 
@@ -37,6 +41,7 @@ export interface CommunityApiSurface {
   toggleLike: (payload: ToggleLikeRequest) => Promise<ToggleLikeResponse>;
   createAnswer: (postId: string, body: CreateAnswerRequest) => Promise<number>;
   acceptAnswer: (postId: string, answerId: string) => Promise<void>;
+  createComment: (params: { parentType: CommentParentType; parentId: string; content: string }) => Promise<Comment>;
   report: (targetType: string, targetId: string, reason: string) => Promise<void>;
   getReputation: (userId: string) => Promise<{ score: number; level: number; badge: string }>;
 }
@@ -123,11 +128,32 @@ export const communityApiReal: CommunityApiSurface = {
     });
   },
 
-  report: async (targetType: string, targetId: string, reason: string) => {
-    await apiFetch(`/api/${targetType}/${targetId}/report`, {
+  createComment: async (params: { parentType: CommentParentType; parentId: string; content: string }) => {
+    const body = createCommentRequestSchema.parse(params);
+    const raw = await apiFetch<unknown>('/api/comments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({
+        parentType: body.parentType,
+        parentId: Number(body.parentId),
+        content: body.content,
+      }),
+    });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = commentSchema.safeParse(payload);
+    if (!parsed.success) throw new ApiError(500, 'Invalid comment response');
+    return parsed.data as Comment;
+  },
+
+  report: async (targetType: string, targetId: string, reason: string) => {
+    const path =
+      targetType === 'post'
+        ? `/api/posts/${targetId}/report`
+        : `/api/answers/${targetId}/report`;
+    await apiFetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ reason: reason ?? '' }),
     });
   },
 

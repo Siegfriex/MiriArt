@@ -16,6 +16,7 @@ import { Button } from '@/shared/ui/Button';
 import { TextInput } from '@/shared/ui/TextInput';
 import { LikeButton } from '@/shared/ui/LikeButton';
 import { useLikeToggle } from '@/features/community/useLikeToggle';
+import { useCreateComment } from '@/features/community/useCreateComment';
 import { CommentSection } from '@/widgets/community/CommentSection';
 import { AnswerThread } from '@/widgets/community/AnswerThread';
 import { AiSummaryCard } from '@/widgets/community/AiSummaryCard';
@@ -51,6 +52,7 @@ export const QnaDetailPage: React.FC = () => {
     initialLiked: post?.isLiked ?? false,
     initialCount: post?.likeCount ?? 0,
   });
+  const createComment = useCreateComment(id ?? '');
 
   if (id == null) {
     return (
@@ -170,6 +172,9 @@ export const QnaDetailPage: React.FC = () => {
             comments={postComments}
             parentType="post"
             parentId={post.id}
+            onSubmit={(content) =>
+              createComment.mutateAsync({ parentType: 'post', parentId: post.id, content })
+            }
           />
 
           <AnswerThread
@@ -178,6 +183,9 @@ export const QnaDetailPage: React.FC = () => {
             acceptedAnswerId={answers.find((a) => a.isAccepted)?.id ?? null}
             postStatus={post.status}
             comments={post.comments ?? []}
+            onCommentSubmit={(answerId, content) =>
+              createComment.mutateAsync({ parentType: 'answer', parentId: answerId, content })
+            }
           />
 
           <AiSummaryCard

@@ -12,6 +12,7 @@ import type {
   ToggleLikeRequest,
   ToggleLikeResponse,
   CreateAnswerRequest,
+  CreateCommentRequest,
 } from '@/entities/community/model/types';
 
 const IS_MOCK = import.meta.env.VITE_COMMUNITY_MOCK === 'true';
@@ -28,4 +29,5 @@ export type {
   ToggleLikeRequest,
   ToggleLikeResponse,
   CreateAnswerRequest,
+  CreateCommentRequest,
 };

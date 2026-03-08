@@ -14,6 +14,7 @@ import {
   toggleLikeRequestSchema,
   toggleLikeResponseSchema,
   createAnswerRequestSchema,
+  createCommentRequestSchema,
 } from '@/shared/api/schemas/community';
 
 export type Post = z.infer<typeof postSchema>;
@@ -26,3 +27,4 @@ export type Comment = z.infer<typeof commentSchema>;
 export type ToggleLikeRequest = z.infer<typeof toggleLikeRequestSchema>;
 export type ToggleLikeResponse = z.infer<typeof toggleLikeResponseSchema>;
 export type CreateAnswerRequest = z.infer<typeof createAnswerRequestSchema>;
+export type CreateCommentRequest = z.infer<typeof createCommentRequestSchema>;

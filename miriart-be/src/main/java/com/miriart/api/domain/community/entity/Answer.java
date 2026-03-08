@@ -42,8 +42,7 @@ public class Answer extends BaseEntity {
     @JoinColumn(name = "persona_id")
     private Persona persona;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "image_urls", columnDefinition = "JSON")
