@@ -1,5 +1,6 @@
 package com.miriart.api.domain.community.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.miriart.api.domain.community.entity.Post;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,9 +12,11 @@ import static com.miriart.api.domain.community.dto.PostFeedResponse.*;
 /**
  * 게시글 상세 응답 DTO. FE postDetailSchema (community.ts:86-89) 매핑.
  * PostFeedResponse 17필드 + answers + comments.
+ * NON_NULL: null 필드(isLiked, deadlineAt)를 JSON에서 제외 → FE Zod .optional()과 정합.
  */
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostDetailResponse {
 
     private String id;

@@ -108,6 +108,19 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/posts?type=invalid - 400, C001 (잘못된 PostType)")
+    void getPosts_invalidType_returns400C001() throws Exception {
+        ResultActions result = mockMvc.perform(get("/api/posts")
+                        .param("type", "invalid")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        String json = result.andReturn().getResponse().getContentAsString();
+        JsonNode root = objectMapper.readTree(json);
+        assertThat(root.path("code").asText()).isEqualTo("C001");
+    }
+
+    @Test
     @DisplayName("GET /api/posts/99999 - 404, CM001")
     void getPost_notFound_returnsCM001() throws Exception {
         ResultActions result = mockMvc.perform(get("/api/posts/99999")
