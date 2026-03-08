@@ -24,8 +24,8 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
     long countByPostId(Long postId);
 
-    /** likeCount 증감 (delta: +1 또는 -1). */
-    @Modifying
+    /** likeCount 증감 (delta: +1 또는 -1). clearAutomatically로 같은 TX 내 findById 재조회 시 최신값 보장. */
+    @Modifying(clearAutomatically = true)
     @Query("update Answer a set a.likeCount = a.likeCount + :delta where a.id = :id")
     int incrementLikeCount(@Param("id") Long id, @Param("delta") int delta);
 }

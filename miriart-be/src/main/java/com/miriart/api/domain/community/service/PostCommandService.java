@@ -10,6 +10,8 @@ import com.miriart.api.domain.community.entity.PostType;
 import com.miriart.api.domain.community.repository.PostRepository;
 import com.miriart.api.domain.user.entity.User;
 import com.miriart.api.domain.user.repository.UserRepository;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +36,12 @@ public class PostCommandService {
     @Transactional
     public PostDetailResponse createPost(Long userId, CreatePostRequest req) {
         User user = userRepository.findByIdOrThrow(userId);
-        PostType postType = PostType.valueOf(req.type().toUpperCase());
+        PostType postType;
+        try {
+            postType = PostType.valueOf(req.type().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
         Persona persona = personaService.getOrCreatePersona(userId, "community");
 
