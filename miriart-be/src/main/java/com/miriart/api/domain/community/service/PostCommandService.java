@@ -13,6 +13,7 @@ import com.miriart.api.domain.user.repository.UserRepository;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +23,12 @@ import java.util.List;
 /**
  * 게시글 작성 커맨드 서비스.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostCommandService {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
+    private final ObjectMapper objectMapper;
     private final PostRepository postRepository;
     private final PersonaService personaService;
     private final PostQueryService postQueryService;
@@ -43,7 +44,10 @@ public class PostCommandService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        Persona persona = personaService.getOrCreatePersona(userId, "community");
+        // isAnonymous: true → 가명 페르소나, false/null → 실명(persona 없음)
+        Persona persona = Boolean.TRUE.equals(req.isAnonymous())
+                ? personaService.getOrCreatePersona(userId, "community")
+                : null;
 
         LocalDateTime deadlineAt = null;
         if (postType == PostType.QNA && req.deadlineHours() != null) {
@@ -67,12 +71,43 @@ public class PostCommandService {
         return postQueryService.getPostDetail(post.getId(), userId);
     }
 
+    @Transactional
+    public PostDetailResponse updatePost(Long userId, Long postId, CreatePostRequest req) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        if (!post.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        post.update(
+                req.title(),
+                req.content(),
+                req.gradeScope(),
+                req.domainScope(),
+                toJson(req.tags()),
+                toJson(req.imageUrls())
+        );
+
+        return postQueryService.getPostDetail(postId, userId);
+    }
+
+    @Transactional
+    public void deletePost(Long userId, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        if (!post.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        post.close();
+    }
+
     private String toJson(List<String> list) {
         if (list == null || list.isEmpty()) return null;
         try {
-            return MAPPER.writeValueAsString(list);
+            return objectMapper.writeValueAsString(list);
         } catch (JsonProcessingException e) {
-            return null;
+            log.error("JSON 직렬화 실패", e);
+            return "[]";
         }
     }
 }

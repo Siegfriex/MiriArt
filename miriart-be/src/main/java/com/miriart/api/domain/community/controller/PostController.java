@@ -59,6 +59,23 @@ public class PostController {
                 .body(ApiResponse.success(postCommandService.createPost(userId, request)));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PostDetailResponse>> updatePost(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id,
+            @RequestBody @Valid CreatePostRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success(postCommandService.updatePost(userId, id, request)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        postCommandService.deletePost(userId, id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{postId}/accept/{answerId}")
     public ResponseEntity<ApiResponse<Void>> acceptAnswer(
             @AuthenticationPrincipal Long userId,

@@ -56,4 +56,9 @@ public class Comment extends BaseEntity {
         this.persona = persona;
         this.content = content;
     }
+
+    /** 댓글 내용 수정. */
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

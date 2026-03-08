@@ -28,4 +28,21 @@ public class CommentController {
         CommentResponse body = commentCommandService.createComment(userId, req);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(body));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id,
+            @RequestBody @Valid CreateCommentRequest req) {
+        CommentResponse body = commentCommandService.updateComment(userId, id, req.content());
+        return ResponseEntity.ok(ApiResponse.success(body));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        commentCommandService.deleteComment(userId, id);
+        return ResponseEntity.noContent().build();
+    }
 }

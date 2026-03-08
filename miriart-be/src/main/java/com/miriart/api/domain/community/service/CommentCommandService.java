@@ -73,4 +73,45 @@ public class CommentCommandService {
                 comment.getId(), parentType, req.parentId(), userId);
         return CommentResponse.from(comment);
     }
+
+    @Transactional
+    public CommentResponse updateComment(Long userId, Long commentId, String content) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        comment.updateContent(content);
+        return CommentResponse.from(comment);
+    }
+
+    @Transactional
+    public void deleteComment(Long userId, Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+
+        // postId 확보 (댓글이 달린 post의 commentCount 감소)
+        Long postId;
+        if (comment.getParentType() == CommentParentType.POST) {
+            postId = comment.getParentId();
+        } else {
+            Answer answer = answerRepository.findById(comment.getParentId())
+                    .orElse(null);
+            postId = answer != null ? answer.getPost().getId() : null;
+        }
+
+        commentRepository.delete(comment);
+
+        if (postId != null) {
+            Post post = postRepository.findById(postId).orElse(null);
+            if (post != null) {
+                post.decrementCommentCount(1);
+            }
+        }
+
+        log.debug("댓글 삭제 - commentId={}, userId={}", commentId, userId);
+    }
 }

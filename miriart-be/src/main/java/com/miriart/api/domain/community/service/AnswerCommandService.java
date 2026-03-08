@@ -105,4 +105,38 @@ public class AnswerCommandService {
         reputationService.addReputationForAnswerAccepted(answer.getUser().getId(), answerId);
         log.info("답변 채택 - postId={}, answerId={}, actorUserId={}", postId, answerId, actorUserId);
     }
+
+    /**
+     * 답변 수정. 작성자 본인만 가능.
+     */
+    @Transactional
+    public void updateAnswer(Long userId, Long postId, Long answerId, String content, String imageUrls) {
+        Answer answer = answerRepository.findByIdAndPostId(answerId, postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+        if (!answer.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        answer.update(content, imageUrls);
+    }
+
+    /**
+     * 답변 삭제. 작성자 본인만 가능, 채택된 답변 삭제 불가.
+     */
+    @Transactional
+    public void deleteAnswer(Long userId, Long postId, Long answerId) {
+        Answer answer = answerRepository.findByIdAndPostId(answerId, postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+        if (!answer.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+        }
+        if (answer.isAccepted()) {
+            throw new BusinessException(ErrorCode.ANSWER_ALREADY_ACCEPTED);
+        }
+
+        Post post = answer.getPost();
+        post.decrementAnswerCount();
+
+        answerRepository.delete(answer);
+        log.info("답변 삭제 - answerId={}, postId={}, userId={}", answerId, postId, userId);
+    }
 }

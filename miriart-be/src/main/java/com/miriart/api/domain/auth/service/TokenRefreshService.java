@@ -7,8 +7,11 @@ import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.redis.RedisService;
 import com.miriart.api.global.security.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +37,11 @@ public class TokenRefreshService {
     private final RedisService redisService;
     private final UserRepository userRepository;
 
+    @Value("${miriart.auth.cookie-same-site:Lax}")
+    private String cookieSameSite;
+
     @Transactional(readOnly = true)
-    public TokenRefreshResponse refresh(String refreshToken) {
+    public TokenRefreshResponse refresh(String refreshToken, HttpServletResponse response) {
         // 1. 토큰 유효성 검증
         if (!jwtUtil.validateRefreshToken(refreshToken)) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED);
@@ -51,7 +57,21 @@ public class TokenRefreshService {
         // 3. 최신 role로 새 Access Token 발급 (DB 1회 조회 — 권한 변경 즉시 반영)
         User user = userRepository.findByIdOrThrow(userId);
         String newAccessToken = jwtUtil.createAccessToken(userId, user.getRole().name());
-        log.debug("Access Token 갱신 완료 - userId: {}", userId);
+
+        // 4. Refresh Token 회전 — 새 RT 발급 → Redis 교체 → Set-Cookie
+        String newRefreshToken = jwtUtil.createRefreshToken(userId);
+        redisService.saveRefreshToken(userId, newRefreshToken);
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite(cookieSameSite)
+                .path("/api/auth/refresh")
+                .maxAge(604800)  // 7일
+                .build();
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        log.debug("Access+Refresh Token 갱신 완료 - userId: {}", userId);
 
         return TokenRefreshResponse.builder()
                 .accessToken(newAccessToken)

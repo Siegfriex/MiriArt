@@ -18,6 +18,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByParentTypeAndParentIdOrderByCreatedAtAsc(
             CommentParentType parentType, Long parentId);
 
+    /** N+1 방지: 여러 parentId에 대한 댓글을 IN 쿼리로 일괄 조회. */
     List<Comment> findByParentTypeAndParentIdInOrderByCreatedAtAsc(
             CommentParentType parentType, List<Long> parentIds);
 }

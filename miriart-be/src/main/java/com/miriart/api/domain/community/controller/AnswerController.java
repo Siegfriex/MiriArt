@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,12 +45,32 @@ public class AnswerController {
                 .body(ApiResponse.success(answerId));
     }
 
+    @PutMapping("/{answerId}")
+    public ResponseEntity<ApiResponse<Void>> update(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @PathVariable Long answerId,
+            @RequestBody @Valid CreateAnswerRequest req) {
+        answerCommandService.updateAnswer(userId, postId, answerId,
+                req.content(), toJson(req.imageUrls()));
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @DeleteMapping("/{answerId}")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @PathVariable Long answerId) {
+        answerCommandService.deleteAnswer(userId, postId, answerId);
+        return ResponseEntity.noContent().build();
+    }
+
     private String toJson(List<String> list) {
         if (list == null || list.isEmpty()) return null;
         try {
             return objectMapper.writeValueAsString(list);
         } catch (JsonProcessingException e) {
-            log.error("imageUrls JSON 직렬화 실패", e);
+            log.warn("imageUrls JSON 직렬화 실패, 빈 배열 반환", e);
             return "[]";
         }
     }

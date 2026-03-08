@@ -5,6 +5,8 @@ import com.miriart.api.domain.auth.dto.TokenExchangeResponse;
 import com.miriart.api.domain.auth.dto.TokenRefreshResponse;
 import com.miriart.api.domain.auth.service.OAuth2TokenExchangeService;
 import com.miriart.api.domain.auth.service.TokenRefreshService;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.response.ApiResponse;
 import com.miriart.api.global.security.JwtUtil;
 import jakarta.servlet.http.Cookie;
@@ -65,9 +67,13 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenRefreshResponse>> refreshToken(
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            HttpServletResponse response) {
         String refreshToken = extractRefreshTokenFromCookie(request);
-        TokenRefreshResponse result = tokenRefreshService.refresh(refreshToken);
+        if (refreshToken == null) {
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
+        TokenRefreshResponse result = tokenRefreshService.refresh(refreshToken, response);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

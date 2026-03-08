@@ -45,7 +45,7 @@ public class PostFeedResponse {
         return PostFeedResponse.builder()
                 .id(String.valueOf(post.getId()))
                 .type(post.getType().name().toLowerCase())
-                .status(post.getStatus().name())
+                .status(post.getStatus().name().toLowerCase())
                 .title(post.getTitle())
                 .content(truncate(post.getContent(), CONTENT_TRUNCATE_LENGTH))
                 .grade(nullToEmpty(post.getGradeScope()))

@@ -54,7 +54,7 @@ public class OAuth2TokenExchangeService {
         try {
             payloadJson = redisService.getAndDeleteOAuth2Code(code);
         } catch (Exception e) {
-            log.error("Redis 장애로 OAuth2 코드 조회 실패 - code: {}", code, e);
+            log.error("Redis OAuth2 코드 조회 실패 - code: {}", code, e);
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         if (payloadJson == null) {

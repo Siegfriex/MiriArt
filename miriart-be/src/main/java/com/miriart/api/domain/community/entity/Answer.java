@@ -71,4 +71,10 @@ public class Answer extends BaseEntity {
     public void incrementLikeCount(int delta) {
         this.likeCount = Math.max(0, this.likeCount + delta);
     }
+
+    /** 답변 내용 수정. */
+    public void update(String content, String imageUrls) {
+        this.content = content;
+        this.imageUrls = imageUrls;
+    }
 }

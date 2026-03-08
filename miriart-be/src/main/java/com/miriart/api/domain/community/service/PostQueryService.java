@@ -45,8 +45,9 @@ public class PostQueryService {
     public PostsFeedPageResponse getFeed(String type, String sort, String grade, String domain,
                                          String cursor, int size, Long optionalUserId) {
         int page = decodeCursor(cursor);
+        int clampedSize = Math.max(1, Math.min(size, 100));
         Sort sorting = "popular".equalsIgnoreCase(sort) ? SORT_POPULAR : SORT_LATEST;
-        PageRequest pageable = PageRequest.of(page, size, sorting);
+        PageRequest pageable = PageRequest.of(page, clampedSize, sorting);
 
         // type 파싱
         PostType postType = null;
@@ -62,13 +63,19 @@ public class PostQueryService {
         boolean hasDomain = domain != null && !domain.isBlank();
 
         Page<Post> postPage;
-        if (postType != null && hasGrade && hasDomain) {
+        if (postType != null && (hasGrade || hasDomain)) {
             postPage = postRepository.findByTypeAndStatusAndGradeScopeAndDomainScope(
-                    postType, PostStatus.OPEN, grade, domain, pageable);
+                    postType, PostStatus.OPEN,
+                    hasGrade ? grade : null,
+                    hasDomain ? domain : null,
+                    pageable);
         } else if (postType != null) {
             postPage = postRepository.findByTypeAndStatus(postType, PostStatus.OPEN, pageable);
-        } else if (hasGrade && hasDomain) {
-            postPage = postRepository.findByGradeScopeAndDomainScope(grade, domain, pageable);
+        } else if (hasGrade || hasDomain) {
+            postPage = postRepository.findByGradeScopeAndDomainScope(
+                    hasGrade ? grade : null,
+                    hasDomain ? domain : null,
+                    pageable);
         } else {
             postPage = postRepository.findAll(pageable);
         }
@@ -93,10 +100,11 @@ public class PostQueryService {
 
         List<Answer> answers = answerRepository.findByPostIdOrderByCreatedAtAsc(postId);
 
-        // 댓글: post 댓글 + 답변 댓글 (IN 쿼리로 N+1 해결)
+        // 댓글: post 댓글
         List<Comment> postComments = commentRepository
                 .findByParentTypeAndParentIdOrderByCreatedAtAsc(CommentParentType.POST, postId);
 
+        // answer 댓글: IN 쿼리로 N+1 방지
         List<Long> answerIds = answers.stream().map(Answer::getId).toList();
         Map<Long, List<Comment>> answerCommentsMap;
         if (answerIds.isEmpty()) {
