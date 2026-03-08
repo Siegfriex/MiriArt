@@ -37,7 +37,8 @@ public class PostQueryService {
      */
     public PostsFeedPageResponse getFeed(String type, String cursor, int size, Long optionalUserId) {
         int page = decodeCursor(cursor);
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        int clampedSize = Math.max(1, Math.min(size, 100));
+        PageRequest pageable = PageRequest.of(page, clampedSize, Sort.by("createdAt").descending());
 
         Page<Post> postPage;
         if (type != null && !type.isBlank()) {

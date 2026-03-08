@@ -58,6 +58,11 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<Page<AnalysisDetailResponse>>> getMyAnalyses(
             @AuthenticationPrincipal Long userId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        // size 상한 제한 (DoS 방지)
+        if (pageable.getPageSize() > 100) {
+            pageable = org.springframework.data.domain.PageRequest.of(
+                    pageable.getPageNumber(), 100, pageable.getSort());
+        }
         return ResponseEntity.ok(ApiResponse.success(analysisService.getMyAnalyses(userId, pageable)));
     }
 

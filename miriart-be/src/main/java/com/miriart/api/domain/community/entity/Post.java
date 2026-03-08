@@ -126,4 +126,30 @@ public class Post extends BaseEntity {
     public void incrementLikeCount(int delta) {
         this.likeCount = Math.max(0, this.likeCount + delta);
     }
+
+    /** 게시글 수정. */
+    public void update(String title, String content, String gradeScope, String domainScope,
+                       String tags, String imageUrls) {
+        this.title = title;
+        this.content = content;
+        this.gradeScope = gradeScope;
+        this.domainScope = domainScope;
+        this.tags = tags;
+        this.imageUrls = imageUrls;
+    }
+
+    /** 게시글 닫기 (soft delete). */
+    public void close() {
+        this.status = PostStatus.CLOSED;
+    }
+
+    /** 답변 개수 1 감소. */
+    public void decrementAnswerCount() {
+        this.answerCount = Math.max(0, this.answerCount - 1);
+    }
+
+    /** 댓글 개수 N 감소. */
+    public void decrementCommentCount(int count) {
+        this.commentCount = Math.max(0, this.commentCount - count);
+    }
 }

@@ -45,7 +45,7 @@ public class PostDetailResponse {
         return PostDetailResponse.builder()
                 .id(String.valueOf(post.getId()))
                 .type(post.getType().name().toLowerCase())
-                .status(post.getStatus().name())
+                .status(post.getStatus().name().toLowerCase())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .grade(nullToEmpty(post.getGradeScope()))
