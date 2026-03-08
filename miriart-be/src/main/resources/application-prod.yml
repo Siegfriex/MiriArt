@@ -11,9 +11,7 @@ spring:
       sql:
         enabled: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    # Cloud Run 시크릿 매핑: SPRING_DATASOURCE_URL/USERNAME/PASSWORD → Spring 자동 바인딩
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-timeout: 30000
@@ -30,22 +28,21 @@ spring:
         # dialect·temp는 application.yml 공통 설정 사용
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST}
+      # Cloud Run 시크릿 매핑: SPRING_DATA_REDIS_HOST → Spring 자동 바인딩
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: 6379
   security:
     oauth2:
       client:
         registration:
           kakao:
-            client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID}
-            client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET}
+            # client-id/secret: Cloud Run 시크릿 → Spring 자동 바인딩
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: profile_nickname, account_email
           google:
-            client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID}
-            client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET}
+            # client-id/secret: Cloud Run 시크릿 → Spring 자동 바인딩
             scope: email, profile
         provider:
           kakao:
