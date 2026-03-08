@@ -174,6 +174,7 @@ CREATE TABLE `posts` (
   `updated_at` datetime(6) NOT NULL,
   `accepted_answer_id` bigint DEFAULT NULL,
   `answer_count` int NOT NULL,
+  `comment_count` int NOT NULL DEFAULT 0,
   `content` tinytext COLLATE utf8mb4_unicode_ci NOT NULL,
   `deadline_at` datetime(6) DEFAULT NULL,
   `domain_scope` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

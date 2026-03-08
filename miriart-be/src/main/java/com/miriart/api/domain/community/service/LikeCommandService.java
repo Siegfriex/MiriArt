@@ -1,6 +1,6 @@
 package com.miriart.api.domain.community.service;
 
-import com.miriart.api.domain.community.dto.LikeToggleResult;
+import com.miriart.api.domain.community.dto.LikeToggleResponse;
 import com.miriart.api.domain.community.entity.Like;
 import com.miriart.api.domain.community.entity.LikeTargetType;
 import com.miriart.api.domain.community.repository.AnswerRepository;
@@ -19,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 좋아요 토글 서비스. SELECT 후 insert/delete + UNIQUE 위반 시 CM006 변환.
- *
- * <p>트랜잭션: 메서드 단위 @Transactional. 대상 likeCount는 엔티티 증감 후 save.</p>
- *
- * @author MiriArt Team
+ * CTO 제언 반영: Service에서 LikeToggleResponse 직접 반환, Controller는 thin.
  */
 @Slf4j
 @Service
@@ -35,37 +32,52 @@ public class LikeCommandService {
     private final AnswerRepository answerRepository;
 
     /**
-     * 좋아요 토글. 이미 있으면 삭제(REMOVED), 없으면 추가(ADDED). UNIQUE 위반 시 LIKE_ALREADY_EXISTS.
+     * 좋아요 토글. 이미 있으면 삭제, 없으면 추가. UNIQUE 위반 시 LIKE_ALREADY_EXISTS.
+     * likeCount까지 계산해서 LikeToggleResponse 반환.
      */
     @Transactional
-    public LikeToggleResult toggleLike(Long userId, LikeTargetType targetType, Long targetId) {
+    public LikeToggleResponse toggleLike(Long userId, LikeTargetType targetType, Long targetId) {
         User user = userRepository.findByIdOrThrow(userId);
         ensureTargetExists(targetType, targetId);
 
+        boolean liked;
         var existing = likeRepository.findByUserIdAndTargetTypeAndTargetId(userId, targetType, targetId);
         if (existing.isPresent()) {
             Like like = existing.get();
             likeRepository.delete(like);
             decrementTargetLikeCount(targetType, targetId);
-            return LikeToggleResult.REMOVED;
+            liked = false;
+        } else {
+            try {
+                Like like = Like.builder()
+                        .user(user)
+                        .targetType(targetType)
+                        .targetId(targetId)
+                        .build();
+                likeRepository.saveAndFlush(like);
+            } catch (DataIntegrityViolationException e) {
+                String constraint = e.getCause() instanceof ConstraintViolationException cve
+                        ? cve.getConstraintName() : null;
+                log.debug("Like unique constraint violation, constraint={}, userId={}, target={}/{}",
+                        constraint, userId, targetType, targetId);
+                throw new BusinessException(ErrorCode.LIKE_ALREADY_EXISTS);
+            }
+            incrementTargetLikeCount(targetType, targetId);
+            liked = true;
         }
 
-        try {
-            Like like = Like.builder()
-                    .user(user)
-                    .targetType(targetType)
-                    .targetId(targetId)
-                    .build();
-            likeRepository.saveAndFlush(like);
-        } catch (DataIntegrityViolationException e) {
-            String constraint = e.getCause() instanceof ConstraintViolationException cve
-                    ? cve.getConstraintName() : null;
-            log.debug("Like unique constraint violation, constraint={}, userId={}, target={}/{}",
-                    constraint, userId, targetType, targetId);
-            throw new BusinessException(ErrorCode.LIKE_ALREADY_EXISTS);
-        }
-        incrementTargetLikeCount(targetType, targetId);
-        return LikeToggleResult.ADDED;
+        int likeCount = resolveLikeCount(targetType, targetId);
+        return new LikeToggleResponse(liked, likeCount);
+    }
+
+    private int resolveLikeCount(LikeTargetType targetType, Long targetId) {
+        return switch (targetType) {
+            case POST -> postRepository.findById(targetId)
+                    .map(p -> p.getLikeCount()).orElse(0);
+            case ANSWER -> answerRepository.findById(targetId)
+                    .map(a -> a.getLikeCount()).orElse(0);
+            case COMMENT -> 0;
+        };
     }
 
     private void ensureTargetExists(LikeTargetType targetType, Long targetId) {
@@ -74,7 +86,7 @@ public class LikeCommandService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
             case ANSWER -> answerRepository.findById(targetId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
-            case COMMENT -> throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); // Comment 엔티티 조회 추가 시 구현
+            case COMMENT -> throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 

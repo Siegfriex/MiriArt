@@ -223,7 +223,8 @@
       "Bash(rm:*)",
       "Bash(git commit:*)",
       "Bash(gh repo:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(mysql:*)"
     ]
   }
 }

@@ -78,6 +78,9 @@ public class Post extends BaseEntity {
     @Column(name = "answer_count", nullable = false)
     private int answerCount = 0;
 
+    @Column(name = "comment_count", nullable = false)
+    private int commentCount = 0;
+
     @Column(name = "accepted_answer_id")
     private Long acceptedAnswerId;
 

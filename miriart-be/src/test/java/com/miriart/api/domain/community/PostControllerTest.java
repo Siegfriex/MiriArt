@@ -2,7 +2,6 @@ package com.miriart.api.domain.community;
 
 import com.miriart.api.domain.community.entity.Post;
 import com.miriart.api.domain.community.entity.PostType;
-import com.miriart.api.domain.community.entity.PostStatus;
 import com.miriart.api.domain.community.repository.PostRepository;
 import com.miriart.api.domain.user.entity.LoginProvider;
 import com.miriart.api.domain.user.entity.User;
@@ -26,7 +25,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * P1: GET /api/posts 200, 페이지네이션·정렬. posts 스키마 사용 범위 검증.
+ * GET /api/posts — 피드 목록 (PostsFeedPageResponse 구조).
+ * GET /api/posts/{id} — 상세 (PostDetailResponse 구조).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -55,9 +55,9 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/posts - 200, 페이지 구조 및 Post 필드 매핑")
-    void getPosts_returns200AndPageWithPostFields() throws Exception {
-        Post post = postRepository.save(Post.builder()
+    @DisplayName("GET /api/posts - 200, PostsFeedPageResponse 구조 (posts + nextCursor)")
+    void getPosts_returns200AndFeedPage() throws Exception {
+        postRepository.save(Post.builder()
                 .user(author)
                 .type(PostType.FREE)
                 .title("P1 테스트 글")
@@ -66,7 +66,6 @@ class PostControllerTest {
 
         ResultActions result = mockMvc.perform(get("/api/posts")
                         .param("size", "20")
-                        .param("sort", "createdAt,desc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -74,11 +73,49 @@ class PostControllerTest {
         JsonNode root = objectMapper.readTree(json);
         assertThat(root.path("success").asBoolean()).isTrue();
         JsonNode data = root.path("data");
-        assertThat(data.path("content").isArray()).isTrue();
-        if (data.path("content").size() > 0) {
-            JsonNode first = data.path("content").get(0);
+        assertThat(data.path("posts").isArray()).isTrue();
+        if (data.path("posts").size() > 0) {
+            JsonNode first = data.path("posts").get(0);
             assertThat(first.path("title").asText()).isEqualTo("P1 테스트 글");
-            assertThat(first.path("id").isMissingNode()).isFalse();
+            assertThat(first.has("id")).isTrue();
+            assertThat(first.has("type")).isTrue();
+            assertThat(first.has("persona")).isTrue();
         }
+    }
+
+    @Test
+    @DisplayName("GET /api/posts/{id} - 200, PostDetailResponse 구조")
+    void getPost_returns200AndDetail() throws Exception {
+        Post post = postRepository.save(Post.builder()
+                .user(author)
+                .type(PostType.FREE)
+                .title("상세 테스트 글")
+                .content("상세 본문")
+                .build());
+
+        ResultActions result = mockMvc.perform(get("/api/posts/" + post.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        String json = result.andReturn().getResponse().getContentAsString();
+        JsonNode root = objectMapper.readTree(json);
+        assertThat(root.path("success").asBoolean()).isTrue();
+        JsonNode data = root.path("data");
+        assertThat(data.path("title").asText()).isEqualTo("상세 테스트 글");
+        assertThat(data.path("content").asText()).isEqualTo("상세 본문");
+        assertThat(data.path("answers").isArray()).isTrue();
+        assertThat(data.path("comments").isArray()).isTrue();
+    }
+
+    @Test
+    @DisplayName("GET /api/posts/99999 - 404, CM001")
+    void getPost_notFound_returnsCM001() throws Exception {
+        ResultActions result = mockMvc.perform(get("/api/posts/99999")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+
+        String json = result.andReturn().getResponse().getContentAsString();
+        JsonNode root = objectMapper.readTree(json);
+        assertThat(root.path("code").asText()).isEqualTo("CM001");
     }
 }
