@@ -2,10 +2,7 @@ package com.miriart.api.domain.community.controller;
 
 import com.miriart.api.domain.community.dto.LikeToggleRequest;
 import com.miriart.api.domain.community.dto.LikeToggleResponse;
-import com.miriart.api.domain.community.entity.LikeTargetType;
 import com.miriart.api.domain.community.service.LikeCommandService;
-import com.miriart.api.global.exception.BusinessException;
-import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +24,7 @@ public class LikeController {
     public ResponseEntity<ApiResponse<LikeToggleResponse>> toggle(
             @AuthenticationPrincipal Long userId,
             @RequestBody @Valid LikeToggleRequest req) {
-        LikeTargetType type;
-        try {
-            type = LikeTargetType.valueOf(req.targetType());
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        LikeToggleResponse response = likeCommandService.toggleLike(userId, type, req.targetId());
+        LikeToggleResponse response = likeCommandService.toggleLike(userId, req.targetType(), req.targetId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

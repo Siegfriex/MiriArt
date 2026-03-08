@@ -9,5 +9,6 @@ export const API_BASE = ((): string => {
   const url = import.meta.env.VITE_API_BASE_URL;
   if (url && typeof url === 'string') return url.trim();
   if (import.meta.env.DEV) return 'http://localhost:8080';
+  if (import.meta.env.PROD) console.error('VITE_API_BASE_URL is not set. Set it in Vercel Environment Variables for production.');
   return ''; // 프로덕션 미설정 시 same-origin (Vercel에 VITE_API_BASE_URL 설정 후 재배포 필요)
 })();

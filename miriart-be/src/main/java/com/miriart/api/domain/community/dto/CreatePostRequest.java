@@ -11,9 +11,9 @@ import java.util.List;
 public record CreatePostRequest(
         @NotBlank String type,
         @NotBlank @Size(max = 100) String title,
-        @NotBlank String content,
-        List<String> imageUrls,
-        List<String> tags,
+        @NotBlank @Size(max = 10000) String content,
+        @Size(max = 10) List<String> imageUrls,
+        @Size(max = 10) List<String> tags,
         String gradeScope,
         String domainScope,
         Boolean isAnonymous,

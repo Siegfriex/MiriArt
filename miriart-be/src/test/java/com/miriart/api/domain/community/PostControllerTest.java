@@ -121,6 +121,65 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/posts?sort=popular - 인기순 정렬 → 200")
+    void getPosts_sortPopular_returns200() throws Exception {
+        postRepository.save(Post.builder()
+                .user(author)
+                .type(PostType.FREE)
+                .title("인기순 테스트")
+                .content("본문")
+                .build());
+
+        mockMvc.perform(get("/api/posts")
+                        .param("sort", "popular")
+                        .param("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /api/posts?type=QNA&grade=중1 - 필터 조합 → 200")
+    void getPosts_typeAndGradeFilter_returns200() throws Exception {
+        postRepository.save(Post.builder()
+                .user(author)
+                .type(PostType.QNA)
+                .title("중1 수학 질문")
+                .content("본문")
+                .gradeScope("중1")
+                .domainScope("수학")
+                .build());
+
+        ResultActions result = mockMvc.perform(get("/api/posts")
+                        .param("type", "QNA")
+                        .param("grade", "중1")
+                        .param("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        String json = result.andReturn().getResponse().getContentAsString();
+        JsonNode root = objectMapper.readTree(json);
+        assertThat(root.path("success").asBoolean()).isTrue();
+    }
+
+    @Test
+    @DisplayName("GET /api/posts?domain=수학 - 도메인 필터 → 200")
+    void getPosts_domainFilter_returns200() throws Exception {
+        postRepository.save(Post.builder()
+                .user(author)
+                .type(PostType.FREE)
+                .title("수학 도메인 글")
+                .content("본문")
+                .domainScope("수학")
+                .build());
+
+        mockMvc.perform(get("/api/posts")
+                        .param("domain", "수학")
+                        .param("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("GET /api/posts/99999 - 404, CM001")
     void getPost_notFound_returnsCM001() throws Exception {
         ResultActions result = mockMvc.perform(get("/api/posts/99999")

@@ -49,7 +49,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 oAuth2User.getProvider()
         );
 
-        redisService.saveOAuth2Code(code, payload.toJson());
+        try {
+            redisService.saveOAuth2Code(code, payload.toJson());
+        } catch (Exception e) {
+            log.error("Redis 장애로 OAuth2 코드 저장 실패 - userId: {}", oAuth2User.getUserId(), e);
+            response.sendRedirect(frontendOauthSuccessUrl + "/auth/callback?error=server_error");
+            return;
+        }
 
         String redirectUrl = frontendOauthSuccessUrl + "/auth/callback?code=" + code;
         log.debug("OAuth2 성공 리다이렉트 → {} (code 생략)", frontendOauthSuccessUrl + "/auth/callback?code=***");

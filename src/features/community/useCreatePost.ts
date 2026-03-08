@@ -97,7 +97,7 @@ export function useCreatePost(
       domainScope: formState.domainScope || undefined,
       isAnonymous: formState.isAnonymous,
       deadlineHours: formState.deadlineHours,
-      imageUrls: [], // TODO: 업로드 후 URL 전달
+      imageUrls: [], // TODO: GCS presigned URL 또는 BE 업로드 API 연동 후 imageUrls 전달
     };
     await mutation.mutateAsync(body);
   }, [formState, mutation]);

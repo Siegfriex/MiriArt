@@ -8,6 +8,7 @@ import com.miriart.api.domain.community.service.AnswerCommandService;
 import com.miriart.api.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,12 +19,13 @@ import java.util.List;
 /**
  * 답변 API. POST /api/posts/{postId}/answers (인증 필요).
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/posts/{postId}/answers")
 @RequiredArgsConstructor
 public class AnswerController {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper objectMapper;
     private final AnswerCommandService answerCommandService;
 
     @PostMapping
@@ -45,9 +47,10 @@ public class AnswerController {
     private String toJson(List<String> list) {
         if (list == null || list.isEmpty()) return null;
         try {
-            return MAPPER.writeValueAsString(list);
+            return objectMapper.writeValueAsString(list);
         } catch (JsonProcessingException e) {
-            return null;
+            log.error("imageUrls JSON 직렬화 실패", e);
+            return "[]";
         }
     }
 }

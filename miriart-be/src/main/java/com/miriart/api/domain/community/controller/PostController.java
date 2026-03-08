@@ -33,11 +33,14 @@ public class PostController {
     @GetMapping
     public ResponseEntity<ApiResponse<PostsFeedPageResponse>> getPosts(
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String domain,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(ApiResponse.success(
-                postQueryService.getFeed(type, cursor, size, userId)));
+                postQueryService.getFeed(type, sort, grade, domain, cursor, size, userId)));
     }
 
     @GetMapping("/{id}")

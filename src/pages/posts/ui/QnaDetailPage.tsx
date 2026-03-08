@@ -207,7 +207,6 @@ export const QnaDetailPage: React.FC = () => {
           />
           <Button
             onClick={() => {
-              console.log('답변 작성:', answerText);
               setAnswerText('');
             }}
             disabled={!answerText.trim()}

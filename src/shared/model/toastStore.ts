@@ -1,6 +1,6 @@
 /**
  * @fileoverview 전역 토스트 알림 스토어. success/error/info 메시지 표시, 자동 사라짐.
- * @참조 gemini.ts (API 에러 시), Toast.tsx (ToastContainer), SubscriptionSheet 등
+ * @참조 miriartApi.ts (API 에러 시), Toast.tsx (ToastContainer), SubscriptionSheet 등
  * @라우팅 (직접 사용 안 함)
  * @상태 zustand (in-memory)
  */
@@ -23,7 +23,7 @@ interface ToastStore {
 
 /**
  * 토스트 스토어 훅. show(message, type?, duration?), dismiss(id) 제공.
- * @참조 gemini.ts, Toast.tsx, SubscriptionSheet
+ * @참조 miriartApi.ts, Toast.tsx, SubscriptionSheet
  * @상태 toasts 배열
  */
 export const useToastStore = create<ToastStore>((set, get) => ({

@@ -56,7 +56,7 @@ export const communityApiReal: CommunityApiSurface = {
     if (params.cursor) qs.set('cursor', params.cursor);
     if (params.size != null) qs.set('size', String(params.size));
     const path = `/api/posts${qs.toString() ? `?${qs}` : ''}`;
-    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders() });
+    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders(), requestClass: 'INTERACTIVE_FAST' });
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = postsResponseSchema.safeParse(payload);
     if (!parsed.success) throw new ApiError(500, 'Invalid posts response');
@@ -65,7 +65,7 @@ export const communityApiReal: CommunityApiSurface = {
   },
 
   getPost: async (id: string) => {
-    const raw = await apiFetch<unknown>(`/api/posts/${id}`, { headers: getAuthHeaders() });
+    const raw = await apiFetch<unknown>(`/api/posts/${id}`, { headers: getAuthHeaders(), requestClass: 'INTERACTIVE_FAST' });
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = postDetailResponseSchema.safeParse(payload);
     if (!parsed.success) throw new ApiError(500, 'Invalid post detail response');
@@ -78,6 +78,7 @@ export const communityApiReal: CommunityApiSurface = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(body),
+      requestClass: 'INTERACTIVE_FAST',
     });
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = postDetailResponseSchema.safeParse(payload);
@@ -97,6 +98,7 @@ export const communityApiReal: CommunityApiSurface = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(payload),
+      requestClass: 'INTERACTIVE_FAST',
     });
     const responsePayload = (raw as { data?: unknown }).data ?? raw;
     const parsed = toggleLikeResponseSchema.safeParse(responsePayload);
@@ -111,6 +113,7 @@ export const communityApiReal: CommunityApiSurface = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(sendBody),
+      requestClass: 'INTERACTIVE_FAST',
     });
     const responsePayload = (raw as { data?: unknown }).data ?? raw;
     if (typeof responsePayload === 'number') return responsePayload;
@@ -125,19 +128,23 @@ export const communityApiReal: CommunityApiSurface = {
     await apiFetch(`/api/posts/${postId}/accept/${answerId}`, {
       method: 'POST',
       headers: getAuthHeaders(),
+      requestClass: 'INTERACTIVE_FAST',
     });
   },
 
   createComment: async (params: { parentType: CommentParentType; parentId: string; content: string }) => {
     const body = createCommentRequestSchema.parse(params);
+    const num = Number(body.parentId);
+    if (!Number.isFinite(num)) throw new ApiError(400, 'Invalid parentId');
     const raw = await apiFetch<unknown>('/api/comments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
         parentType: body.parentType,
-        parentId: Number(body.parentId),
+        parentId: num,
         content: body.content,
       }),
+      requestClass: 'INTERACTIVE_FAST',
     });
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = commentSchema.safeParse(payload);
@@ -154,12 +161,14 @@ export const communityApiReal: CommunityApiSurface = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ reason: reason ?? '' }),
+      requestClass: 'INTERACTIVE_FAST',
     });
   },
 
   getReputation: async (userId: string) => {
     const raw = await apiFetch<unknown>(`/api/users/${userId}/reputation`, {
       headers: getAuthHeaders(),
+      requestClass: 'INTERACTIVE_FAST',
     });
     const payload = (raw as { data?: unknown }).data ?? raw;
     if (payload && typeof payload === 'object' && 'level' in payload) {

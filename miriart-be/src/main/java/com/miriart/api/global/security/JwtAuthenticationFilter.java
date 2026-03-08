@@ -25,7 +25,7 @@ import java.util.List;
  *   <li>인증된 API(/api/chat, /api/analyses 등)에서 SecurityContextHolder로 현재 사용자 ID·권한 조회</li>
  * </ul>
  *
- * <p>Cariv 미구현 TODO 필터를 MiriArt에서 신규 작성.</p>
+ * <p>MiriArt 신규 작성.</p>
  *
  * @author MiriArt Team
  */

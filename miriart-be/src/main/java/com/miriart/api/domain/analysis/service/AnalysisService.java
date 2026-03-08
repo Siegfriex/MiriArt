@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 /**
  * 작품 분석 오케스트레이션 서비스.
@@ -51,6 +52,10 @@ public class AnalysisService {
     private final AnalysisFailHandler analysisFailHandler;
     private final ObjectMapper objectMapper;
 
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "image/png", "image/jpeg", "image/webp", "image/gif"
+    );
+
     /**
      * 작품 업로드 + AI 분석 시작 (3단계 트랜잭션)
      * POST /api/analyses
@@ -60,6 +65,10 @@ public class AnalysisService {
         // 1. 파일 검증 (트랜잭션 불필요)
         if (image == null || image.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_EMPTY);
+        }
+        String contentType = image.getContentType();
+        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessException(ErrorCode.INVALID_FILE_TYPE);
         }
 
         // 2. GCS 업로드 (트랜잭션 불필요 — 파일 I/O)
@@ -80,7 +89,11 @@ public class AnalysisService {
 
         } catch (Exception e) {
             // 6. FAILED UPDATE (PENDING이 이미 커밋되어 있으므로 조회·업데이트 가능)
-            analysisFailHandler.markFailed(analysis.getId());
+            try {
+                analysisFailHandler.markFailed(analysis.getId());
+            } catch (Exception failEx) {
+                log.error("markFailed 자체 실패 - analysisId: {}", analysis.getId(), failEx);
+            }
             log.info("분석 실패 - analysisId: {}, userId: {}, cause: {}", analysis.getId(), userId, e.getMessage());
 
             if (e instanceof BusinessException) {

@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { H2, H3, BodyText } from '../../shared/ui/Typography';
 import { Button } from '../../shared/ui/Button';
 import { TextInput } from '../../shared/ui/TextInput';
-import { X, Image as ImageIcon, ArrowLeft, Camera } from 'lucide-react';
+import { X, Image as ImageIcon, ArrowLeft, Camera, AlertCircle } from 'lucide-react';
 import { useModalStore } from '../../shared/model/modalStore';
 import { useToastStore } from '../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';

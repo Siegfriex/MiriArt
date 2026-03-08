@@ -29,6 +29,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByGradeScopeAndDomainScope(String gradeScope, String domainScope, Pageable pageable);
 
+    Page<Post> findByTypeAndStatusAndGradeScopeAndDomainScope(
+            PostType type, PostStatus status, String gradeScope, String domainScope, Pageable pageable);
+
     /**
      * 채택 시 동시성 제어용. PESSIMISTIC_WRITE → SELECT ... FOR UPDATE.
      * AnswerCommandService.acceptAnswer()에서 사용 중.
@@ -41,6 +44,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying
     @Query("update Post p set p.answerCount = p.answerCount + 1 where p.id = :id")
     int incrementAnswerCount(@Param("id") Long id);
+
+    /** commentCount 증가. 댓글 작성 시 호출. */
+    @Modifying(clearAutomatically = true)
+    @Query("update Post p set p.commentCount = p.commentCount + 1 where p.id = :id")
+    int incrementCommentCount(@Param("id") Long id);
 
     /** likeCount 증감 (delta: +1 또는 -1). flushAutomatically로 pending delete/insert 반영 보장. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)

@@ -50,7 +50,13 @@ public class OAuth2TokenExchangeService {
      */
     public TokenExchangeResponse exchange(String code, HttpServletResponse response) {
         // 1. Redis에서 code 조회 + 삭제 (1회용)
-        String payloadJson = redisService.getAndDeleteOAuth2Code(code);
+        String payloadJson;
+        try {
+            payloadJson = redisService.getAndDeleteOAuth2Code(code);
+        } catch (Exception e) {
+            log.error("Redis 장애로 OAuth2 코드 조회 실패 - code: {}", code, e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
         if (payloadJson == null) {
             throw new BusinessException(ErrorCode.OAUTH_CODE_INVALID);
         }

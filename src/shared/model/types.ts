@@ -1,6 +1,6 @@
 /**
  * @fileoverview 공통 도메인 타입 정의. User, Message, Session, Grade, AIModelType 등 앱 전역에서 사용.
- * @참조 gemini.ts, aiModels.ts, MessageBubble, ChatInput, SessionCard, AnalysisCard, RadarChart,
+ * @참조 miriartApi.ts, aiModels.ts, MessageBubble, ChatInput, SessionCard, AnalysisCard, RadarChart,
  *        StickyContextCard, SessionListPanel, ComparisonAccordion, chat-room Page, result-detail Page, entities
  * @라우팅 (직접 사용 안 함 - 타입만 제공)
  * @상태 (직접 사용 안 함 - 타입만 제공)

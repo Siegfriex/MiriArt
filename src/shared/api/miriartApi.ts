@@ -1,6 +1,6 @@
 /**
  * @fileoverview MiriArt API 클라이언트. 인증, 분석, 채팅, 커뮤니티 API.
- * gemini.ts 대체. Authorization 헤더 + Refresh 인터셉터 포함.
+ * 이전 gemini.ts 대체. Authorization 헤더 + Refresh 인터셉터 포함.
  * @참조 AuthCallback, UploadFlow, chat-room Page, communityApi
  */
 
@@ -15,11 +15,14 @@ import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
 import { API_BASE } from '../config/api';
+import type { RequestClass } from '../config/requestPolicy';
+import { REQUEST_POLICY, DEFAULT_REQUEST_CLASS } from '../config/requestPolicy';
 
 // #region agent log
 const DEBUG_LOG = (message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  if (!import.meta.env.DEV) return;
   const payload = { sessionId: 'a4f614', location: 'miriartApi.ts', message, data, timestamp: Date.now(), hypothesisId };
-  if (import.meta.env.DEV) console.log('[DEBUG]', message, data);
+  console.log('[DEBUG]', message, data);
   fetch('http://127.0.0.1:7620/ingest/67ee1a3b-2ca5-4344-aa14-d8c9f2ec8b28', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a4f614' },
@@ -74,17 +77,50 @@ async function refreshToken(): Promise<void> {
   tokenManager.setAccessToken(parsed.data.accessToken);
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit, retry = true): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: {
-      ...(init.headers || {}),
-    },
-  });
+/** apiFetch 옵션. requestClass 지정 시 해당 정책(timeout/retry) 적용. signal은 넘기지 않는다. */
+export type ApiFetchOptions = RequestInit & { requestClass?: RequestClass };
 
-  // 401 → Refresh 시도 (1회)
-  if (res.status === 401 && retry) {
+/**
+ * 정책 기반 fetch. 401 래퍼 → 내부 policy-aware fetch.
+ * - 내부: timeout + 네트워크/타임아웃 재시도만 수행.
+ * - 401은 루프 바깥에서 한 번만: refresh 후 내부 fetch 한 번 더.
+ */
+export async function apiFetch<T>(path: string, init: ApiFetchOptions = {}, retry401 = true): Promise<T> {
+  const requestClass = init.requestClass ?? DEFAULT_REQUEST_CLASS;
+  const { requestClass: _rc, signal: _signal, ...fetchInit } = init;
+  if (init.signal != null && import.meta.env.DEV) {
+    console.warn('[apiFetch] Do not pass signal to apiFetch; policy-based timeout uses internal AbortController.');
+  }
+  const policy = REQUEST_POLICY[requestClass];
+
+  async function fetchWithPolicy(innerPath: string, innerInit: RequestInit): Promise<Response> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= policy.retry; attempt++) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), policy.timeoutMs);
+      try {
+        const res = await fetch(`${API_BASE}${innerPath}`, {
+          ...innerInit,
+          credentials: 'include',
+          headers: { ...(innerInit.headers || {}) },
+          signal: controller.signal,
+        });
+        clearTimeout(id);
+        return res;
+      } catch (err) {
+        clearTimeout(id);
+        if (err instanceof Error && err.name === 'AbortError') {
+          throw new ApiError(408, 'FE_TIMEOUT');
+        }
+        lastError = err;
+        if (attempt >= policy.retry) throw err;
+      }
+    }
+    throw lastError;
+  }
+
+  let res = await fetchWithPolicy(path, fetchInit);
+  if (res.status === 401 && retry401) {
     if (!isRefreshing) {
       isRefreshing = true;
       refreshPromise = refreshToken().finally(() => {
@@ -93,10 +129,7 @@ export async function apiFetch<T>(path: string, init: RequestInit, retry = true)
       });
     }
     await refreshPromise;
-    return apiFetch<T>(path, {
-      ...init,
-      headers: { ...(init.headers || {}), ...getAuthHeaders() },
-    }, false);
+    res = await fetchWithPolicy(path, { ...fetchInit, headers: { ...(fetchInit.headers as Record<string, string> || {}), ...getAuthHeaders() } });
   }
 
   if (!res.ok) {
@@ -163,7 +196,7 @@ export const UserApi = {
     const parsed = userProfileApiSchema.safeParse(payload);
     if (!parsed.success) {
       const issues = parsed.error.issues;
-      console.warn('[getMe] parse failed. payload:', payload, 'zod issues:', issues);
+      if (import.meta.env.DEV) console.warn('[getMe] parse failed. payload:', payload, 'zod issues:', issues);
       // #region agent log
       DEBUG_LOG('getMe parse failed', {
         payloadKeys: typeof payload === 'object' && payload !== null ? Object.keys(payload as object) : [],
@@ -218,6 +251,7 @@ export const AnalysisApi = {
         method: 'POST',
         headers: getAuthHeaders(),
         body: formData,
+        requestClass: 'CRITICAL_SLOW',
       });
       const payload = (raw as { data?: unknown }).data ?? raw;
       const startParsed = analysisStartResponseSchema.safeParse(payload);
@@ -225,7 +259,7 @@ export const AnalysisApi = {
         throw new ApiError(500, 'Invalid analysis start response');
       }
       const { analysisId } = startParsed.data;
-      const detailRaw = await apiFetch<unknown>(`/api/analyses/${analysisId}`, { headers: getAuthHeaders() });
+      const detailRaw = await apiFetch<unknown>(`/api/analyses/${analysisId}`, { headers: getAuthHeaders(), requestClass: 'CRITICAL_SLOW' });
       const detailPayload = (detailRaw as { data?: unknown }).data ?? detailRaw;
       const detailParsed = analysisResponseSchema.safeParse(detailPayload);
       if (!detailParsed.success) {
@@ -247,7 +281,7 @@ export const AnalysisApi = {
   getList: async (params?: { page?: number; size?: number; grade?: string }): Promise<AnalysisResult[]> => {
     const raw = await apiFetch<unknown>(
       '/api/analyses?' + new URLSearchParams((params ?? {}) as Record<string, string>).toString(),
-      { headers: getAuthHeaders() }
+      { headers: getAuthHeaders(), requestClass: 'CRITICAL_SLOW' }
     );
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = analysesListResponseSchema.safeParse(payload);
@@ -259,7 +293,7 @@ export const AnalysisApi = {
   },
 
   getById: async (id: string): Promise<AnalysisResult> => {
-    const raw = await apiFetch<unknown>(`/api/analyses/${id}`, { headers: getAuthHeaders() });
+    const raw = await apiFetch<unknown>(`/api/analyses/${id}`, { headers: getAuthHeaders(), requestClass: 'CRITICAL_SLOW' });
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = analysisResponseSchema.safeParse(payload);
     if (!parsed.success) {
@@ -290,6 +324,7 @@ export const ChatApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(params),
+        requestClass: 'CRITICAL_SLOW',
       });
       const payload = (raw as { data?: unknown }).data ?? raw;
       const parsed = chatResponseSchema.safeParse(payload);
@@ -323,6 +358,9 @@ const COMMUNITY_MESSAGES: Record<string, string> = {
 /** API 계약서 §9 기반 ErrorCode → 한국어 메시지 변환. 스키마 검증 실패 메시지도 친절한 문구로 매핑 */
 export function handleApiError(error: unknown): string {
   if (!(error instanceof ApiError)) return '알 수 없는 오류가 발생했습니다.';
+
+  // FE 타임아웃 (정책 기반 AbortController). BE 408+AN002/AI002는 아래 code 매핑으로 처리.
+  if (error.status === 408 && error.message === 'FE_TIMEOUT') return '요청이 너무 오래 걸립니다.';
 
   // 스키마 검증 실패 등 메시지 문자열 기반 매핑 (사용자 노출용)
   const messageMap: Record<string, string> = {

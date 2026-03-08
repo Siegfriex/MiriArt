@@ -233,7 +233,13 @@
       "Bash(gcloud secrets:*)",
       "Bash(gcloud sql:*)",
       "Bash(gcloud components:*)",
-      "Bash(gcloud builds:*)"
+      "Bash(gcloud builds:*)",
+      "Bash(gcloud:*)",
+      "Bash(gcloud run:*)",
+      "Bash(npm ls:*)",
+      "Bash(find:*)",
+      "Bash(dpkg:*)",
+      "Bash(sudo apt-get:*)"
     ]
   }
 }

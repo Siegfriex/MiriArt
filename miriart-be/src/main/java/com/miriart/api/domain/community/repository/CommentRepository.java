@@ -17,4 +17,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     List<Comment> findByParentTypeAndParentIdOrderByCreatedAtAsc(
             CommentParentType parentType, Long parentId);
+
+    List<Comment> findByParentTypeAndParentIdInOrderByCreatedAtAsc(
+            CommentParentType parentType, List<Long> parentIds);
 }

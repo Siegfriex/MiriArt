@@ -9,6 +9,7 @@ import com.miriart.api.domain.community.repository.PostRepository;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,10 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 게시글 읽기 전용 서비스. 피드 목록 + 상세 조회.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,23 +34,41 @@ public class PostQueryService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
 
-    /**
-     * 피드 목록. v1: type 필터만, createdAt DESC 고정, Page 기반 + cursor 래퍼.
-     * TODO: sort(popular), grade, domain 필터는 다음 스프린트.
-     */
-    public PostsFeedPageResponse getFeed(String type, String cursor, int size, Long optionalUserId) {
-        int page = decodeCursor(cursor);
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    private static final Sort SORT_LATEST = Sort.by("createdAt").descending();
+    private static final Sort SORT_POPULAR = Sort.by("likeCount").descending()
+            .and(Sort.by("answerCount").descending())
+            .and(Sort.by("createdAt").descending());
 
-        Page<Post> postPage;
+    /**
+     * 피드 목록. type/sort/grade/domain 필터 + Page 기반 cursor 래퍼.
+     */
+    public PostsFeedPageResponse getFeed(String type, String sort, String grade, String domain,
+                                         String cursor, int size, Long optionalUserId) {
+        int page = decodeCursor(cursor);
+        Sort sorting = "popular".equalsIgnoreCase(sort) ? SORT_POPULAR : SORT_LATEST;
+        PageRequest pageable = PageRequest.of(page, size, sorting);
+
+        // type 파싱
+        PostType postType = null;
         if (type != null && !type.isBlank()) {
-            PostType postType;
             try {
                 postType = PostType.valueOf(type.toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
             }
+        }
+
+        boolean hasGrade = grade != null && !grade.isBlank();
+        boolean hasDomain = domain != null && !domain.isBlank();
+
+        Page<Post> postPage;
+        if (postType != null && hasGrade && hasDomain) {
+            postPage = postRepository.findByTypeAndStatusAndGradeScopeAndDomainScope(
+                    postType, PostStatus.OPEN, grade, domain, pageable);
+        } else if (postType != null) {
             postPage = postRepository.findByTypeAndStatus(postType, PostStatus.OPEN, pageable);
+        } else if (hasGrade && hasDomain) {
+            postPage = postRepository.findByGradeScopeAndDomainScope(grade, domain, pageable);
         } else {
             postPage = postRepository.findAll(pageable);
         }
@@ -72,14 +93,19 @@ public class PostQueryService {
 
         List<Answer> answers = answerRepository.findByPostIdOrderByCreatedAtAsc(postId);
 
-        // 댓글: post 댓글 + 각 answer 댓글
-        // TODO: Phase 6에서 Answer.commentCount 비정규화 + 댓글 전용 조회로 N+1 개선
+        // 댓글: post 댓글 + 답변 댓글 (IN 쿼리로 N+1 해결)
         List<Comment> postComments = commentRepository
                 .findByParentTypeAndParentIdOrderByCreatedAtAsc(CommentParentType.POST, postId);
-        Map<Long, List<Comment>> answerCommentsMap = new HashMap<>();
-        for (Answer a : answers) {
-            answerCommentsMap.put(a.getId(), commentRepository
-                    .findByParentTypeAndParentIdOrderByCreatedAtAsc(CommentParentType.ANSWER, a.getId()));
+
+        List<Long> answerIds = answers.stream().map(Answer::getId).toList();
+        Map<Long, List<Comment>> answerCommentsMap;
+        if (answerIds.isEmpty()) {
+            answerCommentsMap = Map.of();
+        } else {
+            answerCommentsMap = commentRepository
+                    .findByParentTypeAndParentIdInOrderByCreatedAtAsc(CommentParentType.ANSWER, answerIds)
+                    .stream()
+                    .collect(Collectors.groupingBy(Comment::getParentId));
         }
 
         Boolean isLiked = resolveIsLiked(optionalUserId, LikeTargetType.POST, postId);
@@ -110,7 +136,9 @@ public class PostQueryService {
             if (decoded.startsWith("page=")) {
                 return Integer.parseInt(decoded.substring(5));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("cursor decode failed: cursor={}", cursor, e);
+        }
         return 0;
     }
 

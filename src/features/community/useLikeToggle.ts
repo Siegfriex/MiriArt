@@ -6,6 +6,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { communityApi } from '@/entities/community/api/communityApi';
 import { communityKeys } from '@/entities/community/api/communityQueries';
+import { handleApiError } from '@/shared/api/miriartApi';
+import { useToastStore } from '@/shared/model/toastStore';
 
 export type LikeTargetType = 'post' | 'answer';
 
@@ -50,8 +52,9 @@ export function useLikeToggle(
       });
       return { previous };
     },
-    onError: (_err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previous != null) queryClient.setQueryData(queryKey, context.previous);
+      useToastStore.getState().show(handleApiError(err), 'error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

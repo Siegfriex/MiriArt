@@ -37,7 +37,7 @@ export const AuthCallback: React.FC = () => {
           const me = await UserApi.getMe();
           setProfileFromApi(me);
         } catch (err) {
-          console.error('[AuthCallback] getMe failed, treating login as failed:', err);
+          if (import.meta.env.DEV) console.error('[AuthCallback] getMe failed, treating login as failed:', err);
           useUserStore.getState().clearAuth();
           navigate('/auth/login', { replace: true });
           return;

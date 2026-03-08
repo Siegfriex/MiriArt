@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * <ul>
  *   <li>OAuth2: 인가 코드 60초 TTL 저장/조회·삭제. 리프레시 토큰 7일</li>
  *   <li>AI 채팅: {@link com.miriart.api.domain.ai.service.AiProxyService}에서 saveChatSession/getChatSession (72시간 TTL)로 히스토리 저장</li>
- *   <li>TODO: refresh 토큰 블랙리스트(jti), 플랜 캐시(user:plan)는 현재 미사용. 필요 시 blacklistToken/isBlacklisted, saveUserPlan/getUserPlan 재도입.</li>
+ *   <li>refresh 토큰 블랙리스트(jti), 플랜 캐시(user:plan)는 현재 미사용</li>
  * </ul>
  *
  * <p>Cariv RedisService 이식 + MiriArt 도메인별 key prefix 메서드 추가.</p>
