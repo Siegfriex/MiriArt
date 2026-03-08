@@ -114,4 +114,14 @@ public class Post extends BaseEntity {
     public void expire() {
         this.status = PostStatus.EXPIRED;
     }
+
+    /** 답변 개수 1 증가 (createAnswer 시 호출). */
+    public void incrementAnswerCount() {
+        this.answerCount++;
+    }
+
+    /** 좋아요 수 증감 (toggleLike 시 호출). */
+    public void incrementLikeCount(int delta) {
+        this.likeCount = Math.max(0, this.likeCount + delta);
+    }
 }

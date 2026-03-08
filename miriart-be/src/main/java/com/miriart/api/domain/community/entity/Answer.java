@@ -67,4 +67,9 @@ public class Answer extends BaseEntity {
     public void accept() {
         this.accepted = true;
     }
+
+    /** 좋아요 수 증감 (toggleLike 시 호출). */
+    public void incrementLikeCount(int delta) {
+        this.likeCount = Math.max(0, this.likeCount + delta);
+    }
 }
