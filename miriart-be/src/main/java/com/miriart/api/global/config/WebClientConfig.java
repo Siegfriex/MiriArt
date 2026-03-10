@@ -44,7 +44,7 @@ import java.time.Duration;
 public class WebClientConfig {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
-    private static final int RESPONSE_TIMEOUT_SECONDS = 35;
+    private static final int RESPONSE_TIMEOUT_SECONDS = 65;
 
     @Value("${miriart.fastapi.internal-url:http://localhost:8000}")
     private String fastapiInternalUrl;

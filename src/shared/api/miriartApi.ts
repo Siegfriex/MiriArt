@@ -54,6 +54,7 @@ export function getAuthHeaders(): Record<string, string> {
 // ─── Refresh Token 인터셉터가 포함된 fetch 래퍼 ────────────────────────────────
 let isRefreshing = false;
 let refreshPromise: Promise<void> | null = null;
+let refreshFailed = false;
 
 async function refreshToken(): Promise<void> {
   const res = await fetch(`${API_BASE}/api/auth/refresh`, {
@@ -61,6 +62,7 @@ async function refreshToken(): Promise<void> {
     credentials: 'include', // httpOnly Cookie 자동 전송
   });
   if (!res.ok) {
+    refreshFailed = true;
     tokenManager.clearAccessToken();
     useUserStore.getState().clearAuth();
     const isDevSkipAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_SKIP_AUTH !== 'false';
@@ -70,6 +72,7 @@ async function refreshToken(): Promise<void> {
     }
     throw new ApiError(401, 'Refresh token expired');
   }
+  refreshFailed = false;
   const json = await res.json();
   const payload = (json as { data?: unknown }).data ?? json;
   const parsed = refreshResponseSchema.safeParse(payload);
@@ -123,14 +126,24 @@ export async function apiFetch<T>(path: string, init: ApiFetchOptions = {}, retr
 
   let res = await fetchWithPolicy(path, fetchInit);
   if (res.status === 401 && retry401) {
+    // refresh가 이미 실패했으면 즉시 401 throw (무한 루프 방지)
+    if (refreshFailed) {
+      throw new ApiError(401, 'Session expired');
+    }
     if (!isRefreshing) {
       isRefreshing = true;
-      refreshPromise = refreshToken().finally(() => {
-        isRefreshing = false;
-        refreshPromise = null;
-      });
+      refreshPromise = refreshToken()
+        .catch(() => { /* clearAuth + redirect 이미 처리됨, 에러 삼킴 */ })
+        .finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
     }
     await refreshPromise;
+    // refresh 실패 시 재시도하지 않고 즉시 종료
+    if (refreshFailed) {
+      throw new ApiError(401, 'Session expired');
+    }
     res = await fetchWithPolicy(path, { ...fetchInit, headers: { ...(fetchInit.headers as Record<string, string> || {}), ...getAuthHeaders() } });
   }
 
