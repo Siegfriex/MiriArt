@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException;
 @RequiredArgsConstructor
 public class AiProxyService {
 
-    private static final int AI_TIMEOUT_SECONDS = 30;
+    private static final int AI_TIMEOUT_SECONDS = 60;
 
     private final WebClient fastapiWebClient;
     private final RedisService redisService;
