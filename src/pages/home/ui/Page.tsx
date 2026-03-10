@@ -23,12 +23,11 @@ import { ROUTES } from '../../../shared/config/routes';
 import { ContextBar } from '../../../widgets/community/ContextBar';
 import { HomeFeed } from '../../../widgets/community/HomeFeed';
 import { useFeedQuery } from '../../../features/community/useFeedQuery';
-import { AnalysisApi } from '../../../shared/api/miriartApi';
+import { AnalysisApi, handleApiError } from '../../../shared/api/miriartApi';
 import type { AnalysisResult } from '../../../shared/model/types';
 import { SignedImage } from '../../../shared/ui/SignedImage';
 
 const HOME_RECENT_LIMIT = 3;
-const LIST_LOAD_ERROR = '분석 기록을 불러오지 못했습니다. 다시 시도해 주세요.';
 
 /** 홈 페이지. */
 export const Home: React.FC = () => {
@@ -45,7 +44,7 @@ export const Home: React.FC = () => {
   useEffect(() => {
     AnalysisApi.getList({ size: HOME_RECENT_LIMIT })
       .then((list) => setRecentAnalyses(list.slice(0, HOME_RECENT_LIMIT)))
-      .catch(() => setRecentError(LIST_LOAD_ERROR))
+      .catch((err) => setRecentError(handleApiError(err)))
       .finally(() => setRecentLoading(false));
   }, []);
 
@@ -66,7 +65,7 @@ export const Home: React.FC = () => {
         setRecentError(null);
         AnalysisApi.getList({ size: HOME_RECENT_LIMIT })
           .then((list) => setRecentAnalyses(list.slice(0, HOME_RECENT_LIMIT)))
-          .catch(() => setRecentError(LIST_LOAD_ERROR))
+          .catch((err) => setRecentError(handleApiError(err)))
           .finally(() => setRecentLoading(false));
       },
     });

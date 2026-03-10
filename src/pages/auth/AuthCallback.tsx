@@ -9,14 +9,16 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AuthApi, UserApi, tokenManager } from '../../shared/api/miriartApi';
+import { AuthApi, UserApi, tokenManager, handleApiError } from '../../shared/api/miriartApi';
 import { useUserStore } from '../../shared/model/userStore';
+import { useToastStore } from '../../shared/model/toastStore';
 
 /** OAuth2 콜백. code → exchangeToken → setAuth → getMe → setProfileFromApi 또는 clearAuth + /auth/login */
 export const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setAuth, setProfileFromApi } = useUserStore();
+  const { show: showToast } = useToastStore();
   const effectRunRef = useRef(0);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export const AuthCallback: React.FC = () => {
           setProfileFromApi(me);
         } catch (err) {
           if (import.meta.env.DEV) console.error('[AuthCallback] getMe failed, treating login as failed:', err);
+          showToast(handleApiError(err), 'error');
           useUserStore.getState().clearAuth();
           navigate('/auth/login', { replace: true });
           return;
@@ -49,11 +52,12 @@ export const AuthCallback: React.FC = () => {
           navigate('/app/home', { replace: true });
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        showToast(handleApiError(err), 'error');
         useUserStore.getState().clearAuth();
         navigate('/auth/login');
       });
-  }, [navigate, searchParams, setAuth, setProfileFromApi]);
+  }, [navigate, searchParams, setAuth, setProfileFromApi, showToast]);
 
   return (
     <div className="fixed inset-0 bg-surface flex items-center justify-center z-priority">

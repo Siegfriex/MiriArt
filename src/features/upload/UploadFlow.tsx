@@ -15,7 +15,7 @@ import { useToastStore } from '../../shared/model/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
-import { AnalysisApi, ApiError, UserApi, type PlanInfo } from '../../shared/api/miriartApi';
+import { AnalysisApi, ApiError, UserApi, handleApiError, type PlanInfo } from '../../shared/api/miriartApi';
 import { AiLoadingState, AiErrorState } from '@/shared/ui/ai';
 
 const MAX_FILE_SIZE_MB = 10;
@@ -42,9 +42,11 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [errorType, setErrorType] = useState<ErrorType | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [plan, setPlan] = useState<PlanInfo | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [planError, setPlanError] = useState(false);
+  const [planErrorMessage, setPlanErrorMessage] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,14 +55,17 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const loadPlan = () => {
     setPlanLoading(true);
     setPlanError(false);
+    setPlanErrorMessage(null);
     UserApi.getPlan()
       .then((p) => {
         setPlan(p);
         setPlanError(false);
+        setPlanErrorMessage(null);
       })
-      .catch(() => {
+      .catch((err) => {
         setPlan(null);
         setPlanError(true);
+        setPlanErrorMessage(handleApiError(err));
       })
       .finally(() => setPlanLoading(false));
   };
@@ -142,6 +147,9 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
     } catch (error) {
       if (timerRef.current) clearInterval(timerRef.current);
 
+      const message = handleApiError(error);
+      setErrorMessage(message);
+
       if (error instanceof ApiError && error.status === 402) {
         setErrorType('credits');
       } else if (error instanceof ApiError && error.status === 408) {
@@ -156,6 +164,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
   const handleRetry = () => {
     setStep(3);
     setErrorType(null);
+    setErrorMessage(null);
   };
 
   // ─── Step 1: Image Picker ──────────────────────────────────────────────────
@@ -278,7 +287,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
               {planLoading
                 ? '잔여 횟수 확인 중...'
                 : planError
-                  ? '잔여 횟수 정보를 불러오지 못했습니다.'
+                  ? planErrorMessage ?? '잔여 횟수 정보를 불러오지 못했습니다.'
                   : remaining <= 0
                     ? '이번 달 분석 횟수를 모두 사용하셨어요. 플랜을 업그레이드해 주세요.'
                     : STRINGS.UPLOAD_STEP3_DESC(remaining)}
@@ -340,14 +349,16 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
         ? '플랜을 업그레이드하여 더 많은 크레딧을 충전하세요.'
         : errorType === 'file_size'
           ? '10MB 이하의 이미지를 선택해주세요.'
-          : errorType === 'timeout'
+            : errorType === 'timeout'
             ? '잠시 후 다시 시도해주세요.'
-            : '요청 형식이나 서버 상태를 확인한 뒤 다시 시도해주세요.';
+            : errorType === 'error' && errorMessage
+              ? '다시 시도하거나 네트워크·서버 상태를 확인해 주세요.'
+              : errorMessage ?? '요청 형식이나 서버 상태를 확인한 뒤 다시 시도해주세요.';
 
     return (
       <div className="absolute inset-0 bg-surface">
         <AiErrorState
-          title={errorTitle}
+          title={errorType === 'error' && errorMessage ? errorMessage : errorTitle}
           description={errorDesc}
           variant="fullscreen"
           onRetry={errorType !== 'credits' ? handleRetry : undefined}

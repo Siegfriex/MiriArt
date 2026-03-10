@@ -291,6 +291,12 @@ export const AnalysisApi = {
           requestId: body.requestId,
           timestamp: new Date().toISOString(),
         });
+      } else {
+        useDebugStore.getState().setLastAnalysisError({
+          status: 0,
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
       }
       const msg =
         error instanceof ApiError && error.status === 402
