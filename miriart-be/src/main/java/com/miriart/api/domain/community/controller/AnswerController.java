@@ -6,6 +6,8 @@ import com.miriart.api.domain.community.dto.CreateAnswerCommand;
 import com.miriart.api.domain.community.dto.CreateAnswerRequest;
 import com.miriart.api.domain.community.service.AnswerCommandService;
 import com.miriart.api.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import java.util.List;
 /**
  * 답변 API. POST /api/posts/{postId}/answers (인증 필요).
  */
+@Tag(name = "커뮤니티", description = "게시글·답변·좋아요 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/posts/{postId}/answers")
@@ -29,6 +32,7 @@ public class AnswerController {
     private final ObjectMapper objectMapper;
     private final AnswerCommandService answerCommandService;
 
+    @Operation(summary = "답변 작성")
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> create(
             @AuthenticationPrincipal Long userId,
@@ -45,6 +49,7 @@ public class AnswerController {
                 .body(ApiResponse.success(answerId));
     }
 
+    @Operation(summary = "답변 수정")
     @PutMapping("/{answerId}")
     public ResponseEntity<ApiResponse<Void>> update(
             @AuthenticationPrincipal Long userId,
@@ -56,6 +61,7 @@ public class AnswerController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @Operation(summary = "답변 삭제")
     @DeleteMapping("/{answerId}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal Long userId,

@@ -9,6 +9,7 @@ import React from 'react';
 import { Artwork } from '../../../entities/artwork/model';
 import { Grade } from '../../model/types';
 import { ChevronRight } from 'lucide-react';
+import { SignedImage } from '../SignedImage';
 
 interface AnalysisCardProps {
   artwork: Artwork;
@@ -24,8 +25,8 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
         onClick={onClick}
         className="group relative aspect-[4/5] bg-surface-alt rounded-xl overflow-hidden border border-border-default cursor-pointer hover:border-primary-lime/30 transition-colors"
       >
-        <img
-          src={artwork.imageUrl}
+        <SignedImage
+          analysisId={artwork.id}
           alt="작품"
           className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
         />
@@ -50,7 +51,11 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ artwork, variant = '
       className="flex items-center gap-4 p-3 rounded-xl bg-surface-alt border border-border-default hover:border-primary-lime/30 transition-all cursor-pointer group active:scale-[0.99]"
     >
       <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border-default">
-        <img src={artwork.imageUrl} className="w-full h-full object-cover opacity-80" alt="작품" />
+        <SignedImage
+          analysisId={artwork.id}
+          alt="작품"
+          className="w-full h-full object-cover opacity-80"
+        />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
           <span className={`font-bold ${artwork.grade === Grade.A ? 'text-primary-lime' : 'text-text-primary'}`}>
             {artwork.grade}

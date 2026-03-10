@@ -15,13 +15,13 @@ import { ArtifactViewer, ArtifactData } from '../../../widgets/artifact/ui/Artif
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSideGNBStore } from '../../../shared/model/sideGNBStore';
 import { useNavStore } from '../../../shared/model/navStore';
-import { getArtworkById } from '../../../entities/artwork/model';
-import { MOCK_SESSIONS } from '../../../entities/session/model';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
-import { ChatApi, fileToBase64 } from '../../../shared/api/miriartApi';
+import { ChatApi, AnalysisApi, fileToBase64 } from '../../../shared/api/miriartApi';
 import { useToastStore } from '../../../shared/model/toastStore';
 import { AiThinkingDots } from '@/shared/ui/ai';
+import type { AnalysisResult } from '../../../shared/model/types';
+import { SignedImage } from '../../../shared/ui/SignedImage';
 
 /** 채팅방 페이지. @참조 AppRouter @상태 useSideGNBStore, useNavStore, useToastStore, messages 등 */
 export const ChatRoom: React.FC = () => {
@@ -53,21 +53,34 @@ export const ChatRoom: React.FC = () => {
   const [isContextCollapsed, setIsContextCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // sessionId = artworkId (ResultDetail에서 result.id를 직접 전달)
-  // 이전 'session-{id}' 형식에도 하위 호환 처리
+  // sessionId = analysisId (ResultDetail에서 result.id 전달). 실제 분석 조회로 stickyContext·썸네일 정합화.
   const normalizedSessionId = sessionId?.startsWith('session-')
     ? sessionId.replace('session-', '')
     : sessionId;
-  const artwork = normalizedSessionId ? getArtworkById(normalizedSessionId) : null;
 
-  // 세션 데이터에서 타이틀 동적 조회 (session.id = artworkId)
-  const session = MOCK_SESSIONS.find((s) => s.id === normalizedSessionId);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  useEffect(() => {
+    if (!normalizedSessionId || normalizedSessionId === 'new-session') {
+      setAnalysis(null);
+      return;
+    }
+    setAnalysisLoading(true);
+    AnalysisApi.getById(normalizedSessionId)
+      .then(setAnalysis)
+      .catch(() => setAnalysis(null))
+      .finally(() => setAnalysisLoading(false));
+  }, [normalizedSessionId]);
+
   const sessionTitle =
-    sessionId === 'new-session' || normalizedSessionId === 'new-session'
+    !normalizedSessionId || normalizedSessionId === 'new-session'
       ? STRINGS.CHATROOM_NEW_SESSION
-      : session
-        ? `${session.university} ${session.major}`
-        : STRINGS.CHATROOM_NEW_SESSION;
+      : analysis
+        ? `${analysis.university} ${analysis.major}`
+        : analysisLoading
+          ? '불러오는 중...'
+          : STRINGS.CHATROOM_NEW_SESSION;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -110,16 +123,25 @@ export const ChatRoom: React.FC = () => {
       const imageBase64 = image ? await fileToBase64(image) : undefined;
       const imageMimeType = image?.type;
 
+      const stickyContext = analysis
+        ? {
+            grade: String(analysis.grade),
+            score: analysis.totalScore,
+            fixScope: analysis.fixScope,
+            radarData: analysis.radarData as Record<string, number>,
+          }
+        : {
+            grade: 'A',
+            score: 88,
+            fixScope: 'DetailTuning',
+            radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
+          };
+
       const response = await ChatApi.sendMessage({
         modelType,
         message: text,
         sessionId,
-        stickyContext: {
-          grade: 'A',
-          score: 88,
-          fixScope: 'DetailTuning',
-          radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
-        },
+        stickyContext,
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       });
 
@@ -163,12 +185,17 @@ export const ChatRoom: React.FC = () => {
         </div>
         {/* 우측: 작품 썸네일 → ResultDetail 이동 */}
         <div className="flex items-center gap-2">
-          {artwork ? (
+          {normalizedSessionId && normalizedSessionId !== 'new-session' ? (
             <button
-              onClick={() => navigate(ROUTES.RESULT(artwork.id))}
-              className="w-8 h-8 rounded-lg overflow-hidden border border-border-subtle hover:border-primary-lime/50 transition-colors"
+              onClick={() => navigate(ROUTES.RESULT(normalizedSessionId))}
+              className="w-8 h-8 rounded-lg overflow-hidden border border-border-subtle hover:border-primary-lime/50 transition-colors flex-shrink-0"
             >
-              <img src={artwork.imageUrl} alt="작품" className="w-full h-full object-cover" />
+              <SignedImage
+                analysisId={normalizedSessionId}
+                alt="작품"
+                className="w-full h-full object-cover"
+                placeholderClassName="bg-surface-tertiary flex items-center justify-center text-text-low text-[10px]"
+              />
             </button>
           ) : (
             <button
@@ -183,9 +210,9 @@ export const ChatRoom: React.FC = () => {
 
       {/* 스티키 컨텍스트 카드 */}
       <StickyContextCard
-        grade={Grade.A}
-        score={88}
-        fixScope="DetailTuning"
+        grade={analysis?.grade ?? Grade.A}
+        score={analysis?.totalScore ?? 88}
+        fixScope={analysis?.fixScope ?? 'DetailTuning'}
         isCollapsed={isContextCollapsed}
       />
 

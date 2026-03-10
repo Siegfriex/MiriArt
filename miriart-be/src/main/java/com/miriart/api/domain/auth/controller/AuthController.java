@@ -9,18 +9,20 @@ import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.response.ApiResponse;
 import com.miriart.api.global.security.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 
@@ -36,6 +38,7 @@ import java.util.Arrays;
  *
  * @author MiriArt Team
  */
+@Tag(name = "인증", description = "OAuth 코드→JWT 교환, 갱신, 로그아웃")
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
@@ -54,6 +57,8 @@ public class AuthController {
     /**
      * OAuth2 one-time code → JWT 교환
      */
+    @Operation(summary = "OAuth 코드로 JWT 발급", description = "공개 API. FE OAuth 콜백에서 받은 code로 Access Token + Refresh 쿠키 발급.")
+    @SecurityRequirements()
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<TokenExchangeResponse>> exchangeToken(
             @RequestBody @Valid TokenExchangeRequest request,
@@ -65,6 +70,8 @@ public class AuthController {
     /**
      * Access Token 갱신 (쿠키의 refreshToken 사용)
      */
+    @Operation(summary = "Access Token 갱신", description = "공개 API. 쿠키의 refreshToken으로 새 Access Token 발급.")
+    @SecurityRequirements()
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenRefreshResponse>> refreshToken(
             HttpServletRequest request,
@@ -80,6 +87,7 @@ public class AuthController {
     /**
      * 로그아웃 — Redis refresh token 삭제 + 쿠키 만료
      */
+    @Operation(summary = "로그아웃")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @AuthenticationPrincipal Long userId,

@@ -3,6 +3,7 @@ import { Artwork } from '../../../entities/artwork/model';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../shared/config/routes';
 import { Tooltip } from '../../../shared/ui/Tooltip';
+import { SignedImage } from '../../../shared/ui/SignedImage';
 
 interface ArtworkGridProps {
   artworks: Artwork[];
@@ -38,8 +39,8 @@ export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
                   onClick={() => navigate(ROUTES.RESULT(art.id))}
                   className="relative aspect-[3/4] rounded-lg overflow-hidden bg-surface-alt border border-border-default cursor-pointer hover:border-primary-lime/40 transition-colors group"
                 >
-                  <img
-                    src={art.imageUrl}
+                  <SignedImage
+                    analysisId={art.id}
                     alt="작품"
                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                   />

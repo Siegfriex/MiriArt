@@ -52,11 +52,15 @@ public enum ErrorCode {
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "F002", "파일 크기가 제한을 초과했습니다 (최대 10MB)"),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F003", "파일 업로드에 실패했습니다"),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F004", "허용되지 않는 파일 형식입니다 (png, jpeg, webp, gif만 가능)"),
+    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "F005", "이미지 URL 생성에 실패했습니다"),
 
     // Analysis (분석 — MiriArt 신규)
     AI_ANALYSIS_FAILED(HttpStatus.BAD_GATEWAY, "AN001", "AI 분석 서비스 연결에 실패했습니다"),
     AI_ANALYSIS_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "AN002", "분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요"),
     ANALYSIS_NOT_FOUND(HttpStatus.NOT_FOUND, "AN003", "분석 결과를 찾을 수 없습니다"),
+
+    // Image (이미지 — Signed URL)
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "I001", "이미지를 찾을 수 없습니다"),
 
     // Credit (크레딧 — MiriArt 신규)
     CREDIT_LIMIT_EXCEEDED(HttpStatus.PAYMENT_REQUIRED, "CR001", "이번 달 분석 한도를 초과했습니다. 플랜을 업그레이드해주세요"),

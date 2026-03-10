@@ -303,6 +303,30 @@ export const AnalysisApi = {
   },
 };
 
+// ─── Image API (Signed URL) ─────────────────────────────────────────────────
+/** GET /api/images/{analysisId}/url 응답. Signed URL 및 만료 시각. */
+export interface SignedImageUrlResponse {
+  url: string;
+  expiresAt?: string;
+}
+
+/**
+ * BE SSOT: ImageController가 ApiResponse.success(ImageUrlResponse) 반환 → JSON은 항상 { success, data: { url, expiresAt } }.
+ * TODO(BE 계약 확정 후): 현재는 { data: { url } } / { url } 양쪽 허용. BE가 항상 래핑하므로 payload = (raw as { data?: unknown }).data 로만 파싱하도록 타입을 좁혀서 SignedImageUrlResponse만 다루기.
+ */
+export const ImageApi = {
+  /** 분석 id로 표시용 Signed URL 조회. img src 또는 onError 재요청에 사용. */
+  getSignedUrl: async (analysisId: string): Promise<SignedImageUrlResponse> => {
+    const raw = await apiFetch<unknown>(`/api/images/${analysisId}/url`, { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const data = payload as { url?: string; expiresAt?: string };
+    if (!data?.url || typeof data.url !== 'string') {
+      throw new ApiError(500, 'Invalid image URL response');
+    }
+    return { url: data.url, expiresAt: typeof data.expiresAt === 'string' ? data.expiresAt : undefined };
+  },
+};
+
 // ─── AI Chat API (gemini.ts ApiService.chat 대체) ─────────────────────────────
 export interface ChatRequest {
   message: string;
@@ -378,8 +402,15 @@ export function handleApiError(error: unknown): string {
       C001: '입력값을 확인해 주세요.',
       CR001: '이번 달 분석 한도를 초과했습니다. 플랜을 업그레이드해주세요.',
       CR002: 'Basic 플랜 이상에서 사용 가능한 기능입니다.',
+      F001: '업로드할 파일이 없습니다.',
+      F002: '파일 크기가 제한을 초과했습니다. (최대 10MB)',
+      F003: '파일 업로드에 실패했습니다.',
+      F004: '허용되지 않는 파일 형식입니다. (png, jpeg, webp, gif만 가능)',
+      F005: '이미지 URL 생성에 실패했습니다. 다시 시도해 주세요.',
       AN001: 'AI 분석 서비스 연결에 실패했습니다.',
       AN002: '분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.',
+      AN003: '분석 결과를 찾을 수 없습니다.',
+      I001: '이미지를 찾을 수 없습니다.',
       AI001: 'AI 멘토 연결에 실패했습니다.',
       AI002: 'AI 응답 시간이 초과됐습니다.',
       M002: '이미 사용 중인 닉네임입니다.',

@@ -34,3 +34,4 @@ miriart:
     refresh-expiration-ms: 604800000
   gcs:
     bucket: ${GCS_BUCKET_NAME:miriart-bucket}
+    image-url-expiration-minutes: ${IMAGE_URL_EXPIRATION_MINUTES:15}

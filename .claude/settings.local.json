@@ -239,7 +239,9 @@
       "Bash(npm ls:*)",
       "Bash(find:*)",
       "Bash(dpkg:*)",
-      "Bash(sudo apt-get:*)"
+      "Bash(sudo apt-get:*)",
+      "Bash(gcloud logging:*)",
+      "Bash(./scripts/cloudrun-redeploy.sh 2>&1)"
     ]
   }
 }

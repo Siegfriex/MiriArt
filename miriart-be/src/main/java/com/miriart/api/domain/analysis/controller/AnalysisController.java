@@ -6,6 +6,8 @@ import com.miriart.api.domain.analysis.service.AnalysisService;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ import java.io.IOException;
  *
  * @author MiriArt Team
  */
+@Tag(name = "분석", description = "작품 분석 업로드·목록·단건")
 @Slf4j
 @RestController
 @RequestMapping("/api/analyses")
@@ -39,6 +42,7 @@ public class AnalysisController {
 
     private final AnalysisService analysisService;
 
+    @Operation(summary = "작품 분석 시작", description = "multipart/form-data: image, analysisType, problemText(선택)")
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<AnalysisStartResponse>> startAnalysis(
             @AuthenticationPrincipal Long userId,
@@ -54,6 +58,7 @@ public class AnalysisController {
         }
     }
 
+    @Operation(summary = "내 분석 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AnalysisDetailResponse>>> getMyAnalyses(
             @AuthenticationPrincipal Long userId,
@@ -66,6 +71,7 @@ public class AnalysisController {
         return ResponseEntity.ok(ApiResponse.success(analysisService.getMyAnalyses(userId, pageable)));
     }
 
+    @Operation(summary = "분석 단건 조회")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AnalysisDetailResponse>> getAnalysis(
             @AuthenticationPrincipal Long userId,

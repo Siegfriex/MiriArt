@@ -25,6 +25,7 @@ import { HomeFeed } from '../../../widgets/community/HomeFeed';
 import { useFeedQuery } from '../../../features/community/useFeedQuery';
 import { AnalysisApi } from '../../../shared/api/miriartApi';
 import type { AnalysisResult } from '../../../shared/model/types';
+import { SignedImage } from '../../../shared/ui/SignedImage';
 
 const HOME_RECENT_LIMIT = 3;
 const LIST_LOAD_ERROR = '분석 기록을 불러오지 못했습니다. 다시 시도해 주세요.';
@@ -147,10 +148,10 @@ export const Home: React.FC = () => {
                 className="min-w-[140px] flex flex-col space-y-2 group cursor-pointer"
               >
                 <div className="w-full aspect-[4/5] bg-surface-alt rounded-xl border border-border-default overflow-hidden relative group-hover:border-primary-lime/30 transition-colors">
-                  <img
-                    src={art.imageUrl || 'https://via.placeholder.com/140x175?text=작품'}
+                  <SignedImage
+                    analysisId={art.id}
                     alt="작품"
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-colors"
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                   />
                   <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-micro text-primary-lime font-bold border border-primary-lime/30">
                     {art.grade}등급
