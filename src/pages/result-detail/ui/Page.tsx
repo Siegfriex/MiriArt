@@ -20,6 +20,7 @@ import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { buildSampleResult } from '../../../entities/analysis/sampleResult';
 import { AiSkeleton, AiErrorState } from '@/shared/ui/ai';
+import { SignedImage } from '../../../shared/ui/SignedImage';
 
 const RESULT_LOAD_ERROR = '분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 
@@ -160,7 +161,11 @@ export const ResultDetail: React.FC = () => {
       </header>
 
       <div className="relative w-full aspect-[3/4] bg-surface-alt">
-        <img src={displayResult.imageUrl} alt="분석 작품" className="w-full h-full object-cover" draggable={false} />
+        <SignedImage
+          analysisId={displayResult.id}
+          alt="분석 작품"
+          className="w-full h-full object-cover"
+        />
         <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-dark-900/95 to-transparent pt-24">
           <div className="flex items-end justify-between">
             <div>

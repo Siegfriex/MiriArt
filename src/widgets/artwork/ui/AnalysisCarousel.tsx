@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Artwork } from '../../../entities/artwork/model';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../shared/config/routes';
+import { SignedImage } from '../../../shared/ui/SignedImage';
 
 interface AnalysisCarouselProps {
   artworks: Artwork[];
@@ -22,8 +23,8 @@ export const AnalysisCarousel: React.FC<AnalysisCarouselProps> = ({ artworks }) 
         >
           {/* 이미지 */}
           <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-surface-alt border border-border-default group-hover:border-primary-lime/30 transition-colors">
-            <img
-              src={art.imageUrl}
+            <SignedImage
+              analysisId={art.id}
               alt="작품"
               className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
             />

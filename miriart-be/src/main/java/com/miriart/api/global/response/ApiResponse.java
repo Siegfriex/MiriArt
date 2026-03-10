@@ -1,6 +1,7 @@
 package com.miriart.api.global.response;
 
 import com.miriart.api.global.exception.ErrorCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
  *
  * @author MiriArt Team
  */
+@Schema(description = "공통 API 래퍼: success(성공 여부), data(페이로드), code(에러 코드), message(에러 메시지)")
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ApiResponse<T> {

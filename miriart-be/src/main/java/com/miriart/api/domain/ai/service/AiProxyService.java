@@ -59,8 +59,10 @@ public class AiProxyService {
                 .uri("/internal/ai/analyze")
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(status -> status.is5xxServerError(),
-                        res -> Mono.error(new BusinessException(ErrorCode.AI_ANALYSIS_FAILED)))
+                .onStatus(status -> status.is5xxServerError() || status.value() == 400,
+                        res -> res.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new BusinessException(
+                                        AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), true)))))
                 .bodyToMono(InternalAnalyzeResponse.class)
                 .timeout(Duration.ofSeconds(AI_TIMEOUT_SECONDS))
                 .onErrorMap(TimeoutException.class,
@@ -98,8 +100,10 @@ public class AiProxyService {
                 .uri("/internal/ai/chat")
                 .bodyValue(internalRequest)
                 .retrieve()
-                .onStatus(status -> status.is5xxServerError(),
-                        res -> Mono.error(new BusinessException(ErrorCode.AI_CHAT_FAILED)))
+                .onStatus(status -> status.is5xxServerError() || status.value() == 400,
+                        res -> res.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new BusinessException(
+                                        AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), false)))))
                 .bodyToMono(InternalChatResponse.class)
                 .timeout(Duration.ofSeconds(AI_TIMEOUT_SECONDS))
                 .onErrorMap(TimeoutException.class,
@@ -156,6 +160,19 @@ public class AiProxyService {
 
         } catch (JsonProcessingException e) {
             log.warn("채팅 세션 히스토리 저장 실패 - sessionId: {}, error: {}", sessionId, e.getMessage());
+        }
+    }
+
+    /**
+     * AI 에러 응답 body에서 code 필드 추출. 파싱 실패 시 null.
+     */
+    private String parseAiErrorCode(String bodyStr) {
+        if (bodyStr == null || bodyStr.isBlank()) return null;
+        try {
+            AiErrorResponse err = objectMapper.readValue(bodyStr, AiErrorResponse.class);
+            return err != null ? err.getCode() : null;
+        } catch (JsonProcessingException e) {
+            return null;
         }
     }
 }

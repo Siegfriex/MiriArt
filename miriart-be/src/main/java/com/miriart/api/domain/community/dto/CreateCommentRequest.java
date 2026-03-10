@@ -2,16 +2,17 @@ package com.miriart.api.domain.community.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * 댓글 작성 요청 DTO.
  *
  * @param parentType 부모 타입 (post / answer)
  * @param parentId   부모 ID
- * @param content    댓글 내용
+ * @param content    댓글 내용 (최대 500자)
  */
 public record CreateCommentRequest(
         @NotBlank String parentType,
         @NotNull Long parentId,
-        @NotBlank String content
+        @NotBlank @Size(max = 500) String content
 ) {}

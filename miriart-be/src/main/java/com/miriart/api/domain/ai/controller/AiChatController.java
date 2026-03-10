@@ -4,6 +4,8 @@ import com.miriart.api.domain.ai.dto.ChatRequest;
 import com.miriart.api.domain.ai.dto.ChatResponse;
 import com.miriart.api.domain.ai.service.AiProxyService;
 import com.miriart.api.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * @author MiriArt Team
  */
+@Tag(name = "AI 채팅", description = "AI 멘토 채팅")
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
@@ -33,6 +36,7 @@ public class AiChatController {
      * AI 멘토에게 메시지 전송
      * FE 현 ApiService.chat() 마이그레이션 대상 (경로 동일, Authorization 헤더 추가)
      */
+    @Operation(summary = "AI 멘토 채팅 메시지 전송")
     @PostMapping
     public ResponseEntity<ApiResponse<ChatResponse>> chat(
             @AuthenticationPrincipal Long userId,
