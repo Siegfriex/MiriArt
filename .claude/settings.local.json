@@ -241,7 +241,11 @@
       "Bash(dpkg:*)",
       "Bash(sudo apt-get:*)",
       "Bash(gcloud logging:*)",
-      "Bash(./scripts/cloudrun-redeploy.sh 2>&1)"
+      "Bash(./scripts/cloudrun-redeploy.sh 2>&1)",
+      "Bash(find /home/sieg/projects-wsl/MiriArt/miriart-be/build/reports/tests -name \"index.html\" -exec cat {} \\\\; 2>/dev/null | grep -oP '\\(\\\\d+\\) tests.*?\\(\\\\d+\\) failures.*?\\(\\\\d+\\) ignored' | head -5)",
+      "Bash(find /home/sieg/projects-wsl/MiriArt/miriart-be/build/test-results -name \"*.xml\" -exec grep -h 'testsuite' {} \\\\; 2>/dev/null | grep -oP 'tests=\"\\\\d+\"' | awk -F'\"' '{sum += $2} END {print \"Total tests:\", sum}')",
+      "Bash(gcloud projects:*)",
+      "Bash(jar tf:*)"
     ]
   }
 }

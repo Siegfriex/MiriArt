@@ -160,6 +160,7 @@ export const STRINGS = {
   UPLOAD_ERROR_CREDITS: '크레딧이 부족합니다',
   UPLOAD_ERROR_FILE_SIZE: '파일 크기가 너무 큽니다 (최대 10MB)',
   UPLOAD_ERROR_TIMEOUT: '잠시 후 결과를 알려드릴게요',
+  UPLOAD_ERROR_GENERIC: '분석 요청에 실패했습니다',
 
   // ─── Grade Input ────────────────────────────────────────────────────────────
   GRADE_INPUT_TITLE: '내신 등급',

@@ -70,6 +70,8 @@ public enum ErrorCode {
     // AI Chat (AI 채팅 — MiriArt 신규)
     AI_CHAT_FAILED(HttpStatus.BAD_GATEWAY, "AI001", "AI 멘토 연결에 실패했습니다. 다시 시도해주세요"),
     AI_CHAT_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "AI002", "AI 응답 시간이 초과됐습니다"),
+    // AI Service Auth (내부 서비스 인증 — Cloud Run IAM)
+    AI_SERVICE_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "AI003", "AI 서비스 인증에 실패했습니다"),
 
     // Community (커뮤니티 — MiriArt 신규, Phase C)
     // [Phase C] 커뮤니티 기능 구현 시 활성화 예정

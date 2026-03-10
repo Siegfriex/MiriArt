@@ -26,7 +26,7 @@ interface UploadFlowProps {
 }
 
 type Step = 1 | 2 | 3 | 4 | 'error';
-type ErrorType = 'credits' | 'file_size' | 'timeout';
+type ErrorType = 'credits' | 'file_size' | 'timeout' | 'error';
 
 /** 업로드 플로우. onComplete(image). @참조 ModalRegistry @상태 useModalStore, useToastStore, step, selectedImage 등 */
 export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
@@ -147,7 +147,7 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
       } else if (error instanceof ApiError && error.status === 408) {
         setErrorType('timeout');
       } else {
-        setErrorType('timeout');
+        setErrorType('error');
       }
       setStep('error');
     }
@@ -331,14 +331,18 @@ export const UploadFlow: React.FC<UploadFlowProps> = ({ onComplete }) => {
         ? STRINGS.UPLOAD_ERROR_CREDITS
         : errorType === 'file_size'
           ? STRINGS.UPLOAD_ERROR_FILE_SIZE
-          : STRINGS.UPLOAD_ERROR_TIMEOUT;
+          : errorType === 'timeout'
+            ? STRINGS.UPLOAD_ERROR_TIMEOUT
+            : STRINGS.UPLOAD_ERROR_GENERIC;
 
     const errorDesc =
       errorType === 'credits'
         ? '플랜을 업그레이드하여 더 많은 크레딧을 충전하세요.'
         : errorType === 'file_size'
           ? '10MB 이하의 이미지를 선택해주세요.'
-          : '잠시 후 다시 시도해주세요.';
+          : errorType === 'timeout'
+            ? '잠시 후 다시 시도해주세요.'
+            : '요청 형식이나 서버 상태를 확인한 뒤 다시 시도해주세요.';
 
     return (
       <div className="absolute inset-0 bg-surface">

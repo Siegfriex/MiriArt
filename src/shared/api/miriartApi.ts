@@ -6,6 +6,7 @@
 
 import { useToastStore } from '../model/toastStore';
 import { useUserStore } from '../model/userStore';
+import { useDebugStore } from '../model/debugStore';
 import { AIModelType } from '../model/types';
 import { tokenManager } from './tokenManager';
 import { tokenExchangeSchema, refreshResponseSchema } from './schemas/auth';
@@ -267,6 +268,16 @@ export const AnalysisApi = {
       }
       return normalizeAnalysisResult(detailParsed.data);
     } catch (error) {
+      if (error instanceof ApiError) {
+        const body = parseApiErrorBody(error.message);
+        useDebugStore.getState().setLastAnalysisError({
+          status: error.status,
+          code: body.code,
+          message: body.message ?? error.message,
+          requestId: body.requestId,
+          timestamp: new Date().toISOString(),
+        });
+      }
       const msg =
         error instanceof ApiError && error.status === 402
           ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
@@ -357,6 +368,16 @@ export const ChatApi = {
       }
       return parsed.data;
     } catch (error) {
+      if (error instanceof ApiError) {
+        const body = parseApiErrorBody(error.message);
+        useDebugStore.getState().setLastChatError({
+          status: error.status,
+          code: body.code,
+          message: body.message ?? error.message,
+          requestId: body.requestId,
+          timestamp: new Date().toISOString(),
+        });
+      }
       const msg =
         error instanceof ApiError && error.status === 402
           ? '크레딧이 부족합니다. 플랜을 업그레이드해주세요.'
@@ -378,6 +399,27 @@ const COMMUNITY_MESSAGES: Record<string, string> = {
   CM006: '이미 좋아요를 눌렀어요.',
   CM007: '이미 신고한 컨텐츠예요.',
 };
+
+/**
+ * BE ErrorResponse body 문자열 파싱. 디버그 스토어·코드 기반 UX 분기용.
+ * @see handleApiError, debugStore
+ */
+export function parseApiErrorBody(message: string): {
+  code?: string;
+  message?: string;
+  requestId?: string;
+} {
+  try {
+    const body = JSON.parse(message) as { code?: string; message?: string; requestId?: string };
+    return {
+      code: body?.code,
+      message: typeof body?.message === 'string' ? body.message : undefined,
+      requestId: typeof body?.requestId === 'string' ? body.requestId : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 /** API 계약서 §9 기반 ErrorCode → 한국어 메시지 변환. 스키마 검증 실패 메시지도 친절한 문구로 매핑 */
 export function handleApiError(error: unknown): string {
@@ -410,11 +452,14 @@ export function handleApiError(error: unknown): string {
       AN001: 'AI 분석 서비스 연결에 실패했습니다.',
       AN002: '분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.',
       AN003: '분석 결과를 찾을 수 없습니다.',
+      AN004: 'AI 서비스 인증에 일시 문제가 있습니다. 잠시 후 다시 시도해주세요.',
       I001: '이미지를 찾을 수 없습니다.',
       AI001: 'AI 멘토 연결에 실패했습니다.',
       AI002: 'AI 응답 시간이 초과됐습니다.',
+      AI003: 'AI 서비스 인증에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       M002: '이미 사용 중인 닉네임입니다.',
       AUTH002: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.',
+      AUTH009: 'AI 서비스 인증에 일시 문제가 있습니다. 잠시 후 다시 시도해주세요.',
       ...COMMUNITY_MESSAGES,
     };
     return messages[code] || body?.message || '오류가 발생했습니다.';

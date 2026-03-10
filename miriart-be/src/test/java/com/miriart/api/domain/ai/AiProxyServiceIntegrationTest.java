@@ -231,4 +231,36 @@ class AiProxyServiceIntegrationTest {
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE));
     }
+
+    // ── 401/403 Cloud Run IAM 인증 실패 ──────────────────────────────────────
+
+    @Test
+    @DisplayName("analyze - AI 403 → AI003 (AI_SERVICE_AUTH_FAILED)")
+    void analyze_403_mapsToAI003() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/analyze"))
+                .willReturn(aResponse()
+                        .withStatus(403)
+                        .withHeader("Content-Type", "text/html")
+                        .withBody("<html><body>Your client does not have permission</body></html>")));
+
+        assertThatThrownBy(() -> aiProxyService.analyze("gs://b/k", "basic", null))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_SERVICE_AUTH_FAILED));
+    }
+
+    @Test
+    @DisplayName("chat - AI 403 → AI003 (AI_SERVICE_AUTH_FAILED)")
+    void chat_403_mapsToAI003() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/chat"))
+                .willReturn(aResponse()
+                        .withStatus(403)
+                        .withHeader("Content-Type", "text/html")
+                        .withBody("<html><body>Your client does not have permission</body></html>")));
+
+        ChatRequest req = new ChatRequest();
+        ReflectionTestUtils.setField(req, "message", "hello");
+        assertThatThrownBy(() -> aiProxyService.chat(req))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_SERVICE_AUTH_FAILED));
+    }
 }
