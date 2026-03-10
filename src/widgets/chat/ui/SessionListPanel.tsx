@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { H1 } from '../../../shared/ui/Typography';
-import { Session, Grade } from '../../../shared/model/types';
+import { Session } from '../../../shared/model/types';
 import { useSessionList } from '../../../features/chat/useSessionList';
 import { FAB } from '../../../shared/ui/FAB';
 import { SearchBar } from '../../../shared/ui/SearchBar';
@@ -40,14 +40,14 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
 
   const filteredSessions = useMemo(() => {
     if (selectedFilter === '전체') return sessions;
-    if (selectedFilter === 'A등급') return sessions.filter((s) => s.grade === Grade.A);
-    if (selectedFilter === 'B등급') return sessions.filter((s) => s.grade === Grade.B);
-    return sessions.filter((s) => s.university.includes(selectedFilter));
+    if (selectedFilter === 'A등급') return sessions.filter((s) => s.grade === 'A');
+    if (selectedFilter === 'B등급') return sessions.filter((s) => s.grade === 'B');
+    return sessions;
   }, [selectedFilter, sessions]);
 
   const handleSessionClick = (session: Session) => {
     closeSideGNB();
-    navigate(ROUTES.CHAT_ROOM(session.id));
+    navigate(ROUTES.CHAT_ROOM(session.sessionKey));
   };
 
   const handleNewChat = () => {
@@ -97,7 +97,7 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
           ) : filteredSessions.length > 0 ? (
             filteredSessions.map((session) => (
               <SessionCard
-                key={session.id}
+                key={session.sessionKey}
                 session={session}
                 onClick={() => handleSessionClick(session)}
               />

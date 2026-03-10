@@ -15,6 +15,7 @@ import { analysisResponseSchema, analysisStartResponseSchema, analysesListRespon
 import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
+import { chatSessionPageSchema, type ChatSessionPage } from './schemas/chatSession';
 import { API_BASE } from '../config/api';
 import type { RequestClass } from '../config/requestPolicy';
 import { REQUEST_POLICY, DEFAULT_REQUEST_CLASS } from '../config/requestPolicy';
@@ -388,6 +389,34 @@ export const ChatApi = {
   },
 };
 
+// ─── Chat Session API (GET /api/chat/sessions) ─────────────────────────────────
+/**
+ * GET /api/chat/sessions?page=0&size=20&grade=A
+ * BE: ChatSessionController.getSessionList → Page<ChatSessionResponse>
+ */
+export const ChatSessionApi = {
+  getList: async (params?: {
+    page?: number;
+    size?: number;
+    grade?: string;
+  }): Promise<ChatSessionPage> => {
+    const query = new URLSearchParams();
+    if (params?.page != null) query.set('page', String(params.page));
+    if (params?.size != null) query.set('size', String(params.size));
+    if (params?.grade) query.set('grade', params.grade);
+    const qs = query.toString();
+    const path = `/api/chat/sessions${qs ? `?${qs}` : ''}`;
+    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = chatSessionPageSchema.safeParse(payload);
+    if (!parsed.success) {
+      if (import.meta.env.DEV) console.warn('[ChatSessionApi] Zod parse warning:', parsed.error.issues);
+      return payload as ChatSessionPage;
+    }
+    return parsed.data;
+  },
+};
+
 // ─── ErrorCode 처리 ────────────────────────────────────────────────────────────
 /** BE 커뮤니티 ErrorCode(CM001~CM007) → 사용자 메시지. FE 메시지 우선. BE가 한국어 메시지를 내려주면 정책 결정 후 body.message 우선 가능. */
 const COMMUNITY_MESSAGES: Record<string, string> = {
@@ -442,6 +471,7 @@ export function handleApiError(error: unknown): string {
     const code = body?.code;
     const messages: Record<string, string> = {
       C001: '입력값을 확인해 주세요.',
+      CS001: '채팅 세션을 찾을 수 없습니다.',
       CR001: '이번 달 분석 한도를 초과했습니다. 플랜을 업그레이드해주세요.',
       CR002: 'Basic 플랜 이상에서 사용 가능한 기능입니다.',
       F001: '업로드할 파일이 없습니다.',

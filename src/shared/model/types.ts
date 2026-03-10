@@ -58,18 +58,19 @@ export interface Message {
 /** 수정 범위: 전체 재구성 또는 세부 조정 */
 export type FixScope = 'StructureRebuild' | 'DetailTuning';
 
-/** 세션(채팅/작업 단위) 정보. id, 제목, 대학, 전공, 마지막 메시지, 성적, 썸네일 등 */
+/** 세션(채팅/작업 단위) 정보. BE GET /api/chat/sessions 응답과 1:1 대응. 라우팅은 sessionKey 사용. */
 export interface Session {
-  id: string;
+  id: number;
+  sessionKey: string;
+  analysisId: number | null;
   title: string;
-  university: string;
-  major: string;
-  lastMessage: string;
-  timestamp: number;
-  grade: Grade;
-  thumbnailUrl: string;
-  unreadCount?: number;
-  fixScope?: FixScope;
+  lastMessage: string | null;
+  messageCount: number;
+  grade: string | null;
+  totalScore: number | null;
+  fixScope: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** AI 모델 종류: CHAT_PRO, FAST, THINKING, SEARCH, IMAGE_EDIT */

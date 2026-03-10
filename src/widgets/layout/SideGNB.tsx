@@ -8,7 +8,7 @@
 import React from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { H2 } from '../../shared/ui/Typography';
-import { X, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Plus, ChevronRight, ChevronLeft, MessageCircle } from 'lucide-react';
 import { FilterChip } from '../../shared/ui/FilterChip';
 import { SessionListPanel } from '../../widgets/chat/SessionListPanel';
 import { useSideGNBStore } from '../../shared/model/sideGNBStore';
@@ -81,6 +81,14 @@ export const SideGNB: React.FC = () => {
     if (gradeFilter === '전체') return sessions;
     return sessions.filter((s) => s.grade === gradeFilter);
   }, [gradeFilter, sessions]);
+
+  const sessionTimeLabel = (updatedAt: string) => {
+    const diff = Date.now() - new Date(updatedAt).getTime();
+    const hours = Math.floor(diff / 3600000);
+    if (hours < 1) return '방금 전';
+    if (hours < 24) return `${hours}시간 전`;
+    return `${Math.floor(hours / 24)}일 전`;
+  };
 
   return (
     <AnimatePresence>
@@ -178,37 +186,38 @@ export const SideGNB: React.FC = () => {
                       분석 기록이 없습니다.
                     </div>
                   ) : (
-                    filteredSessions.slice(0, 5).map((session) => {
-                      const diff = Date.now() - session.timestamp;
-                      const hours = Math.floor(diff / 3600000);
-                      const timeLabel = hours < 1 ? '방금 전' : hours < 24 ? `${hours}시간 전` : `${Math.floor(hours / 24)}일 전`;
-                      return (
-                        <div
-                          key={session.id}
-                          onClick={() => { close(); navigate(ROUTES.CHAT_ROOM(session.id)); }}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-black/5 hover:bg-black/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-surface-tertiary flex-shrink-0 overflow-hidden relative">
-                            <SignedImage
-                              analysisId={session.id}
-                              alt="세션 썸네일"
-                              className="w-full h-full object-cover opacity-80"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                              <span className="text-xs font-bold text-primary-lime">{session.grade}</span>
+                    filteredSessions.slice(0, 5).map((session) => (
+                      <div
+                        key={session.sessionKey}
+                        onClick={() => { close(); navigate(ROUTES.CHAT_ROOM(session.sessionKey)); }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-black/5 hover:bg-black/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
+                      >
+                        <div className="w-12 h-12 rounded-lg bg-surface-tertiary flex-shrink-0 overflow-hidden relative">
+                          {session.analysisId != null ? (
+                            <>
+                              <SignedImage
+                                analysisId={String(session.analysisId)}
+                                alt="세션 썸네일"
+                                className="w-full h-full object-cover opacity-80"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <span className="text-xs font-bold text-primary-lime">{session.grade ?? '—'}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-text-mid">
+                              <MessageCircle size={20} />
                             </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm text-text-primary truncate font-medium">{session.title}</div>
-                            <div className="text-xs text-text-mid truncate flex items-center gap-1">
-                              <span>{session.university}</span>
-                              <span className="w-1 h-1 bg-dark-600 rounded-full" />
-                              <span>{timeLabel}</span>
-                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-text-primary truncate font-medium">{session.title}</div>
+                          <div className="text-xs text-text-mid truncate flex items-center gap-1">
+                            <span>{sessionTimeLabel(session.updatedAt)}</span>
                           </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    ))
                   )}
                 </div>
               </motion.div>

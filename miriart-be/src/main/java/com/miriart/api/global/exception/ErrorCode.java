@@ -73,6 +73,9 @@ public enum ErrorCode {
     // AI Service Auth (내부 서비스 인증 — Cloud Run IAM)
     AI_SERVICE_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "AI003", "AI 서비스 인증에 실패했습니다"),
 
+    // Chat Session (채팅 세션)
+    CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "CS001", "채팅 세션을 찾을 수 없습니다"),
+
     // Community (커뮤니티 — MiriArt 신규, Phase C)
     // [Phase C] 커뮤니티 기능 구현 시 활성화 예정
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "CM001", "게시글을 찾을 수 없습니다"),

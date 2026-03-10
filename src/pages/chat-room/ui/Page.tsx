@@ -140,6 +140,11 @@ export const ChatRoom: React.FC = () => {
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       });
 
+      // new-session일 때 첫 응답 수신 후 URL을 sessionKey(UUID)로 교체 — BE가 생성한 세션으로 고정
+      if (normalizedSessionId === 'new-session' && response.sessionId) {
+        navigate(ROUTES.CHAT_ROOM(response.sessionId), { replace: true });
+      }
+
       setMessages((prev) => [
         ...prev,
         {

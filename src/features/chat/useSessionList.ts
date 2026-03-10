@@ -1,49 +1,47 @@
 /**
- * @fileoverview 세션 목록 훅. AnalysisApi.getList()로 분석 이력을 조회하여 Session[]로 변환.
- * MOCK_SESSIONS 제거 후 실 API 연동.
+ * @fileoverview 세션 목록 훅. GET /api/chat/sessions 연동. React Query 기반.
  * @참조 SessionListPanel, SideGNB
  */
 
-import { useState, useEffect } from 'react';
-import { AnalysisApi } from '../../shared/api/miriartApi';
-import type { Session, AnalysisResult } from '../../shared/model/types';
+import { useQuery } from '@tanstack/react-query';
+import { ChatSessionApi } from '../../shared/api/miriartApi';
+import type { Session } from '../../shared/model/types';
+import type { ChatSessionDto } from '../../shared/api/schemas/chatSession';
 
-/** 분석 결과 → 세션 카드용 데이터 변환 */
-function analysisToSession(a: AnalysisResult): Session {
+function dtoToSession(dto: ChatSessionDto): Session {
   return {
-    id: a.id,
-    title: `${a.university} ${a.major}`,
-    university: a.university,
-    major: a.major,
-    lastMessage: a.comment,
-    timestamp: a.timestamp,
-    grade: a.grade,
-    thumbnailUrl: '', // SignedImage가 analysisId로 처리
-    fixScope: a.fixScope,
+    id: dto.id,
+    sessionKey: dto.sessionKey,
+    analysisId: dto.analysisId,
+    title: dto.title,
+    lastMessage: dto.lastMessage,
+    messageCount: dto.messageCount,
+    grade: dto.grade,
+    totalScore: dto.totalScore,
+    fixScope: dto.fixScope,
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
   };
 }
 
 /**
- * 분석 이력 기반 세션 목록 조회.
+ * 채팅 세션 목록 조회. BE GET /api/chat/sessions.
  * @param size 최대 조회 건수 (기본 20)
+ * @param grade 필터 등급 (선택)
  */
-export function useSessionList(size = 20) {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useSessionList(size = 20, grade?: string) {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['chatSessions', { size, grade }],
+    queryFn: async () => {
+      const page = await ChatSessionApi.getList({ page: 0, size, grade });
+      return page.content.map(dtoToSession);
+    },
+  });
 
-  const refresh = () => {
-    setLoading(true);
-    setError(null);
-    AnalysisApi.getList({ size })
-      .then((list) => setSessions(list.map(analysisToSession)))
-      .catch(() => setError('세션 목록을 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
+  return {
+    sessions: data ?? [],
+    loading: isLoading,
+    error: isError && error instanceof Error ? error.message : (isError ? '세션 목록을 불러오지 못했습니다.' : null),
+    refresh: refetch,
   };
-
-  useEffect(() => {
-    refresh();
-  }, [size]);
-
-  return { sessions, loading, error, refresh };
 }
