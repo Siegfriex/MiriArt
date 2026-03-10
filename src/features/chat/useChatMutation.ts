@@ -1,14 +1,16 @@
 /**
- * POST /api/chat React Query mutation 훅 스켈레톤.
- * TODO: React Query 도입 시 실제로 사용하도록 페이지/훅을 교체 (예: chat-room에서 ChatApi.sendMessage 대신 useChatMutation 사용).
+ * @fileoverview POST /api/chat React Query mutation. 채팅 전송 후 세션 목록 캐시 무효화.
+ * @참조 chat-room Page
  */
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, getAuthHeaders, ApiError } from '../../shared/api/miriartApi';
 import { chatResponseSchema, type ChatResponse } from '../../shared/api/schemas/chat';
 import type { ChatRequest } from '../../shared/api/miriartApi';
 
 export function useChatMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (params: ChatRequest): Promise<ChatResponse> => {
       const raw = await apiFetch<unknown>('/api/chat', {
@@ -20,6 +22,9 @@ export function useChatMutation() {
       const parsed = chatResponseSchema.safeParse(payload);
       if (!parsed.success) throw new ApiError(500, 'Invalid chat response');
       return parsed.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
     },
   });
 }

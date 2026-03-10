@@ -130,20 +130,20 @@ export const ChatRoom: React.FC = () => {
             fixScope: analysis.fixScope,
             radarData: analysis.radarData as Record<string, number>,
           }
-        : {
-            grade: 'A',
-            score: 88,
-            fixScope: 'DetailTuning',
-            radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
-          };
+        : undefined;
 
       const response = await ChatApi.sendMessage({
         modelType,
         message: text,
         sessionId,
-        stickyContext,
+        ...(stickyContext ? { stickyContext } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       });
+
+      // new-session일 때 첫 응답 수신 후 URL을 sessionKey(UUID)로 교체 — BE가 생성한 세션으로 고정
+      if (normalizedSessionId === 'new-session' && response.sessionId) {
+        navigate(ROUTES.CHAT_ROOM(response.sessionId), { replace: true });
+      }
 
       setMessages((prev) => [
         ...prev,

@@ -12,6 +12,7 @@ import { ModalProvider } from './providers/ModalProvider';
 import { BottomNav } from '../widgets/layout/BottomNav';
 import { SideGNB } from '../widgets/layout/SideGNB';
 import { ToastContainer } from '../shared/ui/Toast';
+import { DebugPanel } from '../shared/ui/DebugPanel';
 import { useModalStore } from '../shared/model/modalStore';
 
 /** 앱 루트 컴포넌트. @참조 main.tsx */
@@ -38,6 +39,9 @@ const App: React.FC = () => {
 
         {/* 전역 Toast 알림 */}
         <ToastContainer />
+
+        {/* Dev/QA 전용 디버그 패널 (마지막 분석/채팅 에러) */}
+        <DebugPanel />
       </div>
     </BrowserRouter>
   );

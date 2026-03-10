@@ -1,7 +1,7 @@
 /**
- * @fileoverview 작품 엔티티 재export. Artwork 타입, MOCK_ARTWORKS, getRecentArtworks, getAllArtworks, getArtworkById.
+ * @fileoverview 작품 엔티티 재export. Artwork 타입 및 변환 유틸.
  * @참조 AnalysisCard, ArtworkGrid, Archive, Home, result-detail
  */
 
 export type { Artwork } from './model';
-export { MOCK_ARTWORKS, getRecentArtworks, getAllArtworks, getArtworkById } from './model';
+export { toArtwork } from './model';

@@ -24,6 +24,10 @@ public class ChatRequest {
 
     private String modelType = "CHAT_PRO";
     private String sessionId;
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
     private Map<String, Object> stickyContext;
     private String imageBase64;
     private String imageMimeType;

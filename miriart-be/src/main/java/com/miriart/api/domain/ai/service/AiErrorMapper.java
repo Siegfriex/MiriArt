@@ -31,6 +31,11 @@ public final class AiErrorMapper {
     public static ErrorCode toErrorCode(HttpStatusCode statusCode, String aiCode, boolean forAnalyze) {
         int status = statusCode.value();
 
+        // 401/403: Cloud Run IAM 인증 실패 (OIDC 토큰 만료·누락·권한 부족)
+        if (status == 401 || status == 403) {
+            return ErrorCode.AI_SERVICE_AUTH_FAILED;
+        }
+
         if (status == 504) {
             if (AI_CODE_LLM_TIMEOUT.equals(aiCode)) {
                 return forAnalyze ? ErrorCode.AI_ANALYSIS_TIMEOUT : ErrorCode.AI_CHAT_TIMEOUT;

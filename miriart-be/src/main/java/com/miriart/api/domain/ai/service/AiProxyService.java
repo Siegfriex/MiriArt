@@ -59,7 +59,8 @@ public class AiProxyService {
                 .uri("/internal/ai/analyze")
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(status -> status.is5xxServerError() || status.value() == 400,
+                .onStatus(status -> status.is5xxServerError() || status.value() == 400
+                        || status.value() == 401 || status.value() == 403,
                         res -> res.bodyToMono(String.class)
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), true)))))
@@ -100,7 +101,8 @@ public class AiProxyService {
                 .uri("/internal/ai/chat")
                 .bodyValue(internalRequest)
                 .retrieve()
-                .onStatus(status -> status.is5xxServerError() || status.value() == 400,
+                .onStatus(status -> status.is5xxServerError() || status.value() == 400
+                        || status.value() == 401 || status.value() == 403,
                         res -> res.bodyToMono(String.class)
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), false)))))
