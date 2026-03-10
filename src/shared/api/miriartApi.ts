@@ -198,9 +198,6 @@ export type { TokenExchangeResponse } from './schemas/auth';
 
 export const AuthApi = {
   exchangeToken: async (code: string): Promise<import('./schemas/auth').TokenExchangeResponse> => {
-    // #region agent log
-    DEBUG_LOG('exchangeToken apiFetch start', { codeLength: code.length }, 'A');
-    // #endregion
     const raw = await apiFetch<unknown>('/api/auth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -209,12 +206,6 @@ export const AuthApi = {
     const payload = (raw as { data?: unknown }).data ?? raw;
     const parsed = tokenExchangeSchema.safeParse(payload);
     if (!parsed.success) {
-      // #region agent log
-      DEBUG_LOG('exchangeToken parse failed', {
-        firstError: parsed.error.errors[0]?.message,
-        issues: parsed.error.issues?.length,
-      }, 'B');
-      // #endregion
       throw new ApiError(500, 'Invalid auth response');
     }
     return parsed.data;
@@ -251,12 +242,6 @@ export const UserApi = {
     if (!parsed.success) {
       const issues = parsed.error.issues;
       if (import.meta.env.DEV) console.warn('[getMe] parse failed. payload:', payload, 'zod issues:', issues);
-      // #region agent log
-      DEBUG_LOG('getMe parse failed', {
-        payloadKeys: typeof payload === 'object' && payload !== null ? Object.keys(payload as object) : [],
-        zodIssues: issues?.map((i) => ({ path: i.path, message: i.message })),
-      }, 'C');
-      // #endregion
       throw new ApiError(500, 'Invalid user profile response');
     }
     return parsed.data;
