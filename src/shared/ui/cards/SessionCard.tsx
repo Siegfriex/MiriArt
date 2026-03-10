@@ -8,6 +8,7 @@
 import React from 'react';
 import { Session } from '../../model/types';
 import { STRINGS } from '../../config/strings';
+import { SignedImage } from '../SignedImage';
 
 interface SessionCardProps {
   session: Session;
@@ -31,12 +32,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onClick }) =>
       onClick={onClick}
       className="bg-surface-alt rounded-xl p-4 border border-border-default flex gap-4 hover:bg-surface-tertiary active:scale-[0.98] transition-all cursor-pointer group"
     >
-      {/* 썸네일 */}
+      {/* 썸네일 — SignedImage로 실 이미지 표시 */}
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-surface-tertiary flex-shrink-0 border border-border-default">
-        <img
-          src={session.thumbnailUrl}
+        <SignedImage
+          analysisId={session.id}
           alt="세션 썸네일"
           className="w-full h-full object-cover opacity-80"
+          placeholderClassName="bg-surface-tertiary flex items-center justify-center text-text-low text-[10px]"
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
           <span className="text-primary-lime font-bold text-lg drop-shadow-md">{session.grade}</span>

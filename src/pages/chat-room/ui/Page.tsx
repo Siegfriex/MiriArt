@@ -130,18 +130,13 @@ export const ChatRoom: React.FC = () => {
             fixScope: analysis.fixScope,
             radarData: analysis.radarData as Record<string, number>,
           }
-        : {
-            grade: 'A',
-            score: 88,
-            fixScope: 'DetailTuning',
-            radarData: { density: 90, form: 85, completion: 80, relevance: 95, thinking: 88 },
-          };
+        : undefined;
 
       const response = await ChatApi.sendMessage({
         modelType,
         message: text,
         sessionId,
-        stickyContext,
+        ...(stickyContext ? { stickyContext } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       });
 

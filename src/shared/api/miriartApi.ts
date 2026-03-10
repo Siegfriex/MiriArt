@@ -322,8 +322,8 @@ export interface SignedImageUrlResponse {
 }
 
 /**
- * BE SSOT: ImageController가 ApiResponse.success(ImageUrlResponse) 반환 → JSON은 항상 { success, data: { url, expiresAt } }.
- * TODO(BE 계약 확정 후): 현재는 { data: { url } } / { url } 양쪽 허용. BE가 항상 래핑하므로 payload = (raw as { data?: unknown }).data 로만 파싱하도록 타입을 좁혀서 SignedImageUrlResponse만 다루기.
+ * BE SSOT: ImageController → ApiResponse.success(ImageUrlResponse) → JSON { success, data: { url, expiresAt } }.
+ * apiFetch가 최외곽 { data } 를 벗겨내므로 payload = { url, expiresAt }.
  */
 export const ImageApi = {
   /** 분석 id로 표시용 Signed URL 조회. img src 또는 onError 재요청에 사용. */

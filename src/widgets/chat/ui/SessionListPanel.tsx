@@ -2,13 +2,13 @@
  * @fileoverview 세션 목록 패널. 필터, SessionCard 목록, FAB(새 채팅). SideGNB 내부에 표시.
  * @참조 SideGNB
  * @라우팅 /app/chat (SideGNB 열림 시)
- * @상태 useModalStore, useSideGNBStore, useUserStore, useState (selectedFilter)
+ * @상태 useModalStore, useSideGNBStore, useUserStore, useSessionList, useState (selectedFilter)
  */
 
 import React, { useState, useMemo } from 'react';
 import { H1 } from '../../../shared/ui/Typography';
 import { Session, Grade } from '../../../shared/model/types';
-import { MOCK_SESSIONS } from '../../../entities/session/model';
+import { useSessionList } from '../../../features/chat/useSessionList';
 import { FAB } from '../../../shared/ui/FAB';
 import { SearchBar } from '../../../shared/ui/SearchBar';
 import { FilterChip } from '../../../shared/ui/FilterChip';
@@ -26,9 +26,9 @@ interface SessionListPanelProps {
   compact?: boolean;
 }
 
-const FILTERS = ['전체', 'A등급', 'B등급', '홍익대', '국민대'];
+const FILTERS = ['전체', 'A등급', 'B등급'];
 
-/** 세션 목록 패널. compact. @참조 SideGNB @상태 useModalStore, useSideGNBStore, useUserStore */
+/** 세션 목록 패널. compact. @참조 SideGNB @상태 useModalStore, useSideGNBStore, useUserStore, useSessionList */
 export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = false }) => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
@@ -36,12 +36,14 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
   const { profile } = useUserStore();
   const [selectedFilter, setSelectedFilter] = useState('전체');
 
+  const { sessions, loading, error } = useSessionList();
+
   const filteredSessions = useMemo(() => {
-    if (selectedFilter === '전체') return MOCK_SESSIONS;
-    if (selectedFilter === 'A등급') return MOCK_SESSIONS.filter((s) => s.grade === Grade.A);
-    if (selectedFilter === 'B등급') return MOCK_SESSIONS.filter((s) => s.grade === Grade.B);
-    return MOCK_SESSIONS.filter((s) => s.university.includes(selectedFilter));
-  }, [selectedFilter]);
+    if (selectedFilter === '전체') return sessions;
+    if (selectedFilter === 'A등급') return sessions.filter((s) => s.grade === Grade.A);
+    if (selectedFilter === 'B등급') return sessions.filter((s) => s.grade === Grade.B);
+    return sessions.filter((s) => s.university.includes(selectedFilter));
+  }, [selectedFilter, sessions]);
 
   const handleSessionClick = (session: Session) => {
     closeSideGNB();
@@ -80,7 +82,19 @@ export const SessionListPanel: React.FC<SessionListPanelProps> = ({ compact = fa
         </div>
 
         <div className="flex flex-col gap-3">
-          {filteredSessions.length > 0 ? (
+          {loading ? (
+            [1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-surface-alt rounded-xl animate-pulse" />
+            ))
+          ) : error ? (
+            <EmptyState
+              title="불러오기 실패"
+              description={error}
+              actionLabel="다시 시도"
+              onAction={() => window.location.reload()}
+              icon={MessageSquareDashed}
+            />
+          ) : filteredSessions.length > 0 ? (
             filteredSessions.map((session) => (
               <SessionCard
                 key={session.id}

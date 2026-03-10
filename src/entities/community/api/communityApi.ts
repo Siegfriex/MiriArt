@@ -15,7 +15,7 @@ import type {
   CreateCommentRequest,
 } from '@/entities/community/model/types';
 
-const IS_MOCK = import.meta.env.VITE_COMMUNITY_MOCK === 'true';
+const IS_MOCK = import.meta.env.VITE_COMMUNITY_MOCK === 'true' && import.meta.env.MODE !== 'production';
 
 export const communityApi: CommunityApiSurface = IS_MOCK ? communityApiMock : communityApiReal;
 

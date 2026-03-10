@@ -2,7 +2,7 @@
  * @fileoverview 사이드 GNB. partial/full 모드, 세션 목록, 필터, 새 채팅. BottomNav 채팅 탭 클릭 시 열림.
  * @참조 App.tsx (전역 마운트), BottomNav
  * @라우팅 /app/* (전역)
- * @상태 useSideGNBStore, useNavStore, useModalStore, useState (gradeFilter, schoolFilter)
+ * @상태 useSideGNBStore, useNavStore, useModalStore, useSessionList, useState (gradeFilter, schoolFilter)
  */
 
 import React from 'react';
@@ -16,14 +16,14 @@ import { useNavStore } from '../../shared/model/navStore';
 import { useModalStore } from '../../shared/model/modalStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '../../shared/config/routes';
-import { MOCK_SESSIONS } from '../../entities/session/model';
+import { useSessionList } from '../../features/chat/useSessionList';
+import { SignedImage } from '../../shared/ui/SignedImage';
 
 const springConfig = { stiffness: 300, damping: 30 };
 
 const GRADE_FILTERS = ['전체', 'A', 'B', 'C', 'D'];
-const SCHOOL_FILTERS = ['홍익대', '국민대', '이화여대', '서울대'];
 
-/** 사이드 GNB. @참조 App, BottomNav @상태 useSideGNBStore, useNavStore, useModalStore */
+/** 사이드 GNB. @참조 App, BottomNav @상태 useSideGNBStore, useNavStore, useModalStore, useSessionList */
 export const SideGNB: React.FC = () => {
   const { mode, close, setMode } = useSideGNBStore();
   const { show: showNav, hide: hideNav } = useNavStore();
@@ -32,7 +32,8 @@ export const SideGNB: React.FC = () => {
   const location = useLocation();
 
   const [gradeFilter, setGradeFilter] = React.useState('전체');
-  const [schoolFilter, setSchoolFilter] = React.useState<string | null>(null);
+
+  const { sessions, loading } = useSessionList(10);
 
   // 라우트 변경 시 SideGNB 자동 닫기 (상태 누수 방지)
   React.useEffect(() => {
@@ -75,6 +76,11 @@ export const SideGNB: React.FC = () => {
       onComplete: () => navigate(ROUTES.CHAT_ROOM('new-session')),
     });
   };
+
+  const filteredSessions = React.useMemo(() => {
+    if (gradeFilter === '전체') return sessions;
+    return sessions.filter((s) => s.grade === gradeFilter);
+  }, [gradeFilter, sessions]);
 
   return (
     <AnimatePresence>
@@ -158,59 +164,52 @@ export const SideGNB: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 학교별 퀵필터 */}
-                <div>
-                  <span className="text-micro text-text-mid font-bold uppercase tracking-wide block mb-2">
-                    학교별
-                  </span>
-                  <div className="flex gap-2 flex-wrap">
-                    {SCHOOL_FILTERS.map((s) => (
-                      <FilterChip
-                        key={s}
-                        label={s}
-                        selected={schoolFilter === s}
-                        onClick={() => setSchoolFilter(schoolFilter === s ? null : s)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
                 {/* 최근 기록 */}
                 <div>
                   <span className="text-micro text-text-mid font-bold uppercase tracking-wide block mb-2">
                     최근 세션
                   </span>
-                  {MOCK_SESSIONS.slice(0, 5).map((session) => {
-                    const diff = Date.now() - session.timestamp;
-                    const hours = Math.floor(diff / 3600000);
-                    const timeLabel = hours < 1 ? '방금 전' : hours < 24 ? `${hours}시간 전` : `${Math.floor(hours / 24)}일 전`;
-                    return (
-                      <div
-                        key={session.id}
-                        onClick={() => { close(); navigate(ROUTES.CHAT_ROOM(session.id)); }}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-black/5 hover:bg-black/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
-                      >
-                        <div className="w-12 h-12 rounded-lg bg-surface-tertiary flex-shrink-0 overflow-hidden relative">
-                          <img
-                            src={session.thumbnailUrl}
-                            className="w-full h-full object-cover opacity-80"
-                            alt="세션 썸네일"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <span className="text-xs font-bold text-primary-lime">{session.grade}</span>
+                  {loading ? (
+                    [1, 2, 3].map((i) => (
+                      <div key={i} className="h-16 bg-surface-alt rounded-xl animate-pulse mb-2" />
+                    ))
+                  ) : filteredSessions.length === 0 ? (
+                    <div className="text-sm text-text-mid py-4 text-center">
+                      분석 기록이 없습니다.
+                    </div>
+                  ) : (
+                    filteredSessions.slice(0, 5).map((session) => {
+                      const diff = Date.now() - session.timestamp;
+                      const hours = Math.floor(diff / 3600000);
+                      const timeLabel = hours < 1 ? '방금 전' : hours < 24 ? `${hours}시간 전` : `${Math.floor(hours / 24)}일 전`;
+                      return (
+                        <div
+                          key={session.id}
+                          onClick={() => { close(); navigate(ROUTES.CHAT_ROOM(session.id)); }}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-black/5 hover:bg-black/10 cursor-pointer border border-transparent hover:border-primary-lime/30 transition-colors mb-2"
+                        >
+                          <div className="w-12 h-12 rounded-lg bg-surface-tertiary flex-shrink-0 overflow-hidden relative">
+                            <SignedImage
+                              analysisId={session.id}
+                              alt="세션 썸네일"
+                              className="w-full h-full object-cover opacity-80"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <span className="text-xs font-bold text-primary-lime">{session.grade}</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-text-primary truncate font-medium">{session.title}</div>
+                            <div className="text-xs text-text-mid truncate flex items-center gap-1">
+                              <span>{session.university}</span>
+                              <span className="w-1 h-1 bg-dark-600 rounded-full" />
+                              <span>{timeLabel}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm text-text-primary truncate font-medium">{session.title}</div>
-                          <div className="text-xs text-text-mid truncate flex items-center gap-1">
-                            <span>{session.university}</span>
-                            <span className="w-1 h-1 bg-dark-600 rounded-full" />
-                            <span>{timeLabel}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </motion.div>
             )}
