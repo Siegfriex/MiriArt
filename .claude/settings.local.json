@@ -248,7 +248,8 @@
       "Bash(jar tf:*)",
       "Bash(cd /home/sieg/projects-wsl/MiriArt && npx tsc --noEmit 2>&1 | head -60)",
       "Bash(npx tsc:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(gcloud alpha:*)"
     ]
   }
 }

@@ -23,13 +23,13 @@ import { ROUTES } from '../../../shared/config/routes';
 import { ContextBar } from '../../../widgets/community/ContextBar';
 import { HomeFeed } from '../../../widgets/community/HomeFeed';
 import { useFeedQuery } from '../../../features/community/useFeedQuery';
-import { AnalysisApi, handleApiError } from '../../../shared/api/miriartApi';
+import { AnalysisApi, handleApiError, tokenManager } from '../../../shared/api/miriartApi';
 import type { AnalysisResult } from '../../../shared/model/types';
 import { SignedImage } from '../../../shared/ui/SignedImage';
 
 const HOME_RECENT_LIMIT = 3;
 
-/** 홈 페이지. */
+/** 홈 페이지. 토큰 없을 때는 목록 요청하지 않음 (401 방지). */
 export const Home: React.FC = () => {
   const { tab, setTab, grade, setGrade, domain, setDomain } = useFeedQuery();
   const { openModal } = useModalStore();
@@ -42,6 +42,10 @@ export const Home: React.FC = () => {
   const [recentError, setRecentError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!tokenManager.getAccessToken()) {
+      setRecentLoading(false);
+      return;
+    }
     AnalysisApi.getList({ size: HOME_RECENT_LIMIT })
       .then((list) => setRecentAnalyses(list.slice(0, HOME_RECENT_LIMIT)))
       .catch((err) => setRecentError(handleApiError(err)))

@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { useArchiveQuery } from '../model/useArchiveQuery';
-import { AnalysisApi, handleApiError } from '../../../shared/api/miriartApi';
+import { AnalysisApi, handleApiError, tokenManager } from '../../../shared/api/miriartApi';
 import type { AnalysisResult } from '../../../shared/model/types';
 import type { Artwork } from '../../../entities/artwork/model';
 
@@ -49,6 +49,10 @@ export const Archive: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!tokenManager.getAccessToken()) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     AnalysisApi.getList()

@@ -20,19 +20,6 @@ import { API_BASE } from '../config/api';
 import type { RequestClass } from '../config/requestPolicy';
 import { REQUEST_POLICY, DEFAULT_REQUEST_CLASS } from '../config/requestPolicy';
 
-// #region agent log
-const DEBUG_LOG = (message: string, data: Record<string, unknown>, hypothesisId: string) => {
-  if (!import.meta.env.DEV) return;
-  const payload = { sessionId: 'a4f614', location: 'miriartApi.ts', message, data, timestamp: Date.now(), hypothesisId };
-  console.log('[DEBUG]', message, data);
-  fetch('http://127.0.0.1:7620/ingest/67ee1a3b-2ca5-4344-aa14-d8c9f2ec8b28', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a4f614' },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-};
-// #endregion
-
 // ─── 에러 클래스 ───────────────────────────────────────────────────────────────
 /** API 에러. status, message 보유. 402=크레딧 부족, 408=타임아웃 등 */
 export class ApiError extends Error {
@@ -62,6 +49,29 @@ async function refreshToken(): Promise<void> {
     credentials: 'include', // httpOnly Cookie 자동 전송
   });
   if (!res.ok) {
+    // #region agent log — BE 특정용: AUTH004(쿠키 안 옴/Redis) vs AUTH006(RT 만료·변조)
+    let refreshErrorCode: string | null = null;
+    try {
+      const bodyText = await res.clone().text();
+      const parsed = JSON.parse(bodyText);
+      const data = parsed?.data ?? parsed;
+      refreshErrorCode = data?.code ?? parsed?.code ?? null;
+    } catch {
+      refreshErrorCode = null;
+    }
+    fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+      body: JSON.stringify({
+        sessionId: '36e181',
+        location: 'miriartApi.ts:refreshFail',
+        message: 'FE: refresh returned non-ok',
+        data: { status: res.status, apiBaseSet, beErrorCode: refreshErrorCode },
+        timestamp: Date.now(),
+        hypothesisId: 'AUTH_H2,H3,H4',
+      }),
+    }).catch(() => {});
+    // #endregion
     refreshFailed = true;
     tokenManager.clearAccessToken();
     useUserStore.getState().clearAuth();
@@ -126,6 +136,21 @@ export async function apiFetch<T>(path: string, init: ApiFetchOptions = {}, retr
 
   let res = await fetchWithPolicy(path, fetchInit);
   if (res.status === 401 && retry401) {
+    // #region agent log
+    const hasAuth = !!(fetchInit.headers && (fetchInit.headers as Record<string, string>)?.Authorization);
+    fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+      body: JSON.stringify({
+        sessionId: '36e181',
+        location: 'miriartApi.ts:first401',
+        message: 'FE: request got 401, will try refresh',
+        data: { path: path.slice(0, 60), hasAuthHeader: hasAuth, apiBaseSet: typeof API_BASE === 'string' && API_BASE.length > 0 },
+        timestamp: Date.now(),
+        hypothesisId: 'AUTH_H1,H2',
+      }),
+    }).catch(() => {});
+    // #endregion
     // refresh가 이미 실패했으면 즉시 401 throw (무한 루프 방지)
     if (refreshFailed) {
       throw new ApiError(401, 'Session expired');
@@ -142,6 +167,20 @@ export async function apiFetch<T>(path: string, init: ApiFetchOptions = {}, retr
     await refreshPromise;
     // refresh 실패 시 재시도하지 않고 즉시 종료
     if (refreshFailed) {
+      // #region agent log
+      fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+        body: JSON.stringify({
+          sessionId: '36e181',
+          location: 'miriartApi.ts:afterRefreshFailed',
+          message: 'FE: refresh already failed, throwing Session expired',
+          data: { path: path.slice(0, 60) },
+          timestamp: Date.now(),
+          hypothesisId: 'AUTH_H2,H3,H4',
+        }),
+      }).catch(() => {});
+      // #endregion
       throw new ApiError(401, 'Session expired');
     }
     res = await fetchWithPolicy(path, { ...fetchInit, headers: { ...(fetchInit.headers as Record<string, string> || {}), ...getAuthHeaders() } });
@@ -257,6 +296,20 @@ export type AnalyzeResponse = import('./schemas/analysis').AnalysisResponseApi;
 
 export const AnalysisApi = {
   analyze: async (imageFile: File, options: AnalyzeOptions): Promise<AnalysisResult> => {
+    // #region agent log
+    fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+      body: JSON.stringify({
+        sessionId: '36e181',
+        location: 'miriartApi.ts:analyze',
+        message: 'FE: about to POST /api/analyses',
+        data: { fileSize: imageFile.size, type: options.type, hasProblemText: !!options.problemText },
+        timestamp: Date.now(),
+        hypothesisId: 'H1',
+      }),
+    }).catch(() => {});
+    // #endregion
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
@@ -271,17 +324,98 @@ export const AnalysisApi = {
       const payload = (raw as { data?: unknown }).data ?? raw;
       const startParsed = analysisStartResponseSchema.safeParse(payload);
       if (!startParsed.success) {
+        // #region agent log
+        fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+          body: JSON.stringify({
+            sessionId: '36e181',
+            location: 'miriartApi.ts:parseStart',
+            message: 'FE: POST response parse failed (start)',
+            data: { issues: startParsed.error.issues?.slice(0, 3) },
+            timestamp: Date.now(),
+            hypothesisId: 'H3',
+          }),
+        }).catch(() => {});
+        // #endregion
         throw new ApiError(500, 'Invalid analysis start response');
       }
       const { analysisId } = startParsed.data;
+      // #region agent log
+      fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+        body: JSON.stringify({
+          sessionId: '36e181',
+          location: 'miriartApi.ts:afterPost',
+          message: 'FE: POST /api/analyses success',
+          data: { analysisId },
+          timestamp: Date.now(),
+          hypothesisId: 'H2',
+        }),
+      }).catch(() => {});
+      // #endregion
       const detailRaw = await apiFetch<unknown>(`/api/analyses/${analysisId}`, { headers: getAuthHeaders(), requestClass: 'CRITICAL_SLOW' });
       const detailPayload = (detailRaw as { data?: unknown }).data ?? detailRaw;
       const detailParsed = analysisResponseSchema.safeParse(detailPayload);
       if (!detailParsed.success) {
+        // #region agent log
+        fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+          body: JSON.stringify({
+            sessionId: '36e181',
+            location: 'miriartApi.ts:parseDetail',
+            message: 'FE: GET response parse failed (detail)',
+            data: { analysisId, issues: detailParsed.error.issues?.slice(0, 3) },
+            timestamp: Date.now(),
+            hypothesisId: 'H3',
+          }),
+        }).catch(() => {});
+        // #endregion
         throw new ApiError(500, 'Invalid analysis response');
       }
+      // #region agent log
+      fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+        body: JSON.stringify({
+          sessionId: '36e181',
+          location: 'miriartApi.ts:analyzeDone',
+          message: 'FE: GET /api/analyses/{id} success, returning',
+          data: { analysisId },
+          timestamp: Date.now(),
+          hypothesisId: 'H5',
+        }),
+      }).catch(() => {});
+      // #endregion
       return normalizeAnalysisResult(detailParsed.data);
     } catch (error) {
+      // #region agent log
+      const status = error instanceof ApiError ? error.status : 0;
+      const errMsg = error instanceof Error ? error.message : String(error);
+      let code: string | undefined;
+      if (error instanceof ApiError) {
+        try {
+          const b = JSON.parse(error.message);
+          code = b?.code;
+        } catch {
+          code = undefined;
+        }
+      }
+      fetch('http://127.0.0.1:3001/ingest/4cc79500-9e5c-408a-ac33-57a3f1a0b1c5', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '36e181' },
+        body: JSON.stringify({
+          sessionId: '36e181',
+          location: 'miriartApi.ts:catch',
+          message: 'FE: analysis failed',
+          data: { status, code, message: errMsg?.slice?.(0, 200) },
+          timestamp: Date.now(),
+          hypothesisId: 'H2,H4,H5',
+        }),
+      }).catch(() => {});
+      // #endregion
       if (error instanceof ApiError) {
         const body = parseApiErrorBody(error.message);
         useDebugStore.getState().setLastAnalysisError({
@@ -508,6 +642,8 @@ export function handleApiError(error: unknown): string {
       AI003: 'AI 서비스 인증에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       M002: '이미 사용 중인 닉네임입니다.',
       AUTH002: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.',
+      AUTH004: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.', // refresh: 쿠키 미전송 또는 Redis 불일치
+      AUTH006: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.', // refresh: RT 만료·변조
       AUTH009: 'AI 서비스 인증에 일시 문제가 있습니다. 잠시 후 다시 시도해주세요.',
       ...COMMUNITY_MESSAGES,
     };
