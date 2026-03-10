@@ -17,7 +17,7 @@ import { useSideGNBStore } from '../../../shared/model/sideGNBStore';
 import { useNavStore } from '../../../shared/model/navStore';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
-import { ChatApi, AnalysisApi, fileToBase64 } from '../../../shared/api/miriartApi';
+import { ChatApi, AnalysisApi, fileToBase64, handleApiError } from '../../../shared/api/miriartApi';
 import { useToastStore } from '../../../shared/model/toastStore';
 import { AiThinkingDots } from '@/shared/ui/ai';
 import type { AnalysisResult } from '../../../shared/model/types';
@@ -69,9 +69,12 @@ export const ChatRoom: React.FC = () => {
     setAnalysisLoading(true);
     AnalysisApi.getById(normalizedSessionId)
       .then(setAnalysis)
-      .catch(() => setAnalysis(null))
+      .catch((err) => {
+        showToast(handleApiError(err), 'error');
+        setAnalysis(null);
+      })
       .finally(() => setAnalysisLoading(false));
-  }, [normalizedSessionId]);
+  }, [normalizedSessionId, showToast]);
 
   const sessionTitle =
     !normalizedSessionId || normalizedSessionId === 'new-session'

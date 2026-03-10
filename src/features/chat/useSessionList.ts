@@ -1,10 +1,11 @@
 /**
  * @fileoverview 세션 목록 훅. GET /api/chat/sessions 연동. React Query 기반.
+ * 토큰 없을 때는 요청하지 않음 (401 방지, DEBUG_REPORT_AUTH_401_2026-03-10).
  * @참조 SessionListPanel, SideGNB
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { ChatSessionApi } from '../../shared/api/miriartApi';
+import { ChatSessionApi, tokenManager } from '../../shared/api/miriartApi';
 import type { Session } from '../../shared/model/types';
 import type { ChatSessionDto } from '../../shared/api/schemas/chatSession';
 
@@ -30,12 +31,14 @@ function dtoToSession(dto: ChatSessionDto): Session {
  * @param grade 필터 등급 (선택)
  */
 export function useSessionList(size = 20, grade?: string) {
+  const hasToken = !!tokenManager.getAccessToken();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['chatSessions', { size, grade }],
     queryFn: async () => {
       const page = await ChatSessionApi.getList({ page: 0, size, grade });
       return page.content.map(dtoToSession);
     },
+    enabled: hasToken,
   });
 
   return {

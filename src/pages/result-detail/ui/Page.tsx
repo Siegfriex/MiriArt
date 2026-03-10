@@ -12,7 +12,7 @@ import { H1, H2, H3, BodyText } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
 import type { AnalysisResult } from '../../../shared/model/types';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AnalysisApi } from '../../../shared/api/miriartApi';
+import { AnalysisApi, handleApiError } from '../../../shared/api/miriartApi';
 import { useModalStore } from '../../../shared/model/modalStore';
 import { RadarChart } from '../../../shared/ui/charts/RadarChart';
 import { ComparisonAccordion } from '../../../widgets/result/ComparisonAccordion';
@@ -22,7 +22,7 @@ import { buildSampleResult } from '../../../entities/analysis/sampleResult';
 import { AiSkeleton, AiErrorState } from '@/shared/ui/ai';
 import { SignedImage } from '../../../shared/ui/SignedImage';
 
-const RESULT_LOAD_ERROR = '분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+const RESULT_LOAD_ERROR_FALLBACK = '분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 
 /** 결과 상세 페이지. */
 export const ResultDetail: React.FC = () => {
@@ -39,7 +39,7 @@ export const ResultDetail: React.FC = () => {
   useEffect(() => {
     if (!artworkId) {
       setIsLoading(false);
-      setError(RESULT_LOAD_ERROR);
+      setError(RESULT_LOAD_ERROR_FALLBACK);
       return;
     }
     setIsLoading(true);
@@ -50,8 +50,8 @@ export const ResultDetail: React.FC = () => {
         setResult(data);
         setError(null);
       })
-      .catch(() => {
-        setError(RESULT_LOAD_ERROR);
+      .catch((err) => {
+        setError(handleApiError(err));
         setResult(undefined);
       })
       .finally(() => setIsLoading(false));
@@ -66,7 +66,7 @@ export const ResultDetail: React.FC = () => {
         setResult(data);
         setError(null);
       })
-      .catch(() => setError(RESULT_LOAD_ERROR))
+      .catch((err) => setError(handleApiError(err)))
       .finally(() => setIsLoading(false));
   };
 
@@ -121,7 +121,7 @@ export const ResultDetail: React.FC = () => {
         </header>
         <div className="flex-1 flex items-center justify-center p-page-y">
           <AiErrorState
-            title={RESULT_LOAD_ERROR}
+            title={error ?? RESULT_LOAD_ERROR_FALLBACK}
             variant="fullscreen"
             onRetry={handleRetry}
             secondaryAction={{ label: '샘플 분석 결과 보기', onClick: () => setShowSample(true) }}

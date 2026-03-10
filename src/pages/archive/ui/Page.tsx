@@ -21,11 +21,9 @@ import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
 import { useArchiveQuery } from '../model/useArchiveQuery';
-import { AnalysisApi } from '../../../shared/api/miriartApi';
+import { AnalysisApi, handleApiError, tokenManager } from '../../../shared/api/miriartApi';
 import type { AnalysisResult } from '../../../shared/model/types';
 import type { Artwork } from '../../../entities/artwork/model';
-
-const LIST_LOAD_ERROR = '분석 기록을 불러오지 못했습니다. 다시 시도해 주세요.';
 
 function toArtwork(a: AnalysisResult): Artwork {
   return {
@@ -51,11 +49,15 @@ export const Archive: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!tokenManager.getAccessToken()) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     AnalysisApi.getList()
       .then(setAnalyses)
-      .catch(() => setError(LIST_LOAD_ERROR))
+      .catch((err) => setError(handleApiError(err)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -75,7 +77,7 @@ export const Archive: React.FC = () => {
         setError(null);
         AnalysisApi.getList()
           .then(setAnalyses)
-          .catch(() => setError(LIST_LOAD_ERROR))
+          .catch((err) => setError(handleApiError(err)))
           .finally(() => setLoading(false));
       },
     });
