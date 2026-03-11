@@ -1,7 +1,7 @@
 # MiriArt FSD v2.0 — 기능 명세서
 
 > **목적**: MiriArt MVP 기능명세 (F1~F8 + Community Phase C). Phase 구분·I-P-O-E·코드 기준 검증.
-> **버전**: 2.0 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-02
+> **버전**: 2.0 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-10
 > **기반**: Legacy FSD v1.3, 확정 결정 세트, Community Design v1.0
 > **검증 기준**: 아래 모든 “소스”는 실제 코드·파일·라인 기준. 소스는 miriart-be 실제 Java 라인 기준. 구현·예외·엔드포인트는 miriarts_infra §4.4, API_CONTRACT §9·§10 참조.
 > **요청/응답 스키마·에러코드 전체·토큰 보안 전제**는 **MiriArt_API_CONTRACT.md** §1~§9 참조. 본 FSD는 기능 흐름·Process·BE 라인 위주.
@@ -21,10 +21,10 @@
 | F5 | 분석 결과 조회 (Archive) | **P1** | P0 | `GET /api/analyses` | **구현됨** |
 | F6 | 플랜 조회 + 크레딧 카운트 | **P1** | P1 | `GET /api/users/me/plan` | **구현됨** |
 | F7 | 구독 플랜 업그레이드 UI | **P2** | P1 | 결제 연동 미정 | **미구현(향후)** |
-| F8 | AI Chat MySQL 영속화 | **P2** | P2 | `chat_sessions`, `chat_messages` | **미구현(향후)** |
-| C1 | 커뮤니티 피드 CRUD | **C1** | - | `GET/POST /api/posts`, answers·comments API | **일부 구현됨**(GET /api/posts만), 나머지 **미구현(향후)** |
-| C2 | Q&A 채택 + 마감 자동화 | **C2** | - | `POST /api/posts/{id}/accept/{answerId}` | **미구현(향후)** |
-| C3 | 평판 시스템 | **C3** | - | `ApplicationEvent` | **미구현(향후)** |
+| F8 | AI Chat MySQL 영속화 | **P2** | P2 | `GET /api/chat/sessions`, chat_sessions(MySQL). 메시지는 Redis | **일부 구현됨** (세션 목록·메타 MySQL, 메시지 Redis) |
+| C1 | 커뮤니티 피드 CRUD | **C1** | - | `GET/POST/PUT/DELETE /api/posts`, `POST/PUT/DELETE /api/posts/{postId}/answers`, `POST/PUT/DELETE /api/comments`, `POST /api/likes/toggle`, `POST /api/posts/{postId}/report`, `POST /api/answers/{answerId}/report` | **구현됨** |
+| C2 | Q&A 채택 + 마감 자동화 | **C2** | - | `POST /api/posts/{postId}/accept/{answerId}` | **일부 구현됨** (채택 구현됨. 마감 자동화 배치 미구현) |
+| C3 | 평판 시스템 | **C3** | - | 채택 시 ReputationService.addReputationForAnswerAccepted | **일부 구현됨** (채택 시 평판 지급) |
 | C4 | AI 연결 (요약/초안) | **C4** | - | `/internal/ai/summarize-answers` | **미구현(향후)** |
 
 **참조**: 구현·엔드포인트·CORS — miriarts_infra §4.2·§4.4. 예외·ErrorCode·FastAPI 명세 — API_CONTRACT §9·§10·§8. 상세 — PRD §4.1, `MiriArt_레포_전제_코드문서_정의_정리.md`.
@@ -41,7 +41,7 @@
 | F4 | miriart.fastapi.internal-url | Redis(채팅 세션 72h), FastAPI | *miriarts_infra §4.4* |
 | F5 | — | MySQL(analyses) | |
 | F6 | — | MySQL(users, analysis_usage_logs) | |
-| C1 | — | MySQL(posts) | GET만 구현 |
+| C1 | — | MySQL(posts, answers, comments, likes, reputation_ledger) | posts·answers·comments·likes·report·채택 API 구현됨 |
 
 *상세: miriarts_infra §3·§4.*
 
@@ -52,12 +52,12 @@
 | F1 | users, (Redis oauth2:code) | ERD §2.1 users |
 | F2 | users | ERD §2.1 |
 | F3 | analyses, analysis_usage_logs, users, (GCS) | ERD §2.2 analyses, §2.3 analysis_usage_logs |
-| F4 | (Redis chat:session) | — |
+| F4 | (Redis chat:session), chat_sessions(MySQL) | — |
 | F5 | analyses | ERD §2.2 |
 | F6 | users, analysis_usage_logs | ERD §2.1, §2.3 |
-| C1 | posts | ERD §3 posts |
+| C1 | posts, answers, comments, likes, reputation_ledger | ERD §3 posts 등 |
 
-*엔티티·컬럼 상세: 설계는 `MiriArt_ERD_v2.md` §2·§3. **실제 DB 스키마 SSOT**는 `mysql_erd_v1.md` (역추출·정합성 §4).*
+*엔티티·컬럼 상세: 설계는 `MiriArt_ERD_v2.md` §2·§3. **실제 DB 스키마 SSOT**는 엔티티·Flyway·MiriArt_ERD_v2 기준. mysql_erd_v1.md는 미생성 상태.*
 
 ### 1.3 용어·약어
 
@@ -259,9 +259,9 @@ needsProfile === false → /app/home
 
 ### F8: AI Chat MySQL 영속화 전환
 
-**구현 상태**: **미구현(향후)**. Phase 2. 현재 채팅은 Redis만 사용 (miriarts_infra §4.4). **PRD §5.1** 참조.
+**구현 상태**: **일부 구현됨**. Phase 2. 세션 목록·메타는 MySQL(chat_sessions 테이블, V5 Flyway, ChatSession 엔티티). GET /api/chat/sessions 구현. 메시지 히스토리는 Redis. *소스: ChatSessionController.java:32, ChatSession.java, V5__create_chat_sessions.sql*
 
-**설계 예정**: chat_sessions/chat_messages 테이블·Flyway; AiProxyService에 MySQL 저장; Redis 캐시 유지; GET /api/chat/sessions.
+**미구현(향후)**: chat_messages 테이블·메시지 MySQL 저장; 배치로 Redis→MySQL 이관 등은 설계 예정. **PRD §5.1** 참조.
 
 ---
 
@@ -269,45 +269,42 @@ needsProfile === false → /app/home
 
 ### C1: 커뮤니티 피드 CRUD
 
-**구현 상태**: **일부 구현됨** — GET /api/posts만. POST /api/posts, answers·comments API **미구현(향후)**. Phase C1.
+**구현 상태**: **구현됨**. GET/POST/PUT/DELETE /api/posts, answers·comments·likes·report·채택(accept) API 구현. PostQueryService, PostCommandService, AnswerCommandService, CommentCommandService, LikeController, ReportController. *소스: BE_CODE_AUDIT_GAP_REPORT_FINAL §2.1, miriarts_infra §4.4*
 
 **I-P-O-E 요약**
 
 | 구분 | 내용 | 소스(파일/라인) |
 |------|------|------------------|
-| **Input** | (구현) `GET /api/posts` + `@PageableDefault(size=20, sort="createdAt", direction=DESC)` Pageable. (미구현) POST body type, title, content 등 | `PostController.java:31-35` — getPosts(pageable). Post 엔티티 필드는 `Post.java` |
-| **Process** | (구현) `postRepository.findAll(pageable).map(PostListResponse::from)` — **사용자 필터 없음, 전체 목록** | `PostController.java:31-35`; `PostRepository` JpaRepository 기본 findAll |
-| **Output** | (구현) `Page<PostListResponse>`. (미구현) 게시글 ID | `PostController.java:34` map(PostListResponse::from), 35 ApiResponse.success(page) |
+| **Input** | GET /api/posts (type, sort, grade, domain, cursor, size). POST/PUT/DELETE /api/posts, /api/posts/{postId}/answers, /api/comments, /api/likes/toggle, report, accept | PostController, AnswerController, CommentController, LikeController, ReportController |
+| **Process** | PostQueryService.getFeed, PostCommandService, AnswerCommandService, CommentCommandService, ReputationService(채택 시) | 각 Service·Controller |
+| **Output** | Page&lt;PostsFeedPageResponse&gt;, PostDetailResponse, ApiResponse 등 | 갭 리포트 §2.4.1 |
 
-**Java 도메인 패턴** (구현됨 — 엔티티·enum만):
+**Java 도메인 패턴** (구현됨):
 - `PostStatus`: OPEN, SOLVED, EXPIRED, CLOSED. `PostStatus.java:10-14`
 - `Post.accept(Long answerId)`: status=SOLVED, acceptedAnswerId 설정. `Post.java:104-107`
-- `Post.expire()`: status=EXPIRED. `Post.java:113-114`
-- 채택/마감 API·canAcceptAnswer 검사는 **미구현(C2)**.
+- 채택 API는 C2에서 구현됨 (POST /api/posts/{postId}/accept/{answerId}).
 
-**인수 조건**: (현재) 인증 없이 GET /api/posts 시 200 + Page<PostListResponse>.
+**인수 조건**: GET /api/posts permitAll. 쓰기·채택·report는 인증 필요.
 
 ---
 
 ### C2: Q&A 채택 + 마감 자동화
 
-**구현 상태**: **미구현(향후)**. Phase C2. `Post.accept(Long)`, `Post.expire()` 엔티티 메서드만 존재. **PRD §5.1 Phase C** 참조.
+**구현 상태**: **일부 구현됨**. 채택 구현됨. POST /api/posts/{postId}/accept/{answerId}, AnswerCommandService.acceptAnswer, ReputationService 호출. PostStatus.OPEN·deadlineAt 검사. *소스: PostController.java:90-96, AnswerCommandService.java:81-106*
 
-**설계 예정**:
-- **채택**: POST /api/posts/{postId}/accept/{answerId} → post.status=SOLVED, acceptedAnswerId, AnswerAcceptedEvent.
-- **마감**: 배치(예: 매시) `expireDeadlinedPosts(now)` + 조회 시점 OPEN이며 deadline_at 경과 시 EXPIRED 취급.
+**미구현(향후)**: 마감 자동화(배치로 deadline_at 경과 시 EXPIRED 전환 등). **PRD §5.1 Phase C** 참조.
 
 ---
 
 ### C3: 평판 시스템
 
-**구현 상태**: **부분** — 레벨 계산만 코드에 존재. 이벤트·포인트 적립 **미구현(향후)**. **PRD §5.1 Phase C** 참조.
+**구현 상태**: **일부 구현됨**. 채택 시 평판 지급(ReputationService.addReputationForAnswerAccepted) 구현. AnswerCommandService.acceptAnswer 내 호출. *소스: AnswerCommandService.java:105-106, ReputationService.java:36*
 
 **구현됨 — 레벨 계산** (*User.java:95-103*):
 - `User.calculateLevel(int score)`: 500→12, 300→10, 150→8, 75→6, 30→4, 10→2, 그 미만→1.
 - `User.addReputation(int delta)` → reputationScore 갱신 후 calculateLevel 반영.
 
-**설계 예정**: AnswerAcceptedEvent 발행 → @TransactionalEventListener에서 reputationService.addPoints(15 등).
+**미구현(향후)**: 이벤트 기반 분리, 기타 평판 적립 규칙. **PRD §5.1 Phase C** 참조.
 
 ---
 

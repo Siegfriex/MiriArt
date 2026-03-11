@@ -57,7 +57,7 @@
 | 현재 위치 (루트) | 이동 후 | 비고 |
 |------------------|---------|------|
 | `도커_빌드_푸시_GCP_디플로이_프롬프트.md` | `.cursor/prompts/도커_빌드_푸시_GCP_디플로이_프롬프트.md` 또는 `docs/ops/도커_빌드_푸시_GCP_디플로이_프롬프트.md` | 프롬프트 보관은 `.cursor/prompts/`, 공용 문서화는 `docs/ops/` 중 선택 |
-| *(없음)* | `docs/mysql_erd_v1.md` | infra-ssot.mdc·GUIDE에서 참조하나 현재 루트에 없음 → 추후 생성 시 `docs/`에 둘 것 |
+| *(없음)* | `docs/mysql_erd_v1.md` | 스키마 SSOT는 엔티티·Flyway·MiriArt_ERD_v2 기준. mysql_erd_v1.md는 미생성 상태. 추후 역추출 시 `docs/`에 둘 것. |
 
 ---
 

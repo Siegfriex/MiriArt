@@ -1,8 +1,8 @@
 # MiriArt PRD v2.2 — 제품 요구 명세서
 
 > **목적**: Legacy PRD v1.1 갭 메우기 + 현 구현 상태 반영 + 커뮤니티 비전 통합
-> **버전**: 2.2 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-02
-> **검증 기준선**: `docs/SSOT/miriarts_infra.md` + 코드베이스 (문서 정합성 검증일: 2026-03-02)
+> **버전**: 2.2 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-10
+> **검증 기준선**: `docs/SSOT/miriarts_infra.md` §4.4 + 코드베이스 (문서 정합성 검증일: 2026-03-10)
 > **기반**: Legacy PRD v1.1, `MiriArt_FSD_v2.md`, `MiriArt_ERD_v2.md`, Community Design v1.0, FE Disassembly Report v1.0
 
 ---
@@ -27,7 +27,7 @@
 | Auth | 이메일/비밀번호 | 카카오 + 구글 OAuth2 only |
 | AI 서비스 | Cloud Run 단일 | Java BE + FastAPI 분리 |
 | 커뮤니티 | 없음 | 에브리타임 × 지식인 Q&A + 평판 시스템 추가 |
-| Chat 저장 | Firestore | Phase 1: Redis TTL → Phase 2: MySQL |
+| Chat 저장 | Firestore | 현재: 메시지 Redis(72h). 세션 목록·메타 MySQL(chat_sessions, GET /api/chat/sessions 구현됨). |
 | 파일 스토리지 | Cloud Storage | GCS (동일) |
 
 ---
@@ -134,7 +134,7 @@
 | 플랜/크레딧 (F6) | F6 | GET /api/users/me/plan (UserService.getPlanInfo, PlanType) | **구현 완료** |
 | 구독 결제 (F7) | F7 | 플랜 조회만. 결제 연동 없음 | 결제 미구현 |
 | 합격 확률 (Layer 2) | F4 Layer 2 | analyses·university_predictions 필드 존재. 전용 Theory API 없음 | **미구현** (필드만 존재) |
-| 커뮤니티 (C1) | 신규 | GET /api/posts 구현 (PostController). POST /api/posts, /api/answers, comments CRUD 없음 | **C1 일부 구현**, 나머지 **미구현(향후)** |
+| 커뮤니티 (C1) | 신규 | GET/POST/PUT/DELETE /api/posts, answers·comments·likes·report·채택(accept) API 구현 | **구현됨** |
 
 ### 4.2 핵심 엔티티 요약
 
@@ -146,7 +146,7 @@
 | `Analysis` | P1 | 작품 분석 결과 (5축 + fixScope + 합격 확률) | analysis/entity/Analysis.java |
 | `PlanType` | P1 | 구독 플랜 enum (User.planType). 별도 테이블 없음 | user/entity/PlanType.java |
 | `AnalysisUsageLog` | P1 | 월별 분석 카운트 | analysis/entity/AnalysisUsageLog.java |
-| `ChatSession` / `ChatMessage` | P2 | P1: Redis 키로 세션/히스토리. P2: MySQL 테이블 예정 | RedisService, (P2 엔티티 미존재) |
+| `ChatSession` / `ChatMessage` | P1/P2 | ChatSession: 구현됨(엔티티·V5·GET /api/chat/sessions). ChatMessage: Redis만(메시지 히스토리) | ChatSession.java, V5__create_chat_sessions.sql, RedisService |
 | `Post` | C1 | 커뮤니티 게시글 (free/qna) | community/entity/Post.java |
 | `Answer` | C1 | Q&A 답변 | community/entity/Answer.java |
 | `Comment` | C1 | 댓글 (parent_type/parent_id로 Post 또는 Answer 소속) | community/entity/Comment.java |

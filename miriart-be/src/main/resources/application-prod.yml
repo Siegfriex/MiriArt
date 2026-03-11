@@ -58,6 +58,8 @@ miriart:
     secret:
       access: ${JWT_ACCESS_SECRET}
       refresh: ${JWT_REFRESH_SECRET}
+    access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
 logging:
   level:

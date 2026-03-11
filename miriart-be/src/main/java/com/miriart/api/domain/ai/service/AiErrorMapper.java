@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatusCode;
 /**
  * AI 서비스 HTTP 응답(status + body code)을 BE ErrorCode로 매핑.
  *
- * <p>SSOT: 504+LLM_TIMEOUT→AN002/AI002, 502+GCS_ERROR→F005, 502+LLM_*→AN001/AI001, 400+VALIDATION_ERROR→C001.</p>
+ * <p>SSOT: 429+LLM_RATE_LIMITED→AN004/AI004, 504+LLM_TIMEOUT→AN002/AI002, 502+GCS_ERROR→F005, 502+LLM_*→AN001/AI001, 400+VALIDATION_ERROR→C001.</p>
  *
  * @author MiriArt Team
  */
@@ -17,6 +17,8 @@ public final class AiErrorMapper {
     public static final String AI_CODE_LLM_SERVICE_ERROR = "LLM_SERVICE_ERROR";
     public static final String AI_CODE_LLM_PARSING_ERROR = "LLM_PARSING_ERROR";
     public static final String AI_CODE_VALIDATION_ERROR = "VALIDATION_ERROR";
+    // FastAPI SSOT: 429 + LLM_RATE_LIMITED — LLM 공급자 rate limit / DSQ 초과
+    public static final String AI_CODE_LLM_RATE_LIMITED = "LLM_RATE_LIMITED";
 
     private AiErrorMapper() {}
 
@@ -34,6 +36,11 @@ public final class AiErrorMapper {
         // 401/403: Cloud Run IAM 인증 실패 (OIDC 토큰 만료·누락·권한 부족)
         if (status == 401 || status == 403) {
             return ErrorCode.AI_SERVICE_AUTH_FAILED;
+        }
+
+        // 429: LLM 공급자 rate limit / DSQ 초과 (FastAPI SSOT: LLM_RATE_LIMITED)
+        if (status == 429) {
+            return forAnalyze ? ErrorCode.AI_ANALYSIS_RATE_LIMITED : ErrorCode.AI_CHAT_RATE_LIMITED;
         }
 
         if (status == 504) {

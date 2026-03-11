@@ -5,6 +5,7 @@ import com.miriart.api.domain.auth.oauth2.OAuth2LoginSuccessHandler;
 import com.miriart.api.global.security.JwtAuthenticationFilter;
 import com.miriart.api.global.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,7 +29,7 @@ import java.util.List;
  * <ul>
  *   <li>OAuth2 로그인: {@link CustomOAuth2UserService}, {@link OAuth2LoginSuccessHandler}로 Kakao/Google 로그인 후 JWT 발급</li>
  *   <li>API 인증: {@link JwtAuthenticationFilter}가 Authorization Bearer 토큰 검증 후 SecurityContext 주입</li>
- *   <li>공개 경로: /api/auth/**, /oauth2/**, GET /api/posts/**, GET /api/answers/**, swagger, actuator/health</li>
+ *   <li>공개 경로: /api/auth/**, /oauth2/**, GET /api/posts/**, swagger(dev only), actuator/health</li>
  *   <li>그 외 요청은 인증 필요 (FE는 JWT로 /api/* 호출)</li>
  * </ul>
  *
@@ -45,6 +46,9 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtUtil jwtUtil;
 
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
+
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil);
@@ -57,17 +61,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
                         // Public — 인증 불필요
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/answers/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
+                        auth.requestMatchers("/api/auth/**").permitAll();
+                        auth.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll();
+                        auth.requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll();
+                        // Swagger UI: dev/로컬에서만 공개, prod에서는 인증 필요
+                        if (!"prod".equals(activeProfile)) {
+                            auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll();
+                        }
+                        auth.requestMatchers("/actuator/health").permitAll();
                         // 인증 필요
-                        .anyRequest().authenticated()
-                )
+                        auth.anyRequest().authenticated();
+                })
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

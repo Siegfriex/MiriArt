@@ -49,7 +49,7 @@
 | 이름 | 역할 | 주요 책임 | 사용 스택 | 비고 |
 |------|------|------------|------------|------|
 | **miriart-be** | 백엔드 API | 인증(OAuth2/JWT), 커뮤니티(게시글·Q&A), AI 프록시(FastAPI 호출), GCS 업로드, 분석·채팅 API | Java 17, Spring Boot 3.4.2 | *소스: miriart-be/build.gradle:3, 11–13* |
-| **miriart-ai** | AI 전용 서비스 | Vertex AI(Gemini) Vision/Chat 연동, GCS 읽기/쓰기, 작품 분석·AI 채팅·이미지 편집 | Python 3.11, FastAPI 0.115.8 | *소스: miriart-ai/Dockerfile:1, requirements.txt* |
+| **miriart-ai** | AI 전용 서비스 | Vertex AI(Gemini) Vision/Chat 연동, GCS 읽기/쓰기, 작품 분석·AI 채팅·이미지 편집 | Python 3.11, FastAPI 0.115.8 | *소스: miriart-ai/Dockerfile:1, requirements.txt*. **miriart-ai** 코드·cloudbuild는 **본 레포 루트에 없음**. 문서·스크립트 참조 시: **WSL** `~/projects-wsl/miriart-ai`, **Windows UNC** `\\wsl.localhost\Ubuntu-24.04\home\sieg\projects-wsl\miriart-ai`. 레포 내에는 miriart-ai-legacy(또는 없음)만 존재할 수 있음. |
 | **server** | Node API 서버 | Gemini SDK 직접 호출(채팅·분석·이미지 편집 라우트). Cloud Run 배포용 Dockerfile 존재 | Node 20, Express 4.x | **(현재 비활성 / future use)** FE/BE와 HTTP 연동 없음 (추론). *소스: server/package.json, server/Dockerfile* |
 | **프론트엔드** | 클라이언트 | 인증·분석·채팅·커뮤니티 UI. BE API만 호출(VITE_API_BASE_URL) | Node ≥18, React 19.2.4, Vite 6, Tailwind 4 | *소스: 루트 package.json* |
 
@@ -96,7 +96,7 @@
 | 연결 방식 | Cloud Run → **Socket Factory**(Unix 소켓). 인스턴스는 Private IP(10.99.0.3) 존재 | docs/MiriArt_BE_CloudRun_CloudSQL_FIX.md:4–9, miriart-be/build.gradle:56–57 |
 | 주 DB 이름 | miriart_prod (prod), miriart_dev (dev) | docs/MiriArt_GCP_INFRA.md §5, miriart-be/src/main/resources/application-dev.yml:3 |
 | 문자셋 | utf8mb4 / utf8mb4_unicode_ci | docs/MiriArt_GCP_INFRA.md §5 |
-| **실제 스키마 SSOT** | **`docs/mysql_erd_v1.md`** | 테이블·컬럼·인덱스는 해당 문서(역추출·§4 정합성 점검) 기준. 스키마 변경 시 해당 문서 재추출 또는 §4 갱신. 설계/Phase 확장은 `docs/MiriArt_ERD_v2.md`. *Cursor 규칙: .cursor/rules/infra-ssot.mdc, INFRA_SSOT_GUIDE.md* |
+| **실제 스키마 SSOT** | **엔티티·Flyway 마이그레이션(V5 등)·`docs/MiriArt_ERD_v2.md`** | 테이블·컬럼·인덱스는 엔티티 및 Flyway 마이그레이션·ERD_v2 기준. `docs/mysql_erd_v1.md`는 현재 없으며, 역추출 시 해당 경로에 생성 예정. *Cursor 규칙: .cursor/rules/infra-ssot.mdc, INFRA_SSOT_GUIDE.md* |
 | Cloud Shell 접속(공개 IP) | 공개 IP 활성화 시에만 가능. **승인된 네트워크**에 Cloud Shell egress IP를 `x.x.x.x/32` 형식으로 추가. 해당 IP는 세션마다 다를 수 있으므로 **환경변수로 두지 않음** — 접속 전 `curl -s ifconfig.me` 로 확인 후 GCP 콘솔(SQL → 인스턴스 → 연결 → 승인된 네트워크)에서 추가. | 운영 확인 2026-03-02 |
 
 #### Cloud Shell에서 MySQL 접속 절차
@@ -150,10 +150,10 @@
 
 | Secret ID | 용도 | 매핑(서비스 → env) | 소스(파일/라인) |
 |-----------|------|---------------------|------------------|
-| miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → DB_URL | docs/MiriArt_GCP_INFRA.md §8, application-prod.yml:12 |
-| miriart-db-username | MySQL 사용자명 | miriart-be → DB_USERNAME | 동일 |
-| miriart-db-password | MySQL 비밀번호 | miriart-be → DB_PASSWORD | 동일 |
-| miriart-redis-host | Redis 호스트 IP | miriart-be → REDIS_HOST | 동일 |
+| miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → SPRING_DATASOURCE_URL | docs/MiriArt_GCP_INFRA.md §8, application-prod.yml. 현행 배포는 cloudrun-redeploy.sh 기준, --set-secrets가 SPRING_* 이름 사용 |
+| miriart-db-username | MySQL 사용자명 | miriart-be → SPRING_DATASOURCE_USERNAME | 동일 |
+| miriart-db-password | MySQL 비밀번호 | miriart-be → SPRING_DATASOURCE_PASSWORD | 동일 |
+| miriart-redis-host | Redis 호스트 IP | miriart-be → SPRING_DATA_REDIS_HOST | 동일 |
 | miriart-jwt-access-secret | JWT Access 서명 키 | miriart-be → JWT_ACCESS_SECRET | 동일, application-prod.yml:51, JwtProperties.java |
 | miriart-jwt-refresh-secret | JWT Refresh 서명 키 | miriart-be → JWT_REFRESH_SECRET | 동일 |
 | miriart-google-client-id | 구글 OAuth2 Client ID | miriart-be → GOOGLE_CLIENT_ID | 동일 |
@@ -187,8 +187,8 @@
 
 | 구분 | dev | prod |
 |------|-----|------|
-| DB 연결 | localhost:3306/miriart_dev, username/password 고정 (application-dev.yml:3–5) | DB_URL, DB_USERNAME, DB_PASSWORD(Secret 주입), Socket Factory JDBC URL (application-prod.yml:12–14) |
-| Redis | host localhost, port 6379 (application-dev.yml:24) | REDIS_HOST(Secret), port 6379, Memorystore + VPC 커넥터 (application-prod.yml:32–33) |
+| DB 연결 | localhost:3306/miriart_dev, username/password 고정 (application-dev.yml:3–5) | SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD(Secret 주입), Spring Boot 자동 바인딩 (application-prod.yml). 현행 prod 배포는 cloudrun-redeploy.sh 기준 |
+| Redis | host localhost, port 6379 (application-dev.yml:24) | SPRING_DATA_REDIS_HOST(Secret), port 6379, Memorystore + VPC 커넥터 (application-prod.yml:32–33) |
 | OAuth redirect URL | {baseUrl}/login/oauth2/code/{registrationId}, baseUrl=로컬 BE | 동일 템플릿, baseUrl=Cloud Run BE URL (문서) |
 | FE OAuth 성공 URL | FRONTEND_OAUTH_SUCCESS_URL 기본값 http://localhost:5173 (application.yml:17) | Secret miriart-frontend-oauth-url (문서) |
 | JWT 시크릿/만료 | access/refresh 플레이스홀더 기본값 (application-dev.yml:56–57). 만료 900000/604800000 ms (application.yml:32–33 miriart.jwt.access-expiration-ms, refresh-expiration-ms) | JWT_ACCESS_SECRET, JWT_REFRESH_SECRET 필수(Secret). 만료 동일 |
@@ -209,10 +209,10 @@
 
 | 이름 | Secret Manager ID | 사용 서비스 | 용도 | 로드 위치 | 소스(파일/라인) |
 |------|-------------------|-------------|------|-----------|------------------|
-| DB_URL | miriart-db-url | miriart-be | Cloud SQL JDBC URL (소켓) | application-prod.yml → spring.datasource.url, 배포 시 --set-secrets | application-prod.yml:12 |
-| DB_USERNAME | miriart-db-username | miriart-be | MySQL 사용자명 | application-prod.yml | 동일 |
-| DB_PASSWORD | miriart-db-password | miriart-be | MySQL 비밀번호 | application-prod.yml | 동일 |
-| REDIS_HOST | miriart-redis-host | miriart-be | Redis 호스트 IP | application-prod.yml → spring.data.redis.host | application-prod.yml:32 |
+| SPRING_DATASOURCE_URL | miriart-db-url | miriart-be | Cloud SQL JDBC URL (소켓) | application-prod.yml → Spring Boot 자동 바인딩, 배포 시 --set-secrets. 현행: cloudrun-redeploy.sh | application-prod.yml:12 |
+| SPRING_DATASOURCE_USERNAME | miriart-db-username | miriart-be | MySQL 사용자명 | application-prod.yml | 동일 |
+| SPRING_DATASOURCE_PASSWORD | miriart-db-password | miriart-be | MySQL 비밀번호 | application-prod.yml | 동일 |
+| SPRING_DATA_REDIS_HOST | miriart-redis-host | miriart-be | Redis 호스트 IP | application-prod.yml → spring.data.redis.host | application-prod.yml:32 |
 | JWT_ACCESS_SECRET | miriart-jwt-access-secret | miriart-be | JWT Access 서명 키 | application-prod.yml → miriart.jwt.secret.access | application-prod.yml:51, JwtProperties.java |
 | JWT_REFRESH_SECRET | miriart-jwt-refresh-secret | miriart-be | JWT Refresh 서명 키 | application-prod.yml → miriart.jwt.secret.refresh | 동일 |
 | GOOGLE_CLIENT_ID | miriart-google-client-id | miriart-be | 구글 OAuth2 Client ID | application-dev/prod.yml | application-dev.yml:43, application-prod.yml:44 |
@@ -299,7 +299,7 @@
 |----------|------|------------------|
 | /api/auth/** | permitAll | SecurityConfig.java:55 |
 | /oauth2/**, /login/oauth2/** | permitAll | :56 |
-| GET /api/posts/**, GET /api/answers/** | permitAll | :57–58. **GET /api/answers/** 는 컨트롤러 미구현(Phase C1). 구현 전까지 해당 경로 요청 시 404. |
+| GET /api/posts/**, GET /api/answers/** | permitAll | :57–58. **GET /api/answers/** 는 permitAll이지만 해당 경로에 매핑된 컨트롤러가 없어 요청 시 404. AnswerController는 `/api/posts/{postId}/answers`만 매핑. |
 | /swagger-ui/**, /v3/api-docs/** | permitAll | :59 |
 | /actuator/health | permitAll | :60 |
 | 그 외 | authenticated() (JWT) | :62 |
@@ -308,9 +308,19 @@
 
 | 서비스 | 설정 | FE 도메인 연관 | 소스(파일/라인) |
 |--------|------|----------------|------------------|
-| miriart-be | SecurityConfig에서 CORS 설정. allowedOrigins: `http://localhost:5173`, `https://miri-art.vercel.app`. allowCredentials: true. allowedMethods: GET, POST, PUT, PATCH, DELETE, OPTIONS. allowedHeaders: * | FE prod: https://miri-art.vercel.app, dev: http://localhost:5173. **allowedOrigins에 없는 FE 도메인으로 배포 시 CORS 차단 발생** → 새 도메인 사용 시 SecurityConfig 갱신 필요. | SecurityConfig.java:83-96 |
+| miriart-be | SecurityConfig에서 CORS 설정. allowedOrigins: `http://localhost:3000`, `http://localhost:5173`, `https://miri-art.vercel.app`. allowCredentials: true. allowedMethods: GET, POST, PUT, PATCH, DELETE, OPTIONS. allowedHeaders: * | FE prod: https://miri-art.vercel.app, dev: http://localhost:5173, http://localhost:3000. **allowedOrigins에 없는 FE 도메인으로 배포 시 CORS 차단 발생** → 새 도메인 사용 시 SecurityConfig 갱신 필요. | SecurityConfig.java:93-96 |
 | miriart-ai | CORS 미들웨어 없음. BE만 호출 | — | miriart-ai/app/main.py |
 | server | **(현재 비활성 / future use)** origin: ALLOWED_ORIGIN \|\| '*', methods: GET, POST, OPTIONS, allowedHeaders: Content-Type, Authorization | ALLOWED_ORIGIN으로 제한 가능 | server/index.ts:23–27 |
+
+#### 인증 실패 시 응답 (401)
+
+`anyRequest().authenticated()`에 걸리는 경로에 인증 없이 접근 시 Spring Security `authenticationEntryPoint`가 **401** 반환. 응답 body: `{"code":"AUTH001","message":"인증이 필요합니다."}` (Content-Type application/json). *소스: SecurityConfig.java:72-76*
+
+#### 인증 필터·BE→AI 내부 호출
+
+- **JWT 인증**: `JwtAuthenticationFilter`(OncePerRequestFilter)가 요청에서 JWT를 추출·검증하고 SecurityContext에 인증 정보를 설정. *소스: JwtAuthenticationFilter.java*
+- **BE→miriart-ai 호출**: `WebClientConfig`에서 구성한 WebClient가 `FASTAPI_INTERNAL_URL`로 AI 서비스 호출. Cloud Run 배포 시 miriart-ai는 `--no-allow-unauthenticated`이므로 **IAM(roles/run.invoker)** 으로 BE 서비스 계정이 AI를 호출. *소스: WebClientConfig.java, AiProxyService.java*
+- 상세 필터 체인·OIDC 교환 로직은 SecurityConfig 및 관련 필터 클래스 기준. 문서 갭 검수: *docs/BE_CODE_AUDIT_GAP_REPORT_FINAL.md* §6.
 
 ### 4.3 서비스 계정 & IAM
 
@@ -338,6 +348,14 @@
 | POST /api/analyses | 작품 분석 시작 | 202 + analysisId. needsProfile=true일 때만 월 한도 체크, 초과 시 CR001(402). FREE=5회/월. *소스: AnalysisController.java, AnalysisService.java (PlanType.FREE=5)* |
 | GET /api/analyses, GET /api/analyses/{id} | 분석 목록·단건 | 본인만. 없으면 AN003(404). *소스: AnalysisController.java:57–69* |
 | POST /api/chat | AI 멘토 채팅 | FastAPI /internal/ai/chat 호출, Redis 세션 갱신. *소스: AiChatController.java:37–42, AiProxyService.java:97–98* |
+| GET /api/images/{id}/url | 분석 이미지 Signed URL | id=analysisId, ImageUrlResponse, I001/F005 |
+| GET /api/chat/sessions | 채팅 세션 목록 | page, size, grade, Page&lt;ChatSessionResponse&gt; |
+| GET /api/posts, GET /api/posts/{id} | 게시글 목록·단건 | permitAll |
+| POST /api/posts, PUT /api/posts/{id}, DELETE /api/posts/{id} | 게시글 쓰기·수정·삭제 | 인증 필요 |
+| POST /api/posts/{postId}/answers, PUT/DELETE .../answers/{answerId} | 답변 쓰기·수정·삭제 | 인증 필요 |
+| POST /api/likes/toggle | 좋아요 토글 | LikeToggleRequest |
+| POST /api/comments, PUT/DELETE /api/comments/{id} | 댓글 쓰기·수정·삭제 | 인증 필요 |
+| POST /api/posts/{postId}/report, POST /api/answers/{answerId}/report | 신고 | ReportRequest optional |
 
 #### 유저·플랜·크레딧(검증됨)
 
@@ -353,7 +371,7 @@
 | value | JSON 배열 [{"role":"user"\|"model","text":"..."}, ...] | AiProxyService.java:137–155 |
 | TTL | 72시간 | RedisService.java:77, 86 |
 
-MySQL `chat_sessions` / `chat_messages` 테이블·엔티티는 **없음**. 채팅 영속화는 Redis만 사용.
+MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat_sessions.sql`로 생성됨. BE 엔티티 `ChatSession`, `GET /api/chat/sessions`로 세션 목록 조회 가능. 채팅 **메시지**는 Redis(`miriart:chat:session:{sessionId}`)에만 저장. *소스: miriart-be/.../entity/ChatSession.java, db/migration/V5__create_chat_sessions.sql, ChatSessionController.java*
 
 #### 미구현(코드 검색 기준)
 
@@ -397,8 +415,8 @@ MySQL `chat_sessions` / `chat_messages` 테이블·엔티티는 **없음**. 채�
 | --vpc-connector | miriart-connector | :73 |
 | --vpc-egress | private-ranges-only | :74 |
 | --no-allow-unauthenticated | 사용 | :69 |
-| --set-secrets | DB_URL, DB_USERNAME, DB_PASSWORD, REDIS_HOST, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET, FRONTEND_OAUTH_SUCCESS_URL (각 :latest) | :75 |
-| --set-env-vars | SPRING_PROFILES_ACTIVE=prod, FASTAPI_INTERNAL_URL=(miriart-ai Cloud Run URL), GCS_BUCKET_NAME=miriart-bucket | cloudrun-redeploy.ps1:30 |
+| --set-secrets | SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SPRING_DATA_REDIS_HOST, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET, FRONTEND_OAUTH_SUCCESS_URL (각 :latest). **현행 배포는 cloudrun-redeploy.sh** (WSL/배시) 기준이며, ps1은 레거시 변수명(DB_*, REDIS_HOST) 사용 가능성 있음. | cloudrun-redeploy.sh:33 |
+| --set-env-vars | SPRING_PROFILES_ACTIVE=prod, FASTAPI_INTERNAL_URL=(miriart-ai Cloud Run URL), GCS_BUCKET_NAME=miriart-bucket | cloudrun-redeploy.ps1:30, cloudrun-redeploy.sh:34 |
 
 #### 5.3 BE Docker 빌드·Actuator (참고)
 
@@ -446,6 +464,8 @@ MySQL `chat_sessions` / `chat_messages` 테이블·엔티티는 **없음**. 채�
 | AI/server | FastAPI lifespan 경고, server console.error. body/헤더 로깅 없음 | miriart-ai/app/main.py:24, server/index.ts:46–48 |
 | 알람/대시보드 | 코드·문서에 Cloud Monitoring 알람/대시보드 설정 없음. **(추론: 별도 설계 필요)** → TODO-006 | — |
 
+**BE 로그 설정**: `miriart-be/src/main/resources/logback-spring.xml`. **프로파일별**: dev — 일별 롤링 파일(miriart-be.log), ERROR 전용 파일(miriart-be-error.log), maxHistory 7일/14일; prod — 기본 console 출력 또는 Cloud Logging 수집. *소스: logback-spring.xml*
+
 ---
 
 ## 7. 개방 이슈 / TODO (Open Issues / TODO)
@@ -472,7 +492,7 @@ MySQL `chat_sessions` / `chat_messages` 테이블·엔티티는 **없음**. 채�
 **목적**: SSOT 문서를 “변경 전에 반드시 맞춰야 하는 기준선”으로 유지하기 위한 최소 규칙 초안.
 
 - **Cloud Run / Cloud SQL / Redis / Secret Manager / Artifact Registry / 서비스 계정**에 변경이 발생하면, **배포 전에** 이 SSOT 문서의 해당 섹션(§2 리소스 카탈로그, §3 구성·설정, §4 네트워크·보안, §5 배포 파라미터)을 우선 수정한다.
-- **DB 스키마/테이블·엔티티** 변경 시: **스키마 SSOT** `docs/mysql_erd_v1.md`를 기준으로 한다. DDL 적용·역추출 후 해당 문서 §1·§2·§4(무결성·정합성 점검)를 갱신한다. 설계 문서 `docs/MiriArt_ERD_v2.md`와 불일치하면 조율(ERD_v2는 설계·미구현 테이블 포함). *Cursor 규칙: `.cursor/rules/infra-ssot.mdc`, `.cursor/INFRA_SSOT_GUIDE.md` §3.*
+- **DB 스키마/테이블·엔티티** 변경 시: **스키마 SSOT**는 엔티티 + Flyway + MiriArt_ERD_v2 기준. (mysql_erd_v1.md 생성 시 해당 문서로 전환.) DDL 적용·역추출 후 해당 문서 §1·§2·§4(무결성·정합성 점검)를 갱신한다. 설계 문서 `docs/MiriArt_ERD_v2.md`와 불일치하면 조율(ERD_v2는 설계·미구현 테이블 포함). *Cursor 규칙: `.cursor/rules/infra-ssot.mdc`, `.cursor/INFRA_SSOT_GUIDE.md` §3.*
 - **새로운 GCP 리소스**가 추가되면, §2(리소스 카탈로그)와 §3(환경변수·Secret 맵)을 함께 업데이트한다.
 - **CI/CD 파이프라인** 변경 시 §5(배포 & CI/CD)와 §7(개방 이슈/TODO) 상태를 함께 갱신한다.
 - **공개 엔드포인트·인증·CORS** 변경 시 §4(네트워크 & 보안)를 갱신한다.

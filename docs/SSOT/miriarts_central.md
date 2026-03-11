@@ -76,8 +76,8 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 
 ### 1-4. 프론트엔드 데이터 패칭/상태 관리 정책 (v1)
 
-- v1에서는 **React Query / SWR 등 서버 상태 라이브러리를 도입하지 않는다.**
-- 데이터 패칭은 **직접 fetch + ApiService + Zustand** 패턴으로만 구현한다.
+- **현재** FE에는 **@tanstack/react-query**가 도입되어 있으며, 세션 목록·채팅·분석 등에서 useQuery/useMutation 사용. (문서 정책은 과거 v1 기준이었으며, 코드 반영으로 정정함.)
+- 데이터 패칭은 ApiService + **React Query** 및 필요 시 Zustand 조합으로 구현됨.
 - ApiService 레이어에서 다음을 공통 처리한다.
   - 인증 토큰 자동 첨부
   - 공통 에러 포맷 처리

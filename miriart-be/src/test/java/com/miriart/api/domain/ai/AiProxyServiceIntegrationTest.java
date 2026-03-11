@@ -32,7 +32,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 /**
  * AiProxyService ↔ AI 스텁(WireMock) 통합/계약 테스트.
- * SSOT 에러 매핑: 504→AN002/AI002, 502+GCS_ERROR→F005, 502+LLM_*→AN001/AI001, 400+VALIDATION_ERROR→C001.
+ * SSOT 에러 매핑: 429→AN004/AI004, 504→AN002/AI002, 502+GCS_ERROR→F005, 502+LLM_*→AN001/AI001, 400+VALIDATION_ERROR→C001.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("dev")
@@ -230,6 +230,66 @@ class AiProxyServiceIntegrationTest {
         assertThatThrownBy(() -> aiProxyService.chat(req))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE));
+    }
+
+    // ── 429 LLM Rate Limit (FastAPI SSOT: LLM_RATE_LIMITED) ─────────────────
+
+    @Test
+    @DisplayName("analyze - AI 429 + LLM_RATE_LIMITED → AN004")
+    void analyze_429RateLimit_mapsToAN004() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/analyze"))
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"code\":\"LLM_RATE_LIMITED\",\"message\":\"rate limit\"}")));
+
+        assertThatThrownBy(() -> aiProxyService.analyze("gs://b/k", "basic", null))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_ANALYSIS_RATE_LIMITED));
+    }
+
+    @Test
+    @DisplayName("analyze - AI 429 빈 body → AN004 (status-only 매핑)")
+    void analyze_429EmptyBody_mapsToAN004() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/analyze"))
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withBody("")));
+
+        assertThatThrownBy(() -> aiProxyService.analyze("gs://b/k", "basic", null))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_ANALYSIS_RATE_LIMITED));
+    }
+
+    @Test
+    @DisplayName("chat - AI 429 + LLM_RATE_LIMITED → AI004")
+    void chat_429RateLimit_mapsToAI004() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/chat"))
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"code\":\"LLM_RATE_LIMITED\",\"message\":\"rate limit\"}")));
+
+        ChatRequest req = new ChatRequest();
+        ReflectionTestUtils.setField(req, "message", "hello");
+        assertThatThrownBy(() -> aiProxyService.chat(req))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_CHAT_RATE_LIMITED));
+    }
+
+    @Test
+    @DisplayName("chat - AI 429 빈 body → AI004 (status-only 매핑)")
+    void chat_429EmptyBody_mapsToAI004() {
+        wireMock.stubFor(post(urlPathEqualTo("/internal/ai/chat"))
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withBody("")));
+
+        ChatRequest req = new ChatRequest();
+        ReflectionTestUtils.setField(req, "message", "hello");
+        assertThatThrownBy(() -> aiProxyService.chat(req))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ErrorCode.AI_CHAT_RATE_LIMITED));
     }
 
     // ── 401/403 Cloud Run IAM 인증 실패 ──────────────────────────────────────

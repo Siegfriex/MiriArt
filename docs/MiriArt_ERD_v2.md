@@ -136,7 +136,7 @@ INSERT INTO plans (plan_type, monthly_limit, price) VALUES
 
 > **v1 크레딧 설계 기준**: `users` 테이블에 `plan_type` 컬럼 없이, 향후 `user_subscriptions` 테이블로 확장.
 > Phase 1에서는 모든 사용자를 `FREE`로 간주하거나, `users`에 `plan_type` 컬럼 추가로 단순 운영.
-> **실제 운영**: `plans` 테이블은 미사용. `users.plan_type`(ENUM)만 사용. *mysql_erd_v1.md §4.2*
+> **실제 운영**: `plans` 테이블은 미사용. `users.plan_type`(ENUM)만 사용. *스키마 SSOT: 엔티티·Flyway·본 문서.*
 
 **`users` 테이블 plan 컬럼 추가 (Phase 1 단순화)**:
 ```sql
@@ -212,7 +212,7 @@ CREATE TABLE analyses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-> **실제 운영**: `analyses.embedding` 컬럼은 현재 DB에 없음(Phase 4 유사작 검색 설계). 실 스키마는 *mysql_erd_v1.md* 기준. `analysis_type`은 실DB varchar(10).
+> **실제 운영**: `analyses.embedding` 컬럼은 현재 DB에 없음(Phase 4 유사작 검색 설계). 실 스키마는 엔티티·Flyway·본 문서 기준. `analysis_type`은 실DB varchar(10).
 
 ---
 
