@@ -249,7 +249,8 @@
       "Bash(cd /home/sieg/projects-wsl/MiriArt && npx tsc --noEmit 2>&1 | head -60)",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(gcloud alpha:*)"
+      "Bash(gcloud alpha:*)",
+      "Bash(cd /home/sieg/projects-wsl/MiriArt/miriart-be && bash ./scripts/cloudrun-redeploy.sh 2>&1)"
     ]
   }
 }
