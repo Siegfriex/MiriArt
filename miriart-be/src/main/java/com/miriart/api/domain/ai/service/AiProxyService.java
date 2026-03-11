@@ -63,6 +63,7 @@ public class AiProxyService {
                         || status.value() == 401 || status.value() == 403
                         || status.value() == 429,
                         res -> res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), true)))))
                 .bodyToMono(InternalAnalyzeResponse.class)
@@ -106,6 +107,7 @@ public class AiProxyService {
                         || status.value() == 401 || status.value() == 403
                         || status.value() == 429,
                         res -> res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), false)))))
                 .bodyToMono(InternalChatResponse.class)
