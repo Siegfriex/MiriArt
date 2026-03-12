@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,11 +72,11 @@ public class AnalysisController {
         return ResponseEntity.ok(ApiResponse.success(analysisService.getMyAnalyses(userId, pageable)));
     }
 
-    @Operation(summary = "분석 단건 조회")
+    @Operation(summary = "분석 단건 조회", description = "id는 Long 타입 분석 ID (analysisId). UUID가 아님에 주의.")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AnalysisDetailResponse>> getAnalysis(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long id) {
+            @Parameter(description = "분석 ID (Long). FE AnalysisStartResponse.analysisId 참조") @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(analysisService.getAnalysis(userId, id)));
     }
 }

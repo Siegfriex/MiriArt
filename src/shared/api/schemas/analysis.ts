@@ -23,6 +23,12 @@ const radarDataSchema = z.object({
 
 const defaultRadarData = { density: 0, form: 0, completion: 0, relevance: 0, thinking: 0 };
 
+const universityPredictionSchema = z.object({
+  name: z.string(),
+  type: z.enum(['TOP', 'MID', 'SAFE']),
+  probability: z.number(),
+});
+
 export const analysisResponseSchema = z.object({
   id: z.string(),
   grade: z.string(),
@@ -33,6 +39,10 @@ export const analysisResponseSchema = z.object({
   imageUrl: z.string().optional(),
   university: z.string().optional(),
   major: z.string().optional(),
+  universityPredictions: z.array(universityPredictionSchema).optional(),
+  summaryComment: z.string().optional(),
+  targetMajor: z.string().optional(),
+  targetUniversity: z.string().optional(),
 });
 export type AnalysisResponseApi = z.infer<typeof analysisResponseSchema>;
 

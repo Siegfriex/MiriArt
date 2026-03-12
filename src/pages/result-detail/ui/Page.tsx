@@ -12,8 +12,9 @@ import { H1, H2, H3, BodyText } from '../../../shared/ui/Typography';
 import { Button } from '../../../shared/ui/Button';
 import type { AnalysisResult } from '../../../shared/model/types';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AnalysisApi, handleApiError } from '../../../shared/api/miriartApi';
+import { AnalysisApi, ChatSessionApi, handleApiError } from '../../../shared/api/miriartApi';
 import { useModalStore } from '../../../shared/model/modalStore';
+import { useToastStore } from '../../../shared/model/toastStore';
 import { RadarChart } from '../../../shared/ui/charts/RadarChart';
 import { ComparisonAccordion } from '../../../widgets/result/ComparisonAccordion';
 import { STRINGS } from '../../../shared/config/strings';
@@ -29,12 +30,14 @@ export const ResultDetail: React.FC = () => {
   const { artworkId } = useParams();
   const navigate = useNavigate();
   const { openModal } = useModalStore();
+  const { show: showToast } = useToastStore();
 
   const [result, setResult] = useState<AnalysisResult | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSample, setShowSample] = useState(false);
   const [hasGradeInput] = useState(false);
+  const [chatNavigating, setChatNavigating] = useState(false);
 
   useEffect(() => {
     if (!artworkId) {
@@ -90,7 +93,20 @@ export const ResultDetail: React.FC = () => {
 
   // 표시할 결과: 실제 성공 시 result, 샘플 보기 시 buildSampleResult
   const displayResult: AnalysisResult | undefined = result ?? (showSample && artworkId ? buildSampleResult(artworkId) : undefined);
-  const sessionId = displayResult?.id;
+
+  /** 분석 결과 → 채팅: GET /api/chat/sessions?analysisId={id} 후 sessionKey로 이동. */
+  const handleAskMentor = async () => {
+    if (!displayResult) return;
+    setChatNavigating(true);
+    try {
+      const s = await ChatSessionApi.getOrCreateSessionByAnalysisId(displayResult.id);
+      navigate(ROUTES.CHAT_ROOM(s.sessionKey));
+    } catch (err) {
+      showToast(handleApiError(err), 'error');
+    } finally {
+      setChatNavigating(false);
+    }
+  };
 
   // ─── 로딩 ─────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -259,10 +275,11 @@ export const ResultDetail: React.FC = () => {
         </Button>
         <Button
           className="flex-[2] flex gap-2 items-center justify-center"
-          onClick={() => sessionId && navigate(ROUTES.CHAT_ROOM(sessionId))}
+          onClick={handleAskMentor}
+          disabled={!displayResult || chatNavigating}
         >
           <MessageCircle size={18} />
-          {STRINGS.RESULT_ASK_MENTOR}
+          {chatNavigating ? '이동 중...' : STRINGS.RESULT_ASK_MENTOR}
         </Button>
       </div>
     </div>

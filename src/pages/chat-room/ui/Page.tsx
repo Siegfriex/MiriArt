@@ -1,8 +1,7 @@
 /**
- * @fileoverview 채팅방 페이지. MessageBubble, ChatInput, StickyContextCard, ApiService.chat. sessionId로 artwork/세션 조회.
- * @참조 AppRouter
- * @라우팅 /chat/:sessionId
- * @상태 useSideGNBStore, useNavStore, useToastStore, useState (messages, isLoading, activeArtifact, isContextCollapsed)
+ * @fileoverview 채팅방 페이지. sessionKey = SSOT. 세션 메타·메시지 병렬 로드. history는 최근 8턴만 FastAPI 전달.
+ * @참조 AppRouter, FE_CHAT_STAGE2_SPEC.md
+ * @라우팅 /chat/:sessionKey
  */
 
 import React, { useRef, useEffect, useState } from 'react';
@@ -17,73 +16,127 @@ import { useSideGNBStore } from '../../../shared/model/sideGNBStore';
 import { useNavStore } from '../../../shared/model/navStore';
 import { STRINGS } from '../../../shared/config/strings';
 import { ROUTES } from '../../../shared/config/routes';
-import { ChatApi, AnalysisApi, fileToBase64, handleApiError } from '../../../shared/api/miriartApi';
+import { ChatApi, ChatSessionApi, AnalysisApi, fileToBase64, handleApiError } from '../../../shared/api/miriartApi';
 import { useToastStore } from '../../../shared/model/toastStore';
 import { AiThinkingDots } from '@/shared/ui/ai';
 import type { AnalysisResult } from '../../../shared/model/types';
 import { SignedImage } from '../../../shared/ui/SignedImage';
+import type { ChatSessionDto } from '../../../shared/api/schemas/chatSession';
+import type { StickyContext } from '../../../shared/api/schemas/chat';
+import { shouldLoadSessionByKey } from '../../../shared/lib/chatRouteParam';
 
-/** 채팅방 페이지. @참조 AppRouter @상태 useSideGNBStore, useNavStore, useToastStore, messages 등 */
+/**
+ * analysis → StickyContext. analysis가 null이면 undefined.
+ * 분석 있을 때: grade, score, fixScope, radarData 필수 + universityPredictions/analysisComment/targetMajor/targetUniversity 선택.
+ * 분석 없을 때: 이 함수를 쓰지 않고 handleSend에서 session 메타(grade/totalScore/fixScope)만으로 최소 객체를 만듦.
+ * 엣지: analysis.radarData는 도메인에서 필수이므로 undefined 아님. universityPredictions 등은 BE 미제공 시 빈 배열/undefined.
+ */
+function buildStickyContext(analysis: AnalysisResult | null): StickyContext | undefined {
+  if (!analysis) return undefined;
+  return {
+    grade: String(analysis.grade),
+    score: analysis.totalScore,
+    fixScope: analysis.fixScope,
+    radarData: analysis.radarData as Record<string, number>,
+    ...(analysis.universityPredictions?.length ? { universityPredictions: analysis.universityPredictions } : {}),
+    ...((analysis.summaryComment ?? analysis.comment) ? { analysisComment: analysis.summaryComment ?? analysis.comment } : {}),
+    ...(analysis.targetMajor ? { targetMajor: analysis.targetMajor } : {}),
+    ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
+  };
+}
+
+const DEFAULT_GREETING: Message = {
+  id: 'greeting',
+  sender: Sender.AI,
+  type: MessageType.TEXT,
+  content: STRINGS.CHATROOM_GREETING,
+  timestamp: Date.now(),
+};
+
+/**
+ * history: 최근 8턴(최대 16메시지)만 FastAPI에 전달. 1턴 = user + model 한 쌍.
+ * 엣지: (1) USER/AI만 포함하므로 연속 USER 2개 등 비정형 순서면 8턴 미만이 될 수 있음.
+ * (2) IMAGE 타입은 content가 blob URL이므로 빈 문자열로 보냄(API는 텍스트만 사용).
+ * (3) slice(-16)으로 최대 16개만 보내므로 항상 8턴 이하로 제한됨.
+ */
+function buildBackendHistory(messages: Message[], maxTurns = 8): { role: 'user' | 'model'; parts: { text: string }[] }[] {
+  const filtered = messages.filter((m) => m.sender === Sender.USER || m.sender === Sender.AI);
+  const last = filtered.slice(-maxTurns * 2);
+  return last.map((m) => ({
+    role: m.sender === Sender.USER ? ('user' as const) : ('model' as const),
+    parts: [{ text: typeof m.content === 'string' ? m.content : '' }],
+  }));
+}
+
 export const ChatRoom: React.FC = () => {
-  const { sessionId } = useParams();
+  const { sessionKey } = useParams<{ sessionKey: string }>();
   const navigate = useNavigate();
   const { open: openSideGNB } = useSideGNBStore();
   const { hide: hideNav, show: showNav } = useNavStore();
   const { show: showToast } = useToastStore();
 
-  // BottomNav 진입 시 숨김, 퇴장 시 복구
   useEffect(() => {
     hideNav();
-    return () => {
-      showNav();
-    };
+    return () => showNav();
   }, [hideNav, showNav]);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: Sender.AI,
-      type: MessageType.TEXT,
-      content: STRINGS.CHATROOM_GREETING,
-      timestamp: Date.now(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([DEFAULT_GREETING]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState<ArtifactData | null>(null);
   const [isContextCollapsed, setIsContextCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // sessionId = analysisId (ResultDetail에서 result.id 전달). 실제 분석 조회로 stickyContext·썸네일 정합화.
-  const normalizedSessionId = sessionId?.startsWith('session-')
-    ? sessionId.replace('session-', '')
-    : sessionId;
-
+  const [session, setSession] = useState<ChatSessionDto | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [roomLoading, setRoomLoading] = useState(true);
+  const [sessionLoadError, setSessionLoadError] = useState(false);
 
+  // sessionKey 기준 로딩. (URL param은 analysisId로 쓰지 않음 — shouldLoadSessionByKey 참고)
   useEffect(() => {
-    if (!normalizedSessionId || normalizedSessionId === 'new-session') {
+    if (!shouldLoadSessionByKey(sessionKey)) {
+      setSession(null);
       setAnalysis(null);
+      setMessages([DEFAULT_GREETING]);
+      setSessionLoadError(false);
+      setRoomLoading(false);
       return;
     }
-    setAnalysisLoading(true);
-    AnalysisApi.getById(normalizedSessionId)
-      .then(setAnalysis)
-      .catch((err) => {
-        showToast(handleApiError(err), 'error');
+    setRoomLoading(true);
+    setSessionLoadError(false);
+    Promise.all([
+      ChatSessionApi.getSession(sessionKey),
+      ChatSessionApi.getMessages(sessionKey).catch(() => []),
+    ])
+      .then(([sessionRes, messagesRes]) => {
+        setSession(sessionRes);
+        setMessages(messagesRes.length > 0 ? messagesRes : [DEFAULT_GREETING]);
+        if (sessionRes.analysisId != null) {
+          return AnalysisApi.getById(String(sessionRes.analysisId))
+            .then(setAnalysis)
+            .catch(() => setAnalysis(null));
+        }
         setAnalysis(null);
       })
-      .finally(() => setAnalysisLoading(false));
-  }, [normalizedSessionId, showToast]);
+      .catch(() => {
+        setSessionLoadError(true);
+        setSession(null);
+        setAnalysis(null);
+        setMessages([DEFAULT_GREETING]);
+        showToast('세션을 찾을 수 없습니다.', 'error');
+      })
+      .finally(() => setRoomLoading(false));
+  }, [sessionKey, showToast]);
 
   const sessionTitle =
-    !normalizedSessionId || normalizedSessionId === 'new-session'
+    !sessionKey || sessionKey === 'new-session'
       ? STRINGS.CHATROOM_NEW_SESSION
-      : analysis
-        ? `${analysis.university} ${analysis.major}`
-        : analysisLoading
-          ? '불러오는 중...'
-          : STRINGS.CHATROOM_NEW_SESSION;
+      : session
+        ? session.title || STRINGS.CHATROOM_NEW_SESSION
+        : analysis
+          ? `${analysis.university} ${analysis.major}`
+          : roomLoading
+            ? '불러오는 중...'
+            : STRINGS.CHATROOM_NEW_SESSION;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -108,9 +161,7 @@ export const ChatRoom: React.FC = () => {
   };
 
   const handleSend = async (text: string, modelType: AIModelType, image?: File) => {
-    // 이미지 blob URL 생성 (렌더용, 후 revoke는 언마운트 시)
     const imageUrl = image ? URL.createObjectURL(image) : undefined;
-
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: Sender.USER,
@@ -122,30 +173,31 @@ export const ChatRoom: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 이미지를 base64로 변환 (API 전송용)
       const imageBase64 = image ? await fileToBase64(image) : undefined;
       const imageMimeType = image?.type;
-
+      // 분석 있음 → buildStickyContext(확장 필드 포함). 분석 없고 세션 메타만 있음 → 최소 3필드만. 둘 다 없으면 undefined.
       const stickyContext = analysis
-        ? {
-            grade: String(analysis.grade),
-            score: analysis.totalScore,
-            fixScope: analysis.fixScope,
-            radarData: analysis.radarData as Record<string, number>,
-          }
-        : undefined;
+        ? buildStickyContext(analysis)
+        : session?.grade != null && session?.totalScore != null && session?.fixScope != null
+          ? { grade: session.grade, score: session.totalScore, fixScope: session.fixScope }
+          : undefined;
+      const history = buildBackendHistory([...messages, userMsg], 8);
 
+      // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).
       const response = await ChatApi.sendMessage({
         modelType,
         message: text,
-        sessionId,
+        sessionId: sessionKey,
+        sessionKey: sessionKey !== 'new-session' ? sessionKey : undefined,
         ...(stickyContext ? { stickyContext } : {}),
+        ...(history.length > 0 ? { history } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       });
 
       // new-session일 때 첫 응답 수신 후 URL을 sessionKey(UUID)로 교체 — BE가 생성한 세션으로 고정
-      if (normalizedSessionId === 'new-session' && response.sessionId) {
-        navigate(ROUTES.CHAT_ROOM(response.sessionId), { replace: true });
+      const nextKey = response.sessionKey ?? response.sessionId;
+      if (sessionKey === 'new-session' && nextKey) {
+        navigate(ROUTES.CHAT_ROOM(nextKey), { replace: true });
       }
 
       setMessages((prev) => [
@@ -186,15 +238,15 @@ export const ChatRoom: React.FC = () => {
           </button>
           <H2 className="text-base">{sessionTitle}</H2>
         </div>
-        {/* 우측: 작품 썸네일 → ResultDetail 이동 */}
+        {/* 우측: 분석 연결 시 작품 썸네일 → ResultDetail, 아니면 나가기 */}
         <div className="flex items-center gap-2">
-          {normalizedSessionId && normalizedSessionId !== 'new-session' ? (
+          {analysis ? (
             <button
-              onClick={() => navigate(ROUTES.RESULT(normalizedSessionId))}
+              onClick={() => navigate(ROUTES.RESULT(analysis.id))}
               className="w-8 h-8 rounded-lg overflow-hidden border border-border-subtle hover:border-primary-lime/50 transition-colors flex-shrink-0"
             >
               <SignedImage
-                analysisId={normalizedSessionId}
+                analysisId={analysis.id}
                 alt="작품"
                 className="w-full h-full object-cover"
                 placeholderClassName="bg-surface-tertiary flex items-center justify-center text-text-low text-[10px]"
@@ -211,11 +263,34 @@ export const ChatRoom: React.FC = () => {
         </div>
       </div>
 
-      {/* 스티키 컨텍스트 카드 */}
+      {/* 세션 로드 실패 시 안내 */}
+      {sessionLoadError && (
+        <div className="absolute top-14 left-0 right-0 z-10 px-page-x py-4 bg-surface-tertiary/90 border-b border-border-default flex flex-col gap-2">
+          <span className="text-tiny text-text-mid">세션을 찾을 수 없습니다.</span>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.APP.CHAT)}
+            className="text-sm text-primary-lime hover:underline self-start"
+          >
+            채팅 목록으로
+          </button>
+        </div>
+      )}
+
+      {/* 분석 미연결 세션 안내 뱃지 */}
+      {!sessionLoadError && analysis === null && sessionKey && sessionKey !== 'new-session' && !roomLoading && session && (
+        <div className="absolute top-14 left-0 right-0 z-10 px-page-x py-2 bg-surface-tertiary/90 border-b border-border-default">
+          <span className="text-tiny text-text-mid">
+            분석 결과와 연결되지 않은 일반 채팅 세션입니다.
+          </span>
+        </div>
+      )}
+
+      {/* 스티키 컨텍스트 카드 (세션 메타 또는 분석에서) */}
       <StickyContextCard
-        grade={analysis?.grade ?? Grade.A}
-        score={analysis?.totalScore ?? 88}
-        fixScope={analysis?.fixScope ?? 'DetailTuning'}
+        grade={analysis?.grade ?? (session?.grade as Grade) ?? Grade.A}
+        score={analysis?.totalScore ?? session?.totalScore ?? 88}
+        fixScope={analysis?.fixScope ?? session?.fixScope ?? 'DetailTuning'}
         isCollapsed={isContextCollapsed}
       />
 

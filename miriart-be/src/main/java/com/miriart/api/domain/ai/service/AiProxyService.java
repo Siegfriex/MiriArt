@@ -86,8 +86,8 @@ public class AiProxyService {
      * - BE는 Redis에 전체 메시지 이력을 JSON으로 저장 (stateful 보완)
      */
     public ChatResponse chat(ChatRequest chatRequest) {
-        String sessionId = chatRequest.getSessionId() != null
-                ? chatRequest.getSessionId()
+        String sessionId = chatRequest.getSessionKey() != null
+                ? chatRequest.getSessionKey()
                 : UUID.randomUUID().toString();
 
         InternalChatRequest internalRequest = InternalChatRequest.builder()

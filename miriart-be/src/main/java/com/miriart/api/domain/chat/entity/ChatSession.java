@@ -44,6 +44,9 @@ public class ChatSession extends BaseEntity {
     @Column(name = "session_key", nullable = false, unique = true, length = 36)
     private String sessionKey;
 
+    @Column(name = "model_type", nullable = false, length = 20)
+    private String modelType = "CHAT_PRO";
+
     @Column(nullable = false, length = 100)
     private String title;
 
@@ -54,10 +57,11 @@ public class ChatSession extends BaseEntity {
     private int messageCount = 0;
 
     @Builder
-    public ChatSession(User user, Analysis analysis, String sessionKey, String title) {
+    public ChatSession(User user, Analysis analysis, String sessionKey, String modelType, String title) {
         this.user = user;
         this.analysis = analysis;
         this.sessionKey = sessionKey;
+        this.modelType = modelType != null ? modelType : "CHAT_PRO";
         this.title = title;
     }
 

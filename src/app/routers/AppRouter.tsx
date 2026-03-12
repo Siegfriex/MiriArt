@@ -50,7 +50,7 @@ export const AppRouter: React.FC = () => {
       </Route>
 
       {/* Full Screen Pages (Level 2/3) */}
-      <Route path="/chat/:sessionId" element={<ChatRoom />} />
+      <Route path="/chat/:sessionKey" element={<ChatRoom />} />
       <Route path="/result/:artworkId" element={<ResultDetail />} />
       <Route path="/posts/:id" element={<PostDetailPage />} />
       <Route path="/qna/:id" element={<QnaDetailPage />} />

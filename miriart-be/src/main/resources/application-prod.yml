@@ -18,9 +18,14 @@ spring:
       maximum-pool-size: 10
       # DB 연결 지연/실패 시에도 앱 기동 허용 (-1: 무한 대기 후 연결 시도)
       initialization-fail-timeout: 30000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 6
+    locations: classpath:db/migration
   jpa:
     hibernate:
-      # validate: 운영 환경 고정. 스키마 변경 시 수동 DDL 또는 Flyway 사용
+      # validate: Flyway 마이그레이션 후 스키마 검증
       ddl-auto: validate
     show-sql: false
     properties:

@@ -250,7 +250,9 @@
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
       "Bash(gcloud alpha:*)",
-      "Bash(cd /home/sieg/projects-wsl/MiriArt/miriart-be && bash ./scripts/cloudrun-redeploy.sh 2>&1)"
+      "Bash(cd /home/sieg/projects-wsl/MiriArt/miriart-be && bash ./scripts/cloudrun-redeploy.sh 2>&1)",
+      "Bash(which cloud-sql-proxy:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

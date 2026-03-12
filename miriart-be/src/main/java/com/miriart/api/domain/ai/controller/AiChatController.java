@@ -47,8 +47,8 @@ public class AiChatController {
 
         // 1. ID 정규화: analysisId|UUID|null|"new-session" → sessionKey
         ChatSessionKeyResolver.Result resolved =
-                chatSessionKeyResolver.resolve(userId, request.getSessionId());
-        request.setSessionId(resolved.sessionKey());
+                chatSessionKeyResolver.resolve(userId, request.getSessionKey());
+        request.setSessionKey(resolved.sessionKey());
 
         // 2. AI 호출 + DB 메타 업데이트
         ChatResponse response = chatSessionService.chat(userId, request, resolved.chatSession());

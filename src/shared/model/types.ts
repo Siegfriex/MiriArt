@@ -58,7 +58,7 @@ export interface Message {
 /** 수정 범위: 전체 재구성 또는 세부 조정 */
 export type FixScope = 'StructureRebuild' | 'DetailTuning';
 
-/** 세션(채팅/작업 단위) 정보. BE GET /api/chat/sessions 응답과 1:1 대응. 라우팅은 sessionKey 사용. */
+/** 세션(채팅/작업 단위) 정보. BE GET /api/chat/sessions 응답과 1:1 대응. URL/라우팅은 sessionKey만 사용(analysisId는 사용하지 않음). */
 export interface Session {
   id: number;
   sessionKey: string;
@@ -108,7 +108,14 @@ export interface ComparisonTier {
   items: ComparisonItem[];
 }
 
-/** 분석 결과: id, 이미지 URL, 성적, 총점, 대학, 전공, 레이더 데이터, 코멘트, 비교 티어 등 */
+/** 대학 예측 항목. stickyContext·분석 확장용 */
+export interface UniversityPrediction {
+  name: string;
+  type: 'TOP' | 'MID' | 'SAFE';
+  probability: number;
+}
+
+/** 분석 결과: id, 이미지 URL, 성적, 총점, 대학, 전공, 레이더 데이터, 코멘트, 비교 티어, 대학 예측 등 */
 export interface AnalysisResult {
   id: string;
   imageUrl: string;
@@ -123,4 +130,10 @@ export interface AnalysisResult {
   comment: string;
   comparisonTiers?: ComparisonTier[];
   hasAcceptedArtwork?: boolean;
+  /** stickyContext 확장: 대학 예측 목록 */
+  universityPredictions?: UniversityPrediction[];
+  /** 요약 코멘트 (analysisComment로 전달) */
+  summaryComment?: string;
+  targetMajor?: string;
+  targetUniversity?: string;
 }
