@@ -24,25 +24,46 @@ import { SignedImage } from '../../../shared/ui/SignedImage';
 import type { ChatSessionDto } from '../../../shared/api/schemas/chatSession';
 import type { StickyContext } from '../../../shared/api/schemas/chat';
 import { shouldLoadSessionByKey } from '../../../shared/lib/chatRouteParam';
+import { buildSummaryText } from '../../../shared/lib/stickyContextSummary';
 
 /**
- * analysis → StickyContext. analysis가 null이면 undefined.
- * 분석 있을 때: grade, score, fixScope, radarData 필수 + universityPredictions/analysisComment/targetMajor/targetUniversity 선택.
- * 분석 없을 때: 이 함수를 쓰지 않고 handleSend에서 session 메타(grade/totalScore/fixScope)만으로 최소 객체를 만듦.
- * 엣지: analysis.radarData는 도메인에서 필수이므로 undefined 아님. universityPredictions 등은 BE 미제공 시 빈 배열/undefined.
+ * analysis + sessionMeta로 StickyContext 구성. summaryText는 buildSummaryText로 생성.
+ * handleSend에서는 이 함수만 호출해 grade/score/fixScope 등을 직접 조합하지 않음.
  */
-function buildStickyContext(analysis: AnalysisResult | null): StickyContext | undefined {
-  if (!analysis) return undefined;
-  return {
-    grade: String(analysis.grade),
-    score: analysis.totalScore,
-    fixScope: analysis.fixScope,
-    radarData: analysis.radarData as Record<string, number>,
-    ...(analysis.universityPredictions?.length ? { universityPredictions: analysis.universityPredictions } : {}),
-    ...((analysis.summaryComment ?? analysis.comment) ? { analysisComment: analysis.summaryComment ?? analysis.comment } : {}),
-    ...(analysis.targetMajor ? { targetMajor: analysis.targetMajor } : {}),
-    ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
-  };
+function buildStickyContext(
+  analysis: AnalysisResult | null,
+  sessionMeta: ChatSessionDto | null
+): StickyContext | undefined {
+  const summaryText = buildSummaryText(analysis, sessionMeta);
+
+  if (analysis) {
+    return {
+      grade: String(analysis.grade),
+      score: analysis.totalScore,
+      fixScope: analysis.fixScope,
+      radarData: analysis.radarData as Record<string, number>,
+      ...(analysis.universityPredictions?.length
+        ? { universityPredictions: analysis.universityPredictions }
+        : {}),
+      ...((analysis.summaryComment ?? analysis.comment)
+        ? { analysisComment: analysis.summaryComment ?? analysis.comment }
+        : {}),
+      ...(analysis.targetMajor ? { targetMajor: analysis.targetMajor } : {}),
+      ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
+      ...(summaryText ? { summaryText } : {}),
+    };
+  }
+
+  if (sessionMeta && (sessionMeta.grade != null || sessionMeta.totalScore != null)) {
+    return {
+      grade: sessionMeta.grade ?? '',
+      score: sessionMeta.totalScore ?? 0,
+      fixScope: sessionMeta.fixScope ?? 'DetailTuning',
+      ...(summaryText ? { summaryText } : {}),
+    };
+  }
+
+  return undefined;
 }
 
 const DEFAULT_GREETING: Message = {
@@ -175,12 +196,7 @@ export const ChatRoom: React.FC = () => {
     try {
       const imageBase64 = image ? await fileToBase64(image) : undefined;
       const imageMimeType = image?.type;
-      // 분석 있음 → buildStickyContext(확장 필드 포함). 분석 없고 세션 메타만 있음 → 최소 3필드만. 둘 다 없으면 undefined.
-      const stickyContext = analysis
-        ? buildStickyContext(analysis)
-        : session?.grade != null && session?.totalScore != null && session?.fixScope != null
-          ? { grade: session.grade, score: session.totalScore, fixScope: session.fixScope }
-          : undefined;
+      const stickyContext = buildStickyContext(analysis, session ?? null);
       const history = buildBackendHistory([...messages, userMsg], 8);
 
       // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).

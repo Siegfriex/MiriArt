@@ -72,7 +72,10 @@ public class AnalysisController {
         return ResponseEntity.ok(ApiResponse.success(analysisService.getMyAnalyses(userId, pageable)));
     }
 
-    @Operation(summary = "분석 단건 조회", description = "id는 Long 타입 분석 ID (analysisId). UUID가 아님에 주의.")
+    @Operation(summary = "분석 단건 조회",
+            description = "id는 Long 타입 분석 ID (analysisId). UUID가 아님에 주의. "
+                    + "응답의 grade, totalScore, radarData, fixScope, comment, universityPredictionsList 등은 stickyContext.summaryText 생성용으로 FE에 전달됩니다. "
+                    + "targetMajor, targetUniversity는 API에서 제공하지 않으며, 필요 시 FE에서 universityPredictionsList 첫 항목을 사용하거나 null로 두세요.")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AnalysisDetailResponse>> getAnalysis(
             @AuthenticationPrincipal Long userId,

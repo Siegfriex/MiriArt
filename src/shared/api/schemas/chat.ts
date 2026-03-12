@@ -32,8 +32,8 @@ export const universityPredictionSchema = z.object({
 });
 
 /**
- * POST /api/chat 요청의 stickyContext. 분석 있을 때: grade/score/fixScope/radarData + 확장 필드.
- * 분석 없고 세션 메타만 있을 때: grade/score/fixScope 3필드만(Page에서 직접 구성).
+ * POST /api/chat 요청의 stickyContext. 분석 있을 때: grade/score/fixScope/radarData + 확장 필드 + summaryText.
+ * 분석 없고 세션 메타만 있을 때: grade/score/fixScope + summaryText. summaryText는 LLM용 짧은 분석 카드.
  */
 export const stickyContextSchema = z.object({
   grade: z.string(),
@@ -44,6 +44,7 @@ export const stickyContextSchema = z.object({
   analysisComment: z.string().optional(),
   targetMajor: z.string().optional(),
   targetUniversity: z.string().optional(),
+  summaryText: z.string().optional(),
 });
 export type StickyContext = z.infer<typeof stickyContextSchema>;
 

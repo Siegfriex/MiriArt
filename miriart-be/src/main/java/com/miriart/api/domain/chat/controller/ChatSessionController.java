@@ -48,7 +48,9 @@ public class ChatSessionController {
                 chatSessionService.getOrCreateByAnalysis(userId, analysisId)));
     }
 
-    @Operation(summary = "채팅 세션 목록 조회")
+    @Operation(summary = "채팅 세션 목록 조회",
+            description = "grade, totalScore, fixScope는 Analysis와 연동된 세션(analysisId가 있는 경우)에서만 채워지며, "
+                    + "일반 세션(analysisId null)이거나 분석이 PENDING/FAILED이면 null일 수 있습니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ChatSessionResponse>>> getSessionList(
             @AuthenticationPrincipal Long userId,
@@ -62,7 +64,9 @@ public class ChatSessionController {
     }
 
     @Operation(summary = "세션 단건 조회 (sessionKey)",
-            description = "sessionKey(UUID)로 세션 메타데이터 조회. 없으면 CS001.")
+            description = "sessionKey(UUID)로 세션 메타데이터 조회. 없으면 CS001. "
+                    + "grade, totalScore, fixScope는 Analysis와 연동된 세션(analysisId가 있는 경우)에서만 채워지며, "
+                    + "일반 세션(analysisId null)이거나 분석이 PENDING/FAILED이면 null일 수 있습니다.")
     @GetMapping("/{sessionKey}")
     public ResponseEntity<ApiResponse<ChatSessionResponse>> getBySessionKey(
             @AuthenticationPrincipal Long userId,

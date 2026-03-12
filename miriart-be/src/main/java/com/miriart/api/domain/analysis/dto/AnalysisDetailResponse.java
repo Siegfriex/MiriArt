@@ -9,11 +9,14 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * GET /api/analyses/{id} 및 GET /api/analyses 목록 item 응답 DTO.
- * FE 계약: imageUrl, grade, totalScore, radarData(객체), fixScope, comment, university, major.
+ * <p>FE 계약: imageUrl, grade, totalScore, radarData, fixScope, comment(summaryComment), universityPredictionsList, university, major.</p>
+ * <p><b>comment</b>는 FE에서 summaryComment로 매핑해 사용합니다.</p>
+ * <p><b>targetMajor / targetUniversity</b>는 본 API에서 제공하지 않습니다. FE는 universityPredictionsList 첫 항목을 사용하거나 null로 두세요.</p>
  */
 @Getter
 @Builder
@@ -30,15 +33,20 @@ public class AnalysisDetailResponse {
     private RadarData radarData;
     private String fixScope;
     private String comment;
+    /** 대학·전공 예측 배열. stickyContext.summaryText 등 FE에서 구조화 데이터로 사용. */
+    private List<UniversityPrediction> universityPredictionsList;
+    /** 하위 호환용. FE는 universityPredictionsList 사용 권장. */
+    @Deprecated
     private String universityPredictions;
-    /** FE 표시용. universityPredictions 첫 항목의 대학/전공. */
+    /** FE 표시용. universityPredictionsList 첫 항목의 대학/전공. */
     private String university;
     private String major;
     private LocalDateTime createdAt;
 
     public static AnalysisDetailResponse from(Analysis analysis, ObjectMapper objectMapper) {
         RadarData radar = parseRadarData(analysis.getScores(), objectMapper);
-        var first = parseFirstUniversityMajor(analysis.getUniversityPredictions(), objectMapper);
+        List<UniversityPrediction> list = parseUniversityPredictionsList(analysis.getUniversityPredictions(), objectMapper);
+        UniversityPrediction first = (list != null && !list.isEmpty()) ? list.get(0) : null;
         return AnalysisDetailResponse.builder()
                 .id(String.valueOf(analysis.getId()))
                 .imageUrl(analysis.getImageUrl())
@@ -50,6 +58,7 @@ public class AnalysisDetailResponse {
                 .radarData(radar)
                 .fixScope(analysis.getFixScope() != null ? analysis.getFixScope().name() : null)
                 .comment(analysis.getComment() != null ? analysis.getComment() : "")
+                .universityPredictionsList(list != null ? list : Collections.emptyList())
                 .universityPredictions(analysis.getUniversityPredictions())
                 .university(first != null ? first.getUniversity() : null)
                 .major(first != null ? first.getMajor() : null)
@@ -80,14 +89,14 @@ public class AnalysisDetailResponse {
         }
     }
 
-    private static UniversityPrediction parseFirstUniversityMajor(String predictionsJson, ObjectMapper om) {
-        if (predictionsJson == null || predictionsJson.isBlank()) return null;
+    private static List<UniversityPrediction> parseUniversityPredictionsList(String predictionsJson, ObjectMapper om) {
+        if (predictionsJson == null || predictionsJson.isBlank()) return Collections.emptyList();
         try {
             List<UniversityPrediction> list = om.readValue(predictionsJson,
                     om.getTypeFactory().constructCollectionType(List.class, UniversityPrediction.class));
-            return (list != null && !list.isEmpty()) ? list.get(0) : null;
+            return list != null ? list : Collections.emptyList();
         } catch (JsonProcessingException e) {
-            return null;
+            return Collections.emptyList();
         }
     }
 }
