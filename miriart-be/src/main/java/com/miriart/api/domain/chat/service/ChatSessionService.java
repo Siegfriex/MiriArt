@@ -14,6 +14,7 @@ import com.miriart.api.domain.user.repository.UserRepository;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.UUID;
  *
  * @author MiriArt Team
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -113,6 +115,17 @@ public class ChatSessionService {
 
     private ChatSessionResponse toResponse(ChatSession cs) {
         Analysis a = cs.getAnalysis();
+
+        if (log.isDebugEnabled()) {
+            log.debug("[ChatSession→Response] sessionKey={}, hasAnalysis={}, analysisId={}, grade={}, totalScore={}, fixScope={}",
+                    cs.getSessionKey(),
+                    a != null,
+                    a != null ? a.getId() : "N/A",
+                    a != null && a.getGrade() != null ? a.getGrade().name() : "null",
+                    a != null ? a.getTotalScore() : "null",
+                    a != null && a.getFixScope() != null ? a.getFixScope().name() : "null");
+        }
+
         return ChatSessionResponse.builder()
                 .id(cs.getId())
                 .sessionKey(cs.getSessionKey())

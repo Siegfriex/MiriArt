@@ -23,11 +23,41 @@ const radarDataSchema = z.object({
 
 const defaultRadarData = { density: 0, form: 0, completion: 0, relevance: 0, thinking: 0 };
 
-const universityPredictionSchema = z.object({
-  name: z.string(),
-  type: z.enum(['TOP', 'MID', 'SAFE']),
-  probability: z.number(),
-});
+/** BE가 문자열 JSON 또는 배열로 보낼 수 있음. 항상 배열로 정규화.
+ *  BE 필드(university/line) → FE 필드(name/type) 변환 포함. */
+export const universityPredictionSchema = z
+  .object({
+    // BE 필드명
+    university: z.string().optional(),
+    line: z.string().optional(),
+    // FE 필드명 (legacy 호환)
+    name: z.string().optional(),
+    type: z.string().optional(),
+    probability: z.number(),
+  })
+  .transform((p) => ({
+    name: p.name ?? p.university ?? '',
+    type: (p.type ?? p.line ?? 'MID') as 'TOP' | 'MID' | 'SAFE',
+    probability: p.probability,
+  }));
+
+const universityPredictionsCoercedSchema = z
+  .union([
+    z.string().transform((s) => {
+      try {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) {
+          const result = z.array(universityPredictionSchema).safeParse(parsed);
+          if (result.success) return result.data;
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }),
+    z.array(universityPredictionSchema),
+  ])
+  .optional();
 
 export const analysisResponseSchema = z.object({
   id: z.string(),
@@ -39,7 +69,8 @@ export const analysisResponseSchema = z.object({
   imageUrl: z.string().optional(),
   university: z.string().optional(),
   major: z.string().optional(),
-  universityPredictions: z.array(universityPredictionSchema).optional(),
+  universityPredictions: universityPredictionsCoercedSchema,
+  universityPredictionsList: z.array(universityPredictionSchema).optional(),
   summaryComment: z.string().optional(),
   targetMajor: z.string().optional(),
   targetUniversity: z.string().optional(),

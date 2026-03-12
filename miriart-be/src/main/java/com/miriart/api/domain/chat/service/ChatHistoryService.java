@@ -42,6 +42,8 @@ public class ChatHistoryService {
             return Collections.emptyList();
         }
 
+        log.debug("[ChatHistory] sessionKey={}, rawJsonLen={}", sessionKey, raw.length());
+
         try {
             List<Map<String, String>> history = objectMapper.readValue(raw,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));

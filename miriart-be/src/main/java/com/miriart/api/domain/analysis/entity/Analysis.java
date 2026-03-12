@@ -16,7 +16,13 @@ import java.time.LocalDateTime;
  * <p>연계: {@link AnalysisService}가 PENDING으로 저장 후 FastAPI 응답으로 complete/fail 호출.
  * {@link AnalysisRepository}로 사용자별 조회·페이지 조회. scores·universityPredictions는 JSON 문자열 저장.</p>
  *
- * <p>ERD_v2 analyses 테이블 기반.</p>
+ * <h3>Status별 필드 null 규칙</h3>
+ * <table>
+ *   <tr><th>status</th><th>grade</th><th>totalScore</th><th>fixScope</th><th>scores/universityPredictions</th></tr>
+ *   <tr><td>PENDING</td><td>null</td><td>null</td><td>null</td><td>null</td></tr>
+ *   <tr><td>COMPLETED</td><td>non-null</td><td>non-null</td><td>non-null</td><td>JSON string</td></tr>
+ *   <tr><td>FAILED</td><td>null</td><td>null</td><td>null</td><td>null</td></tr>
+ * </table>
  *
  * @author MiriArt Team
  */

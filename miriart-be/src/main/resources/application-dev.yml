@@ -3,6 +3,10 @@ spring:
     exclude:
       - com.google.cloud.spring.autoconfigure.storage.GcpStorageAutoConfiguration
 
+  # dev에서는 ddl-auto:none + 수동 스키마 관리. Flyway는 prod 전용.
+  flyway:
+    enabled: false
+
   # Cloud SQL 자동설정 비활성화 (로컬 MySQL 사용 시 — 미설정 시 "A database name must be provided" 오류)
   cloud:
     gcp:

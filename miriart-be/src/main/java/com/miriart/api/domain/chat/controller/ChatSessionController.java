@@ -8,6 +8,7 @@ import com.miriart.api.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author MiriArt Team
  */
 @Tag(name = "채팅 세션", description = "채팅 세션 관리")
+@Slf4j
 @RestController
 @RequestMapping("/api/chat/sessions")
 @RequiredArgsConstructor
@@ -48,7 +50,9 @@ public class ChatSessionController {
                 chatSessionService.getOrCreateByAnalysis(userId, analysisId)));
     }
 
-    @Operation(summary = "채팅 세션 목록 조회")
+    @Operation(summary = "채팅 세션 목록 조회",
+            description = "grade, totalScore, fixScope는 Analysis와 연동된 세션(analysisId가 있는 경우)에서만 채워지며, "
+                    + "일반 세션(analysisId null)이거나 분석이 PENDING/FAILED이면 null일 수 있습니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ChatSessionResponse>>> getSessionList(
             @AuthenticationPrincipal Long userId,
@@ -62,7 +66,9 @@ public class ChatSessionController {
     }
 
     @Operation(summary = "세션 단건 조회 (sessionKey)",
-            description = "sessionKey(UUID)로 세션 메타데이터 조회. 없으면 CS001.")
+            description = "sessionKey(UUID)로 세션 메타데이터 조회. 없으면 CS001. "
+                    + "grade, totalScore, fixScope는 Analysis와 연동된 세션(analysisId가 있는 경우)에서만 채워지며, "
+                    + "일반 세션(analysisId null)이거나 분석이 PENDING/FAILED이면 null일 수 있습니다.")
     @GetMapping("/{sessionKey}")
     public ResponseEntity<ApiResponse<ChatSessionResponse>> getBySessionKey(
             @AuthenticationPrincipal Long userId,
@@ -81,6 +87,11 @@ public class ChatSessionController {
         // 세션 존재 여부 확인 (없으면 CS001)
         chatSessionService.getBySessionKey(userId, sessionKey);
         List<ChatMessageDto> messages = chatHistoryService.getRecentMessages(sessionKey, limit);
+
+        if (log.isDebugEnabled()) {
+            log.debug("[getMessages] sessionKey={}, resultSize={}", sessionKey, messages.size());
+        }
+
         return ResponseEntity.ok(ApiResponse.success(messages));
     }
 }

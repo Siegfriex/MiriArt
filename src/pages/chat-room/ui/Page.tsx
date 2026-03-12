@@ -24,24 +24,62 @@ import { SignedImage } from '../../../shared/ui/SignedImage';
 import type { ChatSessionDto } from '../../../shared/api/schemas/chatSession';
 import type { StickyContext } from '../../../shared/api/schemas/chat';
 import { shouldLoadSessionByKey } from '../../../shared/lib/chatRouteParam';
+import { buildSummaryText } from '../../../shared/lib/stickyContextSummary';
+import { debugStickyContext } from '../../../shared/lib/debugStickyContext';
 
 /**
- * analysis → StickyContext. analysis가 null이면 undefined.
- * 분석 있을 때: grade, score, fixScope, radarData 필수 + universityPredictions/analysisComment/targetMajor/targetUniversity 선택.
- * 분석 없을 때: 이 함수를 쓰지 않고 handleSend에서 session 메타(grade/totalScore/fixScope)만으로 최소 객체를 만듦.
- * 엣지: analysis.radarData는 도메인에서 필수이므로 undefined 아님. universityPredictions 등은 BE 미제공 시 빈 배열/undefined.
+ * analysis + sessionMeta로 StickyContext 구성. summaryText는 buildSummaryText로 생성.
+ * handleSend에서는 이 함수만 호출해 grade/score/fixScope 등을 직접 조합하지 않음.
  */
-function buildStickyContext(analysis: AnalysisResult | null): StickyContext | undefined {
-  if (!analysis) return undefined;
+function buildStickyContext(
+  analysis: AnalysisResult | null,
+  sessionMeta: ChatSessionDto | null
+): StickyContext | undefined {
+  const summaryText = buildSummaryText(analysis, sessionMeta);
+
+  if (analysis) {
+    const ctx: StickyContext = {
+      grade: String(analysis.grade),
+      score: analysis.totalScore,
+      fixScope: analysis.fixScope,
+      radarData: analysis.radarData as Record<string, number>,
+      ...(analysis.universityPredictions?.length
+        ? { universityPredictions: analysis.universityPredictions }
+        : {}),
+      ...((analysis.summaryComment ?? analysis.comment)
+        ? { analysisComment: analysis.summaryComment ?? analysis.comment }
+        : {}),
+      ...(analysis.targetMajor ? { targetMajor: analysis.targetMajor } : {}),
+      ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
+      ...(summaryText ? { summaryText } : {}),
+    };
+    debugStickyContext('buildStickyContext (analysis)', ctx);
+    return ctx;
+  }
+
+  if (sessionMeta && (sessionMeta.grade != null || sessionMeta.totalScore != null)) {
+    const ctx: StickyContext = {
+      grade: sessionMeta.grade ?? '',
+      score: sessionMeta.totalScore ?? 0,
+      fixScope: sessionMeta.fixScope ?? 'DetailTuning',
+      ...(summaryText ? { summaryText } : {}),
+    };
+    debugStickyContext('buildStickyContext (sessionMeta)', ctx);
+    return ctx;
+  }
+
+  return undefined;
+}
+
+/** StickyContextCard 표시용 grade/score/fixScope. API payload가 아닌 UI 전용. */
+function getStickyContextDisplay(
+  analysis: AnalysisResult | null,
+  session: ChatSessionDto | null
+): { grade: Grade; score: number; fixScope: string } {
   return {
-    grade: String(analysis.grade),
-    score: analysis.totalScore,
-    fixScope: analysis.fixScope,
-    radarData: analysis.radarData as Record<string, number>,
-    ...(analysis.universityPredictions?.length ? { universityPredictions: analysis.universityPredictions } : {}),
-    ...((analysis.summaryComment ?? analysis.comment) ? { analysisComment: analysis.summaryComment ?? analysis.comment } : {}),
-    ...(analysis.targetMajor ? { targetMajor: analysis.targetMajor } : {}),
-    ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
+    grade: (analysis?.grade ?? (session?.grade as Grade) ?? Grade.A) as Grade,
+    score: analysis?.totalScore ?? session?.totalScore ?? 88,
+    fixScope: analysis?.fixScope ?? session?.fixScope ?? 'DetailTuning',
   };
 }
 
@@ -175,16 +213,10 @@ export const ChatRoom: React.FC = () => {
     try {
       const imageBase64 = image ? await fileToBase64(image) : undefined;
       const imageMimeType = image?.type;
-      // 분석 있음 → buildStickyContext(확장 필드 포함). 분석 없고 세션 메타만 있음 → 최소 3필드만. 둘 다 없으면 undefined.
-      const stickyContext = analysis
-        ? buildStickyContext(analysis)
-        : session?.grade != null && session?.totalScore != null && session?.fixScope != null
-          ? { grade: session.grade, score: session.totalScore, fixScope: session.fixScope }
-          : undefined;
+      const stickyContext = buildStickyContext(analysis, session ?? null);
       const history = buildBackendHistory([...messages, userMsg], 8);
 
-      // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).
-      const response = await ChatApi.sendMessage({
+      const requestBody = {
         modelType,
         message: text,
         sessionId: sessionKey,
@@ -192,7 +224,11 @@ export const ChatRoom: React.FC = () => {
         ...(stickyContext ? { stickyContext } : {}),
         ...(history.length > 0 ? { history } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
-      });
+      };
+      debugStickyContext('POST /api/chat body.stickyContext', requestBody.stickyContext ?? null);
+
+      // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).
+      const response = await ChatApi.sendMessage(requestBody);
 
       // new-session일 때 첫 응답 수신 후 URL을 sessionKey(UUID)로 교체 — BE가 생성한 세션으로 고정
       const nextKey = response.sessionKey ?? response.sessionId;
@@ -286,11 +322,9 @@ export const ChatRoom: React.FC = () => {
         </div>
       )}
 
-      {/* 스티키 컨텍스트 카드 (세션 메타 또는 분석에서) */}
+      {/* 스티키 컨텍스트 카드 (세션 메타 또는 분석에서). 표시값은 getStickyContextDisplay로 통일. */}
       <StickyContextCard
-        grade={analysis?.grade ?? (session?.grade as Grade) ?? Grade.A}
-        score={analysis?.totalScore ?? session?.totalScore ?? 88}
-        fixScope={analysis?.fixScope ?? session?.fixScope ?? 'DetailTuning'}
+        {...getStickyContextDisplay(analysis, session)}
         isCollapsed={isContextCollapsed}
       />
 
