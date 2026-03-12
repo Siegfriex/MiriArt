@@ -1,14 +1,15 @@
 package com.miriart.api.domain.ai.dto;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
 
 /**
- * POST /api/chat 응답 DTO (BE → FE). AI 멘토 응답 텍스트·퀵리플라이·세션 ID.
+ * POST /api/chat 응답 DTO (BE → FE). AI 멘토 응답 텍스트·퀵리플라이·세션 키.
  *
- * <p>연계: FastAPI {@link InternalChatResponse}를 AiProxyService가 받아 sessionId를 붙여 이 DTO로 변환 → FE에 ApiResponse.success로 반환.</p>
+ * <p>JSON 응답에 sessionId, sessionKey 모두 포함하여 하위 호환 유지.</p>
  *
  * @author MiriArt Team
  */
@@ -20,4 +21,9 @@ public class ChatResponse {
     private List<String> groundingUrls;
     private List<String> quickReplies;
     private String sessionId;
+
+    @JsonGetter("sessionKey")
+    public String getSessionKey() {
+        return this.sessionId;
+    }
 }

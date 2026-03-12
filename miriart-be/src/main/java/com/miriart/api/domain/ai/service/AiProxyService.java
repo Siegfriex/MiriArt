@@ -60,8 +60,10 @@ public class AiProxyService {
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(status -> status.is5xxServerError() || status.value() == 400
-                        || status.value() == 401 || status.value() == 403,
+                        || status.value() == 401 || status.value() == 403
+                        || status.value() == 429,
                         res -> res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), true)))))
                 .bodyToMono(InternalAnalyzeResponse.class)
@@ -84,8 +86,8 @@ public class AiProxyService {
      * - BE는 Redis에 전체 메시지 이력을 JSON으로 저장 (stateful 보완)
      */
     public ChatResponse chat(ChatRequest chatRequest) {
-        String sessionId = chatRequest.getSessionId() != null
-                ? chatRequest.getSessionId()
+        String sessionId = chatRequest.getSessionKey() != null
+                ? chatRequest.getSessionKey()
                 : UUID.randomUUID().toString();
 
         InternalChatRequest internalRequest = InternalChatRequest.builder()
@@ -102,8 +104,10 @@ public class AiProxyService {
                 .bodyValue(internalRequest)
                 .retrieve()
                 .onStatus(status -> status.is5xxServerError() || status.value() == 400
-                        || status.value() == 401 || status.value() == 403,
+                        || status.value() == 401 || status.value() == 403
+                        || status.value() == 429,
                         res -> res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
                                 .flatMap(body -> Mono.error(new BusinessException(
                                         AiErrorMapper.toErrorCode(res.statusCode(), parseAiErrorCode(body), false)))))
                 .bodyToMono(InternalChatResponse.class)

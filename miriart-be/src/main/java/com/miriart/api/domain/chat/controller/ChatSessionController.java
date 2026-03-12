@@ -1,6 +1,8 @@
 package com.miriart.api.domain.chat.controller;
 
+import com.miriart.api.domain.chat.dto.ChatMessageDto;
 import com.miriart.api.domain.chat.dto.ChatSessionResponse;
+import com.miriart.api.domain.chat.service.ChatHistoryService;
 import com.miriart.api.domain.chat.service.ChatSessionService;
 import com.miriart.api.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- * 채팅 세션 API 컨트롤러. GET /api/chat/sessions — 세션 목록 조회.
+ * 채팅 세션 API 컨트롤러.
  *
- * <p>연계: {@link ChatSessionService}에서 목록 조회. 인증된 사용자만 자신의 세션 접근 가능.</p>
+ * <ul>
+ *   <li>GET /api/chat/sessions — 세션 목록 (페이징, grade 필터)</li>
+ *   <li>GET /api/chat/sessions?analysisId=xxx — analysisId 기반 세션 조회/생성</li>
+ *   <li>GET /api/chat/sessions/{sessionKey} — sessionKey 기반 단건 조회</li>
+ *   <li>GET /api/chat/sessions/{sessionKey}/messages — Redis 히스토리 조회</li>
+ * </ul>
  *
  * @author MiriArt Team
  */
@@ -27,6 +36,17 @@ import org.springframework.web.bind.annotation.*;
 public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;
+    private final ChatHistoryService chatHistoryService;
+
+    @Operation(summary = "분석 기반 세션 조회/생성",
+            description = "userId+analysisId로 세션 조회. 없으면 새로 생성. analysisId는 Long.")
+    @GetMapping(params = "analysisId")
+    public ResponseEntity<ApiResponse<ChatSessionResponse>> getOrCreateByAnalysis(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam Long analysisId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                chatSessionService.getOrCreateByAnalysis(userId, analysisId)));
+    }
 
     @Operation(summary = "채팅 세션 목록 조회")
     @GetMapping
@@ -39,5 +59,28 @@ public class ChatSessionController {
         Pageable pageable = PageRequest.of(page, size);
         Page<ChatSessionResponse> sessions = chatSessionService.getSessionList(userId, grade, pageable);
         return ResponseEntity.ok(ApiResponse.success(sessions));
+    }
+
+    @Operation(summary = "세션 단건 조회 (sessionKey)",
+            description = "sessionKey(UUID)로 세션 메타데이터 조회. 없으면 CS001.")
+    @GetMapping("/{sessionKey}")
+    public ResponseEntity<ApiResponse<ChatSessionResponse>> getBySessionKey(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable String sessionKey) {
+        return ResponseEntity.ok(ApiResponse.success(
+                chatSessionService.getBySessionKey(userId, sessionKey)));
+    }
+
+    @Operation(summary = "세션 메시지 히스토리 조회",
+            description = "Redis에서 세션 히스토리를 가져와 ChatMessageDto 리스트로 반환.")
+    @GetMapping("/{sessionKey}/messages")
+    public ResponseEntity<ApiResponse<List<ChatMessageDto>>> getMessages(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable String sessionKey,
+            @RequestParam(defaultValue = "100") int limit) {
+        // 세션 존재 여부 확인 (없으면 CS001)
+        chatSessionService.getBySessionKey(userId, sessionKey);
+        List<ChatMessageDto> messages = chatHistoryService.getRecentMessages(sessionKey, limit);
+        return ResponseEntity.ok(ApiResponse.success(messages));
     }
 }

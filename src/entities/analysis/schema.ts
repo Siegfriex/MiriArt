@@ -50,6 +50,11 @@ export function normalizeAnalysisResult(
     comment: api.comment,
     comparisonTiers: overrides?.comparisonTiers,
     hasAcceptedArtwork: overrides?.hasAcceptedArtwork ?? false,
+    // BE 분석 응답에 없으면 undefined. stickyContext 확장 시 선택적으로 채워짐. 엣지: BE가 아직 필드 미제공 시 빈 값.
+    universityPredictions: api.universityPredictions,
+    summaryComment: api.summaryComment,
+    targetMajor: api.targetMajor,
+    targetUniversity: api.targetUniversity,
   };
 }
 

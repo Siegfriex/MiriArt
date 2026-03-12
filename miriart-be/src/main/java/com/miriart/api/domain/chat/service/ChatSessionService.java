@@ -5,15 +5,21 @@ import com.miriart.api.domain.ai.dto.ChatResponse;
 import com.miriart.api.domain.ai.service.AiProxyService;
 import com.miriart.api.domain.analysis.entity.Analysis;
 import com.miriart.api.domain.analysis.entity.AnalysisGrade;
+import com.miriart.api.domain.analysis.repository.AnalysisRepository;
 import com.miriart.api.domain.chat.dto.ChatSessionResponse;
 import com.miriart.api.domain.chat.entity.ChatRole;
 import com.miriart.api.domain.chat.entity.ChatSession;
 import com.miriart.api.domain.chat.repository.ChatSessionRepository;
+import com.miriart.api.domain.user.repository.UserRepository;
+import com.miriart.api.global.exception.BusinessException;
+import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 /**
  * 채팅 세션 도메인 서비스. DB 메타데이터 관리 + AiProxyService 래핑.
@@ -32,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatSessionService {
 
     private final ChatSessionRepository chatSessionRepository;
+    private final AnalysisRepository analysisRepository;
+    private final UserRepository userRepository;
     private final AiProxyService aiProxyService;
 
     /**
@@ -70,12 +78,46 @@ public class ChatSessionService {
         return sessions.map(this::toResponse);
     }
 
+    /**
+     * analysisId 기반 세션 조회 또는 생성.
+     * FE가 분석 결과 → 멘토 질문 시 호출.
+     */
+    @Transactional
+    public ChatSessionResponse getOrCreateByAnalysis(Long userId, Long analysisId) {
+        ChatSession session = chatSessionRepository.findByUserIdAndAnalysisId(userId, analysisId)
+                .orElseGet(() -> {
+                    Analysis analysis = analysisRepository.findById(analysisId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.ANALYSIS_NOT_FOUND));
+                    String title = (analysis.getGrade() != null)
+                            ? analysis.getGrade().name() + "등급 분석 채팅"
+                            : "분석 채팅";
+                    return chatSessionRepository.save(ChatSession.builder()
+                            .user(userRepository.getReferenceById(userId))
+                            .analysis(analysis)
+                            .sessionKey(UUID.randomUUID().toString())
+                            .modelType("CHAT_PRO")
+                            .title(title)
+                            .build());
+                });
+        return toResponse(session);
+    }
+
+    /**
+     * sessionKey 기반 세션 단건 조회. 없으면 CS001 예외.
+     */
+    public ChatSessionResponse getBySessionKey(Long userId, String sessionKey) {
+        ChatSession session = chatSessionRepository.findByUserIdAndSessionKey(userId, sessionKey)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_SESSION_NOT_FOUND));
+        return toResponse(session);
+    }
+
     private ChatSessionResponse toResponse(ChatSession cs) {
         Analysis a = cs.getAnalysis();
         return ChatSessionResponse.builder()
                 .id(cs.getId())
                 .sessionKey(cs.getSessionKey())
                 .analysisId(a != null ? a.getId() : null)
+                .modelType(cs.getModelType())
                 .title(cs.getTitle())
                 .lastMessage(cs.getLastMessage())
                 .messageCount(cs.getMessageCount())

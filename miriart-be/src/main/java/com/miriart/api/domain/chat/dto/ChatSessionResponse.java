@@ -17,6 +17,7 @@ public class ChatSessionResponse {
     private Long id;
     private String sessionKey;
     private Long analysisId;
+    private String modelType;
     private String title;
     private String lastMessage;
     private int messageCount;

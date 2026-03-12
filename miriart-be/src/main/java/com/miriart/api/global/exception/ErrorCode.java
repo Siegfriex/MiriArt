@@ -58,6 +58,7 @@ public enum ErrorCode {
     AI_ANALYSIS_FAILED(HttpStatus.BAD_GATEWAY, "AN001", "AI 분석 서비스 연결에 실패했습니다"),
     AI_ANALYSIS_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "AN002", "분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요"),
     ANALYSIS_NOT_FOUND(HttpStatus.NOT_FOUND, "AN003", "분석 결과를 찾을 수 없습니다"),
+    AI_ANALYSIS_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "AN004", "AI 분석 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
 
     // Image (이미지 — Signed URL)
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "I001", "이미지를 찾을 수 없습니다"),
@@ -72,6 +73,7 @@ public enum ErrorCode {
     AI_CHAT_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "AI002", "AI 응답 시간이 초과됐습니다"),
     // AI Service Auth (내부 서비스 인증 — Cloud Run IAM)
     AI_SERVICE_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "AI003", "AI 서비스 인증에 실패했습니다"),
+    AI_CHAT_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "AI004", "AI 채팅 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
 
     // Chat Session (채팅 세션)
     CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "CS001", "채팅 세션을 찾을 수 없습니다"),

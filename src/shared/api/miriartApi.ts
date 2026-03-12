@@ -4,10 +4,12 @@
  * @참조 AuthCallback, UploadFlow, chat-room Page, communityApi
  */
 
+import { z } from 'zod';
 import { useToastStore } from '../model/toastStore';
 import { useUserStore } from '../model/userStore';
 import { useDebugStore } from '../model/debugStore';
-import { AIModelType } from '../model/types';
+import { AIModelType, MessageType, Sender } from '../model/types';
+import type { Message } from '../model/types';
 import { tokenManager } from './tokenManager';
 import { tokenExchangeSchema, refreshResponseSchema } from './schemas/auth';
 import { userProfileApiSchema, userPlanSchema } from './schemas/user';
@@ -15,7 +17,8 @@ import { analysisResponseSchema, analysisStartResponseSchema, analysesListRespon
 import { normalizeAnalysisResult } from '../../entities/analysis/schema';
 import type { AnalysisResult } from '../model/types';
 import { chatResponseSchema, ChatResponse } from './schemas/chat';
-import { chatSessionPageSchema, type ChatSessionPage } from './schemas/chatSession';
+import { chatSessionSchema, chatSessionPageSchema, chatMessageDtoSchema, type ChatSessionPage, type ChatSessionDto, type ChatMessageDto } from './schemas/chatSession';
+import type { StickyContext } from './schemas/chat';
 import { API_BASE } from '../config/api';
 import type { RequestClass } from '../config/requestPolicy';
 import { REQUEST_POLICY, DEFAULT_REQUEST_CLASS } from '../config/requestPolicy';
@@ -331,11 +334,16 @@ export const ImageApi = {
 };
 
 // ─── AI Chat API (gemini.ts ApiService.chat 대체) ─────────────────────────────
+/**
+ * POST /api/chat 요청 body. 실제 API JSON과 일치: message, modelType, sessionKey?, stickyContext?, history?, imageBase64?, imageMimeType?.
+ * sessionKey = SSOT. sessionId는 BE 하위호환용. history는 최근 8턴만 FastAPI에 전달됨.
+ */
 export interface ChatRequest {
   message: string;
   modelType: AIModelType;
   sessionId?: string;
-  stickyContext?: { grade: string; score: number; fixScope: string; radarData?: Record<string, number> };
+  sessionKey?: string;
+  stickyContext?: StickyContext;
   imageBase64?: string;
   imageMimeType?: string;
   history?: { role: 'user' | 'model'; parts: { text: string }[] }[];
@@ -385,6 +393,17 @@ export const ChatApi = {
  * GET /api/chat/sessions?page=0&size=20&grade=A
  * BE: ChatSessionController.getSessionList → Page<ChatSessionResponse>
  */
+/** GET /api/chat/sessions/{sessionKey}/messages 응답 배열 → Message[] 변환. sender USER|AI → Sender enum */
+function mapChatMessagesToMessages(dtos: ChatMessageDto[]): Message[] {
+  return dtos.map((d) => ({
+    id: d.id,
+    sender: d.sender === 'USER' ? Sender.USER : Sender.AI,
+    type: MessageType.TEXT,
+    content: d.content,
+    timestamp: d.timestamp,
+  }));
+}
+
 export const ChatSessionApi = {
   getList: async (params?: {
     page?: number;
@@ -405,6 +424,43 @@ export const ChatSessionApi = {
       return payload as ChatSessionPage;
     }
     return parsed.data;
+  },
+
+  /** GET /api/chat/sessions?analysisId={id}. 해당 분석의 세션 있으면 반환, 없으면 새로 생성 후 반환. */
+  getOrCreateSessionByAnalysisId: async (analysisId: string | number): Promise<ChatSessionDto> => {
+    const path = `/api/chat/sessions?analysisId=${encodeURIComponent(String(analysisId))}`;
+    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = chatSessionSchema.safeParse(payload);
+    if (!parsed.success) {
+      if (import.meta.env.DEV) console.warn('[ChatSessionApi.getOrCreate] Zod parse warning:', parsed.error.issues);
+      return payload as ChatSessionDto;
+    }
+    return parsed.data;
+  },
+
+  /** GET /api/chat/sessions/{sessionKey}. 세션 메타 단건. */
+  getSession: async (sessionKey: string): Promise<ChatSessionDto> => {
+    const path = `/api/chat/sessions/${encodeURIComponent(sessionKey)}`;
+    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const parsed = chatSessionSchema.safeParse(payload);
+    if (!parsed.success) {
+      if (import.meta.env.DEV) console.warn('[ChatSessionApi.getSession] Zod parse warning:', parsed.error.issues);
+      return payload as ChatSessionDto;
+    }
+    return parsed.data;
+  },
+
+  /** GET /api/chat/sessions/{sessionKey}/messages. 서버 메시지를 Message[] 형태로 반환. */
+  getMessages: async (sessionKey: string, limit = 100): Promise<Message[]> => {
+    const path = `/api/chat/sessions/${encodeURIComponent(sessionKey)}/messages?limit=${limit}`;
+    const raw = await apiFetch<unknown>(path, { headers: getAuthHeaders() });
+    const payload = (raw as { data?: unknown }).data ?? raw;
+    const arr = Array.isArray(payload) ? payload : [];
+    const parsed = z.array(chatMessageDtoSchema).safeParse(arr);
+    const dtos = parsed.success ? parsed.data : (arr as ChatMessageDto[]);
+    return mapChatMessagesToMessages(dtos);
   },
 };
 
