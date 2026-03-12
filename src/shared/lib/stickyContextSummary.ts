@@ -5,6 +5,7 @@
 
 import type { AnalysisResult } from '../model/types';
 import type { ChatSessionDto } from '../api/schemas/chatSession';
+import { debugSummaryText } from './debugStickyContext';
 
 function formatScore(v: number): string {
   return Number.isInteger(v) ? String(v) : v.toFixed(1);
@@ -27,8 +28,13 @@ function buildSummaryTextFromAnalysis(a: AnalysisResult): string {
     parts.push(`학생 분석 요약: 점수=${score}.`);
   }
 
-  if (a.radarData) {
-    const { density, form, completion, relevance, thinking } = a.radarData;
+  const radar = a.radarData;
+  if (radar && typeof radar === 'object') {
+    const density = radar.density ?? 0;
+    const form = radar.form ?? 0;
+    const completion = radar.completion ?? 0;
+    const relevance = radar.relevance ?? 0;
+    const thinking = radar.thinking ?? 0;
     parts.push(
       `주요 지표=density ${density}, form ${form}, completion ${completion}, relevance ${relevance}, thinking ${thinking}.`
     );
@@ -37,12 +43,13 @@ function buildSummaryTextFromAnalysis(a: AnalysisResult): string {
   const preds = Array.isArray(a.universityPredictions) ? a.universityPredictions.slice(0, 3) : [];
   if (preds.length > 0) {
     const list = preds
-      .map((p) => `${p.name}(${p.type},${Math.round(p.probability * 100)}%)`)
+      .map((p) => `${p?.name ?? ''}(${p?.type ?? ''},${Math.round(Number(p?.probability ?? 0) * 100)}%)`)
+      .filter(Boolean)
       .join(', ');
-    parts.push(`추천 대학군=${list}.`);
+    if (list) parts.push(`추천 대학군=${list}.`);
   }
 
-  const comment = (a.summaryComment ?? a.comment)?.trim();
+  const comment = (a.summaryComment ?? a.comment ?? '')?.trim();
   if (comment) {
     parts.push(`분석 코멘트: ${comment}.`);
   }
@@ -80,10 +87,26 @@ export function buildSummaryText(
 ): string | undefined {
   if (analysis) {
     const text = buildSummaryTextFromAnalysis(analysis);
+    debugSummaryText(
+      'analysis',
+      {
+        grade: analysis.grade,
+        totalScore: analysis.totalScore,
+        hasRadarData: !!analysis.radarData,
+        universityPredictionsLength: analysis.universityPredictions?.length ?? 0,
+      },
+      text || undefined
+    );
     return text || undefined;
   }
   if (sessionMeta) {
-    return buildSummaryTextFromSession(sessionMeta);
+    const text = buildSummaryTextFromSession(sessionMeta);
+    debugSummaryText(
+      'session',
+      { grade: sessionMeta.grade, totalScore: sessionMeta.totalScore },
+      text
+    );
+    return text;
   }
   return undefined;
 }

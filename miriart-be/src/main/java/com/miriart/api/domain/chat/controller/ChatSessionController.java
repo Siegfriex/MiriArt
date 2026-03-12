@@ -8,6 +8,7 @@ import com.miriart.api.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author MiriArt Team
  */
 @Tag(name = "채팅 세션", description = "채팅 세션 관리")
+@Slf4j
 @RestController
 @RequestMapping("/api/chat/sessions")
 @RequiredArgsConstructor
@@ -85,6 +87,11 @@ public class ChatSessionController {
         // 세션 존재 여부 확인 (없으면 CS001)
         chatSessionService.getBySessionKey(userId, sessionKey);
         List<ChatMessageDto> messages = chatHistoryService.getRecentMessages(sessionKey, limit);
+
+        if (log.isDebugEnabled()) {
+            log.debug("[getMessages] sessionKey={}, resultSize={}", sessionKey, messages.size());
+        }
+
         return ResponseEntity.ok(ApiResponse.success(messages));
     }
 }

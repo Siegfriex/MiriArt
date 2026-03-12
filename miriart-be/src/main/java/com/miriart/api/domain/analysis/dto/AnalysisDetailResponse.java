@@ -7,6 +7,8 @@ import com.miriart.api.domain.ai.dto.UniversityPrediction;
 import com.miriart.api.domain.analysis.entity.Analysis;
 import lombok.Builder;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -21,6 +23,8 @@ import java.util.List;
 @Getter
 @Builder
 public class AnalysisDetailResponse {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalysisDetailResponse.class);
 
     private String id;
     private String imageUrl;
@@ -47,6 +51,16 @@ public class AnalysisDetailResponse {
         RadarData radar = parseRadarData(analysis.getScores(), objectMapper);
         List<UniversityPrediction> list = parseUniversityPredictionsList(analysis.getUniversityPredictions(), objectMapper);
         UniversityPrediction first = (list != null && !list.isEmpty()) ? list.get(0) : null;
+
+        if (log.isDebugEnabled()) {
+            log.debug("[AnalysisDetail] analysisId={}, rawPredictionsLen={}, parsedListSize={}, first=[univ={}, major={}]",
+                    analysis.getId(),
+                    analysis.getUniversityPredictions() != null ? analysis.getUniversityPredictions().length() : 0,
+                    list != null ? list.size() : 0,
+                    first != null ? first.getUniversity() : "null",
+                    first != null ? first.getMajor() : "null");
+        }
+
         return AnalysisDetailResponse.builder()
                 .id(String.valueOf(analysis.getId()))
                 .imageUrl(analysis.getImageUrl())
@@ -96,6 +110,8 @@ public class AnalysisDetailResponse {
                     om.getTypeFactory().constructCollectionType(List.class, UniversityPrediction.class));
             return list != null ? list : Collections.emptyList();
         } catch (JsonProcessingException e) {
+            log.warn("[parseUniversityPredictions] JSON 파싱 실패 — input 길이={}, error={}",
+                    predictionsJson.length(), e.getMessage());
             return Collections.emptyList();
         }
     }
