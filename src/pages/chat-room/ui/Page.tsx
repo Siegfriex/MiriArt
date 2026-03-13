@@ -25,8 +25,6 @@ import type { ChatSessionDto } from '../../../shared/api/schemas/chatSession';
 import type { StickyContext } from '../../../shared/api/schemas/chat';
 import { shouldLoadSessionByKey } from '../../../shared/lib/chatRouteParam';
 import { buildSummaryText } from '../../../shared/lib/stickyContextSummary';
-import { debugStickyContext } from '../../../shared/lib/debugStickyContext';
-
 /**
  * analysis + sessionMeta로 StickyContext 구성. summaryText는 buildSummaryText로 생성.
  * handleSend에서는 이 함수만 호출해 grade/score/fixScope 등을 직접 조합하지 않음.
@@ -53,7 +51,6 @@ function buildStickyContext(
       ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
       ...(summaryText ? { summaryText } : {}),
     };
-    debugStickyContext('buildStickyContext (analysis)', ctx);
     return ctx;
   }
 
@@ -64,7 +61,6 @@ function buildStickyContext(
       fixScope: sessionMeta.fixScope ?? 'DetailTuning',
       ...(summaryText ? { summaryText } : {}),
     };
-    debugStickyContext('buildStickyContext (sessionMeta)', ctx);
     return ctx;
   }
 
@@ -225,7 +221,6 @@ export const ChatRoom: React.FC = () => {
         ...(history.length > 0 ? { history } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       };
-      debugStickyContext('POST /api/chat body.stickyContext', requestBody.stickyContext ?? null);
 
       // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).
       const response = await ChatApi.sendMessage(requestBody);
