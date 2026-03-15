@@ -127,8 +127,19 @@ public class AiProxyService {
             updateSessionHistory(sessionId, chatRequest, response);
         }
 
+        // null 방어 — FastAPI fallback/버그 시 text=null로 올 수 있음 (Structured Chat v3)
+        String textForResponse = (response != null && response.getText() != null)
+                ? response.getText() : "";
+
+        // 구조화 성공 로그 (Structured Chat v3)
+        if (response != null && response.getSections() != null) {
+            log.info("chat response structured, sections_count={}", response.getSections().size());
+        }
+
         return ChatResponse.builder()
-                .text(response != null ? response.getText() : "")
+                .text(textForResponse)
+                .summary(response != null ? response.getSummary() : null)
+                .sections(response != null ? response.getSections() : null)
                 .groundingUrls(response != null ? response.getGroundingUrls() : List.of())
                 .quickReplies(response != null ? response.getQuickReplies() : List.of())
                 .sessionId(sessionId)
@@ -139,6 +150,8 @@ public class AiProxyService {
      * Redis에 채팅 세션 히스토리를 완전한 JSON으로 저장 (Bug #4 Fix)
      * 저장 형식: [ {"role":"user","text":"..."}, {"role":"model","text":"..."}, ... ]
      */
+    // 저장 계층은 sections 미반영 — Structured Chat v1 설계.
+    // text: sections가 있으면 "[제목]\n본문" join 문자열, 없으면 단일 텍스트.
     @SuppressWarnings("unchecked")
     private void updateSessionHistory(String sessionId, ChatRequest request, InternalChatResponse response) {
         try {
@@ -159,7 +172,8 @@ public class AiProxyService {
             // 모델 응답 추가
             Map<String, String> modelMsg = new HashMap<>();
             modelMsg.put("role", "model");
-            modelMsg.put("text", response.getText());
+            // null 방어 — FastAPI fallback/버그 시 text=null로 올 수 있음 (Structured Chat v3)
+            modelMsg.put("text", response.getText() != null ? response.getText() : "");
             history.add(modelMsg);
 
             redisService.updateChatSession(sessionId, objectMapper.writeValueAsString(history));

@@ -79,6 +79,8 @@ function getStickyContextDisplay(
   };
 }
 
+const DEFAULT_QUICK_REPLIES = ['구도 분석 요청', '색감 피드백', '합격 확률 보기'] as const;
+
 const DEFAULT_GREETING: Message = {
   id: 'greeting',
   sender: Sender.AI,
@@ -231,18 +233,57 @@ export const ChatRoom: React.FC = () => {
         navigate(ROUTES.CHAT_ROOM(nextKey), { replace: true });
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: Sender.AI,
-          type: MessageType.TEXT,
-          content: response.text,
-          timestamp: Date.now(),
-          groundingUrls: response.groundingUrls,
-          quickReplies: response.quickReplies ?? ['구도 분석 요청', '색감 피드백', '합격 확률 보기'],
-        },
-      ]);
+      const baseId = String(Date.now() + 1);
+      const now = Date.now();
+
+      if ((response.sections ?? []).length > 0) {
+        const summaryMsg: Message | null = response.summary
+          ? {
+              id: `${baseId}-summary`,
+              sender: Sender.AI,
+              type: MessageType.TEXT,
+              content: response.summary,
+              timestamp: now,
+              sectionType: 'summary',
+              isLastSection: false,
+            }
+          : null;
+
+        const sectionMsgs: Message[] = response.sections!.map((sec, idx) => {
+          const isLast = idx === response.sections!.length - 1;
+          return {
+            id: `${baseId}-${idx}`,
+            sender: Sender.AI,
+            type: MessageType.TEXT,
+            content: sec.text,
+            timestamp: now,
+            sectionType: sec.type,
+            sectionTitle: sec.title,
+            isLastSection: isLast,
+            groundingUrls: isLast ? (response.groundingUrls ?? []) : undefined,
+            quickReplies: isLast ? (response.quickReplies ?? [...DEFAULT_QUICK_REPLIES]) : undefined,
+          };
+        });
+
+        setMessages((prev) => [
+          ...prev,
+          ...(summaryMsg ? [summaryMsg] : []),
+          ...sectionMsgs,
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: baseId,
+            sender: Sender.AI,
+            type: MessageType.TEXT,
+            content: response.text,
+            timestamp: now,
+            groundingUrls: response.groundingUrls,
+            quickReplies: response.quickReplies ?? [...DEFAULT_QUICK_REPLIES],
+          },
+        ]);
+      }
     } catch {
       // ApiService 내부에서 Toast 처리됨
       // 실패한 메시지 표시 (이미 userMsg가 추가된 상태)
