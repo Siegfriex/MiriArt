@@ -123,7 +123,7 @@ SPA 라우팅을 위해 루트의 `vercel.json`에 `rewrites`로 모든 경로�
 | `miriart-ai/` | FastAPI AI 서비스 (Gemini) |
 | `docs/` | PRD, ERD, 인프라 명세 등 |
 
-BE/AI 배포는 GCP Cloud Run 등 별도 파이프라인을 사용합니다. 자세한 인프라 명세는 [docs/MiriArt_GCP_INFRA.md](docs/MiriArt_GCP_INFRA.md)를 참조하세요.
+BE/AI 배포는 GCP Cloud Run 등 별도 파이프라인을 사용합니다. 자세한 인프라 명세는 [docs/SSOT/miriarts_infra.md](docs/SSOT/miriarts_infra.md)를 참조하세요.
 
 ---
 
@@ -155,7 +155,7 @@ BE/AI 배포는 GCP Cloud Run 등 별도 파이프라인을 사용합니다. 자
 | **API 문서** | SpringDoc OpenAPI 2.8.6 (Swagger UI) |
 | **기타** | Lombok, GCP BOM 6.5.4 |
 
-로컬 실행: `miriart-be/`에서 `./gradlew bootRun` (Java 17 필요). 상세는 [miriart-be/.env.example](miriart-be/.env.example) 및 [docs/MiriArt_BE_SETUP_GUIDE.md](docs/MiriArt_BE_SETUP_GUIDE.md) 참고.
+로컬 실행: `miriart-be/`에서 `./gradlew bootRun` (Java 17 필요). 상세는 [miriart-be/.env.example](miriart-be/.env.example) 및 [docs/SSOT/miriarts_infra.md](docs/SSOT/miriarts_infra.md) §5 참고.
 
 ### AI 서비스 (miriart-ai) — Python
 

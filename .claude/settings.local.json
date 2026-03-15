@@ -253,7 +253,10 @@
       "Bash(cd /home/sieg/projects-wsl/MiriArt/miriart-be && bash ./scripts/cloudrun-redeploy.sh 2>&1)",
       "Bash(which cloud-sql-proxy:*)",
       "Bash(pip install:*)",
-      "Bash(find /home/sieg/projects-wsl/MiriArt/src/features/chat -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -10)"
+      "Bash(find /home/sieg/projects-wsl/MiriArt/src/features/chat -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -10)",
+      "Bash(for table:*)",
+      "Bash(echo:*)",
+      "Bash(cd:*)"
     ]
   }
 }

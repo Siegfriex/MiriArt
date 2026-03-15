@@ -2,7 +2,8 @@
 
 > **목적**: Legacy PRD v1.1 갭 메우기 + 현 구현 상태 반영 + 커뮤니티 비전 통합
 > **버전**: 2.2 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-10
-> **검증 기준선**: `docs/SSOT/miriarts_infra.md` §4.4 + 코드베이스 (문서 정합성 검증일: 2026-03-10)
+> **검증 기준선**: `docs/SSOT/miriarts_infra.md` §4.4 + 코드베이스 (문서 정합성 검증일: 2026-03-12). 엔드포인트·ErrorCode 전수: docs/SSOT/miriarts_infra.md §4.4, docs/MiriArt_API_CONTRACT.md.
+> **에러·TX 정책**(엔드포인트별 에러·트랜잭션·락): docs/MiriArt_API_CONTRACT.md "엔드포인트별 발생 가능 에러", docs/SSOT/miriarts_infra.md §4.4 트랜잭션·락·예외 요약 참조.
 > **기반**: Legacy PRD v1.1, `MiriArt_FSD_v2.md`, `MiriArt_ERD_v2.md`, Community Design v1.0, FE Disassembly Report v1.0
 
 ---
@@ -23,9 +24,9 @@
 | 항목 | Legacy PRD v1.1 | MiriArt PRD v2.2 |
 |------|-----------------|-------------------|
 | 프로젝트명 | dysprime | MiriArt (미리미대) |
-| BE 스택 | React Native + Next.js + Firebase | Java/Spring Boot + FastAPI + MySQL/Redis |
+| BE 스택 | React Native + Next.js + Firebase | Java/Spring Boot + 외부 AI 서비스 + MySQL/Redis |
 | Auth | 이메일/비밀번호 | 카카오 + 구글 OAuth2 only |
-| AI 서비스 | Cloud Run 단일 | Java BE + FastAPI 분리 |
+| AI 서비스 | Cloud Run 단일 | Java BE + 외부 AI 서비스(별도 레포) 분리 |
 | 커뮤니티 | 없음 | 에브리타임 × 지식인 Q&A + 평판 시스템 추가 |
 | Chat 저장 | Firestore | 현재: 메시지 Redis(72h). 세션 목록·메타 MySQL(chat_sessions, GET /api/chat/sessions 구현됨). |
 | 파일 스토리지 | Cloud Storage | GCS (동일) |
@@ -94,9 +95,9 @@
 |--------|------|------|
 | FE | React 19 + TypeScript + Vite 6 + Zustand + Tailwind CSS 4 | 모바일 웹 앱 |
 | BE Core | Java 17 + Spring Boot 3.4.x + JPA + MySQL 8.x + Redis | 인증/도메인/커뮤니티 |
-| AI Service | Python 3.11 + FastAPI + Vertex AI/Gemini SDK | AI 분석/채팅/이미지편집 |
+| 외부 AI 서비스 | (별도 레포·별도 에이전트 관리) | 분석/채팅 등. BE가 FASTAPI_INTERNAL_URL로 호출 |
 | Storage | Google Cloud Storage (GCS) | 이미지 파일 |
-| Infra | Google Cloud Run (BE + AI), GCS, MySQL (Cloud SQL 또는 자체) |
+| Infra | Google Cloud Run (BE), GCS, MySQL (Cloud SQL 또는 자체) |
 
 ### 3.2 Cariv BE 재사용률
 
@@ -128,8 +129,8 @@
 |------|-----------------|--------------------------|------|
 | 회원가입/로그인 (F1) | 이메일+비밀번호 → OAuth2 | OAuth2 로그인·토큰·리프레시·로그아웃 구현 (AuthController, OAuth2TokenExchangeService) | **구현 완료** |
 | 온보딩 프로필 (F2) | — | PATCH /api/users/me/profile, GET /api/users/me (UserController) | **구현 완료** |
-| AI 분석 (F3) | F3 Layer 1 | POST/GET /api/analyses, BE→FastAPI 프록시 (AnalysisController, AiProxyService) | FastAPI 연동·검증 수준은 인프라 SSOT §1.2 참고 |
-| AI 채팅 (F4) | F5 Layer 3 | POST /api/chat, Redis 세션, BE→FastAPI (AiChatController, AiProxyService) | **구현 완료** |
+| AI 분석 (F3) | F3 Layer 1 | POST/GET /api/analyses, BE가 외부 AI 서비스 호출 (AnalysisController, AiProxyService) | 인프라 SSOT §1.2 참고 |
+| AI 채팅 (F4) | F5 Layer 3 | POST /api/chat, Redis 세션, BE가 외부 AI 서비스 호출 (AiChatController, AiProxyService) | **구현 완료** |
 | 분석 결과 조회 (F5) | Archive | GET /api/analyses, GET /api/analyses/{id} | **구현 완료** |
 | 플랜/크레딧 (F6) | F6 | GET /api/users/me/plan (UserService.getPlanInfo, PlanType) | **구현 완료** |
 | 구독 결제 (F7) | F7 | 플랜 조회만. 결제 연동 없음 | 결제 미구현 |
@@ -138,7 +139,7 @@
 
 ### 4.2 핵심 엔티티 요약
 
-> **코드 기준**: JPA 엔티티는 `miriart-be/.../entity/` 및 `docs/MiriArt_레포_전제_코드문서_정의_정리.md` [ERD/스키마]와 일치. Plan은 별도 테이블 없음 — `User.planType`(PlanType enum).
+> **코드 기준**: JPA 엔티티는 `miriart-be/.../entity/` 및 `docs/MiriArt_ERD_v2.md`와 일치. Plan은 별도 테이블 없음 — `User.planType`(PlanType enum).
 
 | 엔티티 | Phase | 설명 | 코드 위치 |
 |--------|-------|------|-----------|
@@ -146,17 +147,18 @@
 | `Analysis` | P1 | 작품 분석 결과 (5축 + fixScope + 합격 확률) | analysis/entity/Analysis.java |
 | `PlanType` | P1 | 구독 플랜 enum (User.planType). 별도 테이블 없음 | user/entity/PlanType.java |
 | `AnalysisUsageLog` | P1 | 월별 분석 카운트 | analysis/entity/AnalysisUsageLog.java |
-| `ChatSession` / `ChatMessage` | P1/P2 | ChatSession: 구현됨(엔티티·V5·GET /api/chat/sessions). ChatMessage: Redis만(메시지 히스토리) | ChatSession.java, V5__create_chat_sessions.sql, RedisService |
-| `Post` | C1 | 커뮤니티 게시글 (free/qna) | community/entity/Post.java |
+| `ChatSession` / `ChatMessage` | P1/P2 | ChatSession: 구현됨(엔티티·V5·V6 model_type·GET /api/chat/sessions). ChatMessage: Redis만(메시지 히스토리) | ChatSession.java, V5__create_chat_sessions.sql, V6__add_model_type_to_chat_sessions.sql, RedisService |
+| `Post` | C1 | 커뮤니티 게시글 (FREE/QNA) | community/entity/Post.java |
 | `Answer` | C1 | Q&A 답변 | community/entity/Answer.java |
 | `Comment` | C1 | 댓글 (parent_type/parent_id로 Post 또는 Answer 소속) | community/entity/Comment.java |
 | `Like` | C1 | 좋아요 (target_type/target_id) | community/entity/Like.java |
+| `Report` | C1 | 신고 (target_type: POST/ANSWER) | community/entity/Report.java |
 | `Persona` | C1 | 가명 시스템 | community/entity/Persona.java |
 | `ReputationLedger` | C1 | 평판 포인트 이력 | community/entity/ReputationLedger.java |
 
 ### 4.3 커뮤니티 기능 가치 제안
 
-> 기준: `MIRIART_HOME_COMMUNITY_DESIGN_v1.md`
+> 기준: Community Design v1.0 기반 (커뮤니티 기능 가치 제안)
 
 | 기능 | 벤치마크 | 가치 |
 |------|---------|------|
@@ -179,7 +181,7 @@
 | **C1** | 2026 Q3 | 커뮤니티 피드 MVP | posts/answers/comments CRUD, 타임라인 |
 | **C2** | 2026 Q3~Q4 | Q&A 채택 + 마감 | PostStatus 전이, 배치+fallback |
 | **C3** | 2026 Q4 | 평판 시스템 | reputation_ledger, 레벨/뱃지 |
-| **C4** | 2026 Q4~2027 Q1 | AI 연결 + 건전성 | FastAPI summarize, 신고 시스템, 가명 |
+| **C4** | 2026 Q4~2027 Q1 | AI 연결 + 건전성 | 외부 AI 연동(요약/초안), 신고 시스템, 가명 |
 | **C5** | 2027 Q1+ | 실시간 알림 | WebSocket/SSE, FCM (선택적) |
 
 ### 5.2 P1 MVP 성공 지표
@@ -209,7 +211,7 @@
 |--------|------|------|
 | Vision AI 정확도 한계 | 입시 도메인 등급이 실제 채점과 불일치 | 학원 MOU 데이터로 프롬프트 튜닝, 사용자 피드백 수렴 |
 | 커뮤니티 저품질 | 스팸/부적절 게시글 | 신고 시스템, 가명 책임 설계, 자동 블라인드 |
-| FastAPI 장애 | AI 서비스 다운 시 분석 불가 | Java BE Retry 3회, 타임아웃 시 사용자 안내 + 크레딧 환불 |
+| 외부 AI 서비스 장애 | AI 서비스 다운 시 분석 불가 | Java BE Retry 3회, 타임아웃 시 사용자 안내 + 크레딧 환불 |
 | OAuth SSO 장애 | 카카오/구글 장애 시 로그인 완전 막힘 | 운영자용 ROLE_ADMIN 백도어 (DB 수동 부여) |
 | 타겟 시장 규모 | 기초디자인 수험생 유료 전환율 불확실 | MVP 단계 빠른 실증 (전환율/리텐션 측정) |
 
@@ -221,24 +223,24 @@
 |---------|------|---------|
 | 1.0 (dysprime) | 2026-02-07 | Legacy PRD 초안 |
 | 1.1 (dysprime) | 2026-02-07 | 시장 전략, 기대효과 추가 |
-| 2.0 (MiriArt) | 2026-02-22 | 프로젝트명 변경, Java BE + FastAPI 스택 확정, 커뮤니티 비전 추가, OAuth2 only Auth 전환 |
+| 2.0 (MiriArt) | 2026-02-22 | 프로젝트명 변경, Java BE + 외부 AI 서비스 스택 확정, 커뮤니티 비전 추가, OAuth2 only Auth 전환 |
 | 2.1 (MiriArt) | 2026-03-02 | 참조 문서 경로 레거시(02_21dys_*) → 현행(MiriArt_*) 통일, §8 정합성 원칙·가이드 링크 추가 |
 | 2.2 (MiriArt) | 2026-03-02 | §4.1 갭 표 코드·인프라 SSOT 기준 갱신(F1~F6·C1 일부 구현 완료 반영), §4.2 엔티티에 Comment·Like·PlanType 보강, SSOT= miriarts_infra+코드 우선 명시 |
+| 2.3 (MiriArt) | 2026-03-12 | 문서 계층 코드 SSOT 동기화: 검증 기준선·§4.2 ChatSession(V6 model_type) 갱신, docs/_code_snapshot_endpoints.md·API_CONTRACT 참조 명시 |
+| 2.4 (MiriArt) | 2026-03-12 | §8 참조 문서 목록 검증·미존재 항목 정리(MiriArt BE Setup Guide 미생성 표기) |
 
 ---
 
 ## 8. 참조 문서
 
-> **정합성 원칙**: PRD 수정 시 아래 문서와 Phase·기능·엔티티·API 경로가 일치하도록 유지. 경로는 **현행 문서명(MiriArt_*)** 기준. **기준선(변경 제안 금지)**: miriarts_infra.md, 실제 코드/설정.
+> **정합성 원칙**: PRD 수정 시 아래 문서와 Phase·기능·엔티티·API 경로가 일치하도록 유지. **기준선(변경 제안 금지)**: docs/SSOT/miriarts_infra.md, 실제 코드/설정. 7개 문서 외 Legacy·Community Design 등은 보관 폴더에서 별도 관리.
 
 | 문서명 | 버전 | 위치 |
 |--------|------|------|
 | MiriArt FSD v2.0 | 2.0 | `docs/MiriArt_FSD_v2.md` |
 | MiriArt ERD v2.0 | 2.0 | `docs/MiriArt_ERD_v2.md` |
 | MiriArt API Contract | 1.0 | `docs/MiriArt_API_CONTRACT.md` |
-| MiriArt BE Setup Guide | 1.0 | `docs/MiriArt_BE_SETUP_GUIDE.md` |
-| Community Design | 1.0 | `docs/MIRIART_HOME_COMMUNITY_DESIGN_v1.md` |
-| Cariv→MiriArt 패턴 전략 | - | `docs/Cariv→MiriArt 패턴 재사용 전략.md` |
-| VID v1.1 | 1.1 | `docs/VID_v1.0.md` |
-| Legacy PRD | 1.1 | `docs/legacy/dysprime_PRD_v1.md` |
-| PRD 업데이트·정합성 가이드 | - | `docs/PRD_업데이트_및_문서_정합성_가이드.md` |
+| MiriArt 인프라 SSOT | 1.2 | `docs/SSOT/miriarts_infra.md` |
+| MiriArt 중앙 SSOT | 1.0 | `docs/SSOT/miriarts_central.md` |
+| 인프라 SSOT 변경 이력 | - | `docs/SSOT/CHANGELOG_infra.md` |
+| (선택) Legacy·Community Design 등 | - | 보관 경로에서 별도 관리 |

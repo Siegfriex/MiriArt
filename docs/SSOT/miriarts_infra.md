@@ -9,10 +9,11 @@
 
 *이 섹션만 읽어도 신규 온콜이 대략 그림을 잡을 수 있도록 요약함.*
 
-- **사용자 요청 플로우**: FE(Vite/React) → BE(Spring Boot, Cloud Run) → AI(FastAPI, Cloud Run) → GCS/Vertex AI. FE는 `VITE_API_BASE_URL`로 BE만 호출하고, BE는 `FASTAPI_INTERNAL_URL`로 AI의 `/internal/ai/analyze`, `/internal/ai/chat` 호출.
-- **주요 GCP 리소스**: Cloud Run 2개(miriart-be, miriart-ai), Cloud SQL(MySQL miriart-mysql), Memorystore Redis(miriart-redis), GCS(miriart-bucket, miriart-build-cache), Secret Manager(DB/JWT/OAuth 등), Artifact Registry(miriart-images), Vertex AI(Gemini).
+- **사용자 요청 플로우**: FE(Vite/React) → BE(Spring Boot, Cloud Run) → (필요 시 외부 AI 서비스). FE는 `VITE_API_BASE_URL`로 BE만 호출하고, BE는 분석/채팅 시 외부 AI 서비스를 호출한다(설정: `FASTAPI_INTERNAL_URL`). AI 서비스 코드·배포는 별도 레포·별도 에이전트 관리.
+- **주요 GCP 리소스**: Cloud Run(miriart-be), Cloud SQL(MySQL miriart-mysql), Memorystore Redis(miriart-redis), GCS(miriart-bucket, miriart-build-cache), Secret Manager(DB/JWT/OAuth 등), Artifact Registry(miriart-images). 외부 AI 서비스는 별도 관리.
 - **인프라 TODO Top 3**: (1) BE 자동 배포/CI 부재 — Gradle+Dockerfile+gcloud 기반 수동/스크립트 배포, 중기에는 Cloud Build로 이식 예정 (TODO-004). (2) 카카오 OAuth Secret 미등록 (TODO-001). (3) 관측성 부족 — 알람·대시보드 미구축 (TODO-006).
-- **장애 시 먼저 확인할 위치**: (1) BE 헬스 `GET /actuator/health` (인증 불필요). (2) AI 헬스 `GET /health`. (3) Cloud Logging에서 서비스별 로그(miriart-be, miriart-ai) 및 GlobalExceptionHandler/스택 로그.
+- **장애 시 먼저 확인할 위치**: (1) BE 헬스 `GET /actuator/health` (인증 불필요). (2) Cloud Logging에서 miriart-be 로그 및 GlobalExceptionHandler/스택 로그.
+- **참조 금지**: 본 레포 내 `miriart-ai`, `miriart-ai-legacy` 폴더는 문서·에이전트가 참조하지 않는다. AI 서비스는 별도 레포·별도 에이전트 관리.
 
 ---
 
@@ -23,16 +24,16 @@
 ### 서비스 한 줄 정의
 
 **MiriArt(미리미대)** — Vision AI 작품 평가 + 입시 빅데이터 + 수험생 간 Q&A 커뮤니티를 결합한, 미대 입시 수험생 전용 AI 코칭 앱.  
-*소스: docs/MiriArt_PRD_v2.md:14–16*
+*소스: docs/MiriArt_PRD_v2.md §0.1.*
 
 ### GCP 프로젝트·리전·환경
 
 | 항목 | 값 | 소스(파일/라인) |
 |------|-----|------------------|
-| GCP 프로젝트 ID | `miriarts` | docs/MiriArt_GCP_INFRA.md:4–5 |
+| GCP 프로젝트 ID | `miriarts` | miriart-be/scripts/cloudrun-redeploy.ps1, cloudrun-redeploy.sh 배포 시 사용 |
 | GCP 프로젝트명 | miriart | 동일 |
 | 주요 리전 | asia-northeast3 (서울) | 동일 |
-| 현재 환경 | prod(Cloud Run BE 배포 완료, AI는 문서상 placeholder), 로컬 dev(application-dev.yml) | docs/MiriArt_GCP_INFRA.md §4, §12 |
+| 현재 환경 | prod(Cloud Run BE 배포 완료), 로컬 dev(application-dev.yml) | 본 문서 §2·§5, miriart-be/src/main/resources/application-dev.yml:3 |
 
 ### 이 문서의 목적
 
@@ -48,8 +49,8 @@
 
 | 이름 | 역할 | 주요 책임 | 사용 스택 | 비고 |
 |------|------|------------|------------|------|
-| **miriart-be** | 백엔드 API | 인증(OAuth2/JWT), 커뮤니티(게시글·Q&A), AI 프록시(FastAPI 호출), GCS 업로드, 분석·채팅 API | Java 17, Spring Boot 3.4.2 | *소스: miriart-be/build.gradle:3, 11–13* |
-| **miriart-ai** | AI 전용 서비스 | Vertex AI(Gemini) Vision/Chat 연동, GCS 읽기/쓰기, 작품 분석·AI 채팅·이미지 편집 | Python 3.11, FastAPI 0.115.8 | *소스: miriart-ai/Dockerfile:1, requirements.txt*. **miriart-ai** 코드·cloudbuild는 **본 레포 루트에 없음**. 문서·스크립트 참조 시: **WSL** `~/projects-wsl/miriart-ai`, **Windows UNC** `\\wsl.localhost\Ubuntu-24.04\home\sieg\projects-wsl\miriart-ai`. 레포 내에는 miriart-ai-legacy(또는 없음)만 존재할 수 있음. |
+| **miriart-be** | 백엔드 API | 인증(OAuth2/JWT), 커뮤니티(게시글·Q&A), 외부 AI 서비스 호출(분석·채팅), GCS 업로드 | Java 17, Spring Boot 3.4.2 | *소스: miriart-be/build.gradle:3, 11–13* |
+| **외부 AI 서비스** | (별도 레포) | 분석·채팅 등. BE가 FASTAPI_INTERNAL_URL로 호출. 코드·배포는 별도 에이전트 관리. | — | 본 레포에서 상세 기술하지 않음. |
 | **server** | Node API 서버 | Gemini SDK 직접 호출(채팅·분석·이미지 편집 라우트). Cloud Run 배포용 Dockerfile 존재 | Node 20, Express 4.x | **(현재 비활성 / future use)** FE/BE와 HTTP 연동 없음 (추론). *소스: server/package.json, server/Dockerfile* |
 | **프론트엔드** | 클라이언트 | 인증·분석·채팅·커뮤니티 UI. BE API만 호출(VITE_API_BASE_URL) | Node ≥18, React 19.2.4, Vite 6, Tailwind 4 | *소스: 루트 package.json* |
 
@@ -61,12 +62,8 @@
     │ 소스: src/shared/config/api.ts:8-12, miriartApi.ts, Login.tsx
     ▼
 [miriart-be (Spring Boot, Cloud Run)]
-    │ Base URL: miriart.fastapi.internal-url → FASTAPI_INTERNAL_URL (기본값 http://localhost:8000)
-    │ 소스: WebClientConfig.java:33, 42–44, AiProxyService.java:58–59, 97–98
-    │ 호출 path: POST /internal/ai/analyze, POST /internal/ai/chat
-    ▼
-[miriart-ai (FastAPI, Cloud Run)]  — prefix /internal/ai (miriart-ai/app/main.py:34)
-    └→ Vertex AI, GCS
+    │ 분석/채팅 시: WebClient가 FASTAPI_INTERNAL_URL로 외부 AI 서비스 호출. 소스: WebClientConfig.java:33, AiProxyService.java
+    │ GCS: miriart.gcs.bucket (application.yml:24)
 
 [server (Node/Express)]  — (현재 비활성 / future use) 위 플로우에 미연동 (추론)
 ```
@@ -81,8 +78,7 @@
 
 | 서비스명 | 리전 | 런타임 | 메모리/CPU | 타임아웃 | 동시성/min·max | 서비스 계정 | Ingress/IAM | 소스(파일/라인) |
 |----------|------|--------|------------|----------|----------------|-------------|-------------|------------------|
-| miriart-be | asia-northeast3 | Java 17 (Eclipse Temurin) | 1Gi (문서) | 문서에 --timeout 미기재 | 문서에 미기재 | miriart-be-runner@miriarts.iam.gserviceaccount.com | --no-allow-unauthenticated, 호출 시 IAM | miriart-be/scripts/cloudrun-redeploy.ps1:18-31, MiriArt_GCP_INFRA.md §4 |
-| miriart-ai | asia-northeast3 | Python 3.11, uvicorn | 1Gi, 1 CPU | 120s | 미기재 | miriart-ai-runner@miriarts.iam.gserviceaccount.com | --no-allow-unauthenticated, 내부 전용 | miriart-ai/cloudbuild.yaml:17–33 |
+| miriart-be | asia-northeast3 | Java 17 (Eclipse Temurin) | 1Gi (문서) | 문서에 --timeout 미기재 | 문서에 미기재 | miriart-be-runner@miriarts.iam.gserviceaccount.com | --no-allow-unauthenticated, 호출 시 IAM | miriart-be/scripts/cloudrun-redeploy.ps1:18-31, cloudrun-redeploy.sh |
 | server | (레포 내 배포 정의 없음) | Node 20 | Dockerfile만 존재 | — | — | — | **(현재 비활성 / future use)** (추론) | server/Dockerfile |
 
 프론트엔드는 GCP Cloud Run이 아닌 **Vercel**에 배포되며, FE 배포 설정의 SSOT는 Vercel 프로젝트 설정이다. *소스: README.md:82–100, 157 (Vercel 배포·연결), docs/SSOT/miriarts_central.md:223 (Vercel SPA 배포).*
@@ -91,12 +87,12 @@
 
 | 항목 | 값 | 소스(파일/라인) |
 |------|-----|------------------|
-| 인스턴스명 | miriart-mysql | docs/MiriArt_GCP_INFRA.md §5 |
+| 인스턴스명 | miriart-mysql | Cloud Run 배포 시 --add-cloudsql-instances=miriarts:asia-northeast3:miriart-mysql (cloudrun-redeploy.ps1:72, cloudrun-redeploy.sh) |
 | 리전 | asia-northeast3 | 동일 |
-| 연결 방식 | Cloud Run → **Socket Factory**(Unix 소켓). 인스턴스는 Private IP(10.99.0.3) 존재 | docs/MiriArt_BE_CloudRun_CloudSQL_FIX.md:4–9, miriart-be/build.gradle:56–57 |
-| 주 DB 이름 | miriart_prod (prod), miriart_dev (dev) | docs/MiriArt_GCP_INFRA.md §5, miriart-be/src/main/resources/application-dev.yml:3 |
-| 문자셋 | utf8mb4 / utf8mb4_unicode_ci | docs/MiriArt_GCP_INFRA.md §5 |
-| **실제 스키마 SSOT** | **엔티티·Flyway 마이그레이션(V5 등)·`docs/MiriArt_ERD_v2.md`** | 테이블·컬럼·인덱스는 엔티티 및 Flyway 마이그레이션·ERD_v2 기준. `docs/mysql_erd_v1.md`는 현재 없으며, 역추출 시 해당 경로에 생성 예정. *Cursor 규칙: .cursor/rules/infra-ssot.mdc, INFRA_SSOT_GUIDE.md* |
+| 연결 방식 | Cloud Run → **Socket Factory**(Unix 소켓). JDBC URL은 Secret miriart-db-url(소켓 방식). 인스턴스 Private IP(10.99.0.3) 존재 | miriart-be/build.gradle:56-57 (mysql-socket-factory-connector), cloudrun-redeploy 시 --add-cloudsql-instances |
+| 주 DB 이름 | miriart_prod (prod), miriart_dev (dev) | miriart-be/src/main/resources/application-dev.yml:3 (miriart_dev), prod는 Secret miriart-db-url |
+| 문자셋 | utf8mb4 / utf8mb4_unicode_ci | JDBC URL 파라미터 (Secret miriart-db-url) |
+| **실제 스키마 SSOT** | **엔티티·Flyway 마이그레이션(V5·V6)·`docs/MiriArt_ERD_v2.md` v2.1** | 테이블·컬럼·인덱스는 miriart-be/.../entity/*.java 및 db/migration/V5*.sql, V6*.sql, docs/MiriArt_ERD_v2.md 기준. ERD v2.1은 실 DB(miriart_prod) 역추출 검증 완료(2026-03-15). 운영 테이블 12개(flyway_schema_history 포함). |
 | Cloud Shell 접속(공개 IP) | 공개 IP 활성화 시에만 가능. **승인된 네트워크**에 Cloud Shell egress IP를 `x.x.x.x/32` 형식으로 추가. 해당 IP는 세션마다 다를 수 있으므로 **환경변수로 두지 않음** — 접속 전 `curl -s ifconfig.me` 로 확인 후 GCP 콘솔(SQL → 인스턴스 → 연결 → 승인된 네트워크)에서 추가. | 운영 확인 2026-03-02 |
 
 #### Cloud Shell에서 MySQL 접속 절차
@@ -134,23 +130,23 @@
 
 | 항목 | 값 | 소스(파일/라인) |
 |------|-----|------------------|
-| 인스턴스명 | miriart-redis | docs/MiriArt_GCP_INFRA.md §6 |
+| 인스턴스명 | miriart-redis | 배포 시 Secret miriart-redis-host(Private IP), cloudrun-redeploy.sh --vpc-connector |
 | 리전 | asia-northeast3 | 동일 |
 | 메모리/버전 | 1GB, Redis 7.0 | 동일 |
-| 접속 방식 | Private IP (10.15.105.203), 포트 6379. Cloud Run → **VPC 커넥터** miriart-connector 필요 | docs/MiriArt_GCP_INFRA.md §6, docs/MiriArt_BE_CloudRun_CloudSQL_FIX.md §3, §6 |
+| 접속 방식 | Private IP (10.15.105.203), 포트 6379. Cloud Run → **VPC 커넥터** miriart-connector(10.8.0.0/28), --vpc-egress=private-ranges-only | miriart-be/scripts/cloudrun-redeploy.sh |
 
 ### GCS 버킷
 
 | 버킷명 | 용도 | 공개/비공개 | 소스(파일/라인) |
 |--------|------|-------------|------------------|
-| miriart-bucket | 작품(artworks), 편집(edited), 프로필(profiles), 커뮤니티(community) 이미지 | 비공개 (서비스 계정만) | docs/MiriArt_GCP_INFRA.md §3 |
-| miriart-build-cache | Cloud Build 캐시 | Cloud Build만 | 동일 |
+| miriart-bucket | 작품(artworks), 편집(edited), 프로필(profiles), 커뮤니티(community) 이미지 | 비공개 (서비스 계정만) | miriart-be/src/main/resources/application.yml:24 (miriart.gcs.bucket) |
+| miriart-build-cache | Cloud Build 캐시 | Cloud Build만 | Cloud Build 설정 |
 
 ### Secret Manager (주요 Secret ID)
 
 | Secret ID | 용도 | 매핑(서비스 → env) | 소스(파일/라인) |
 |-----------|------|---------------------|------------------|
-| miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → SPRING_DATASOURCE_URL | docs/MiriArt_GCP_INFRA.md §8, application-prod.yml. 현행 배포는 cloudrun-redeploy.sh 기준, --set-secrets가 SPRING_* 이름 사용 |
+| miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → SPRING_DATASOURCE_URL | application-prod.yml:12, miriart-be/scripts/cloudrun-redeploy.sh --set-secrets (SPRING_DATASOURCE_URL=miriart-db-url:latest) |
 | miriart-db-username | MySQL 사용자명 | miriart-be → SPRING_DATASOURCE_USERNAME | 동일 |
 | miriart-db-password | MySQL 비밀번호 | miriart-be → SPRING_DATASOURCE_PASSWORD | 동일 |
 | miriart-redis-host | Redis 호스트 IP | miriart-be → SPRING_DATA_REDIS_HOST | 동일 |
@@ -168,10 +164,8 @@
 
 | 서비스 | 용도 | 비고 | 소스(파일/라인) |
 |--------|------|------|------------------|
-| Artifact Registry | Docker 이미지 저장소 `miriart-images`, 리전 asia-northeast3 | | docs/MiriArt_GCP_INFRA.md §7 |
-| Vertex AI | Gemini Vision/Chat (miriart-ai) | | docs/MiriArt_GCP_INFRA.md §1, miriart-ai/app/core/gemini_client.py |
-| Cloud Build | CI/CD (miriart-ai용 cloudbuild.yaml) | | docs/MiriArt_GCP_INFRA.md §1, §2 |
-| FCM (Firebase Cloud Messaging) | Phase C5 추가 예정 | | docs/MiriArt_GCP_INFRA.md §1 |
+| Artifact Registry | Docker 이미지 저장소 `miriart-images`, 리전 asia-northeast3 | BE 이미지 등 | miriart-be/scripts/cloudrun-redeploy.ps1:8, cloudrun-redeploy.sh (asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-be:latest) |
+| FCM (Firebase Cloud Messaging) | Phase C5 추가 예정 | | 본 문서 §7 TODO-005 |
 
 ---
 
@@ -195,11 +189,10 @@
 | 파일 저장 | MockFileStorageService 사용 가능 | GcsFileStorageService, miriart.gcs.bucket (application.yml:24) |
 | JPA ddl-auto, show-sql, 로그 | ddl-auto none, show-sql true, com.miriart.api DEBUG (application-dev.yml) | ddl-auto validate, show-sql false, root INFO (application-prod.yml:23–24, 55–56) |
 
-#### FastAPI / server / FE
+#### server / FE
 
 | 서비스 | dev / prod 차이 | 소스(파일/라인) |
 |--------|------------------|------------------|
-| FastAPI | config 기본값 gcp_project_id `miriart-dev`, gcp_region `asia-northeast3`, gcs_bucket_name `miriart-bucket`. 로컬: .env·GOOGLE_APPLICATION_CREDENTIALS. Cloud Run: --set-env-vars GCP_PROJECT_ID=miriarts 등 | miriart-ai/app/core/config.py:22–25, miriart-ai/cloudbuild.yaml:32 |
 | server | **(현재 비활성 / future use)** 레포 내 dev/prod 전용 설정 없음. PORT, ALLOWED_ORIGIN, GEMINI_API_KEY 환경변수 (추론) | server/index.ts:19, 24 |
 | FE | VITE_API_BASE_URL: dev 미설정 시 http://localhost:8080, prod 미설정 시 ''(빈 문자열). Vercel 등 prod에서는 반드시 BE URL로 설정 필요. | src/shared/config/api.ts:8-12 |
 
@@ -220,12 +213,8 @@
 | KAKAO_CLIENT_ID | miriart-kakao-client-id | miriart-be | 카카오 OAuth2 Client ID | application-dev.yml (문서상 Secret 미등록) | application-dev.yml:35 |
 | KAKAO_CLIENT_SECRET | miriart-kakao-client-secret | miriart-be | 카카오 OAuth2 Secret | 동일 | 동일 |
 | FRONTEND_OAUTH_SUCCESS_URL | miriart-frontend-oauth-url | miriart-be | OAuth 성공 후 FE 리다이렉트 URL | application.yml → miriart.frontend.oauth-success-url | application.yml:17 |
-| FASTAPI_INTERNAL_URL | (없음) | miriart-be | FastAPI AI Base URL | application.yml → miriart.fastapi.internal-url, 배포 시 --set-env-vars | application.yml:19, WebClientConfig.java:33 |
+| FASTAPI_INTERNAL_URL | (없음) | miriart-be | 외부 AI 서비스 Base URL (분석·채팅 호출) | application.yml → miriart.fastapi.internal-url, 배포 시 --set-env-vars | application.yml:19, WebClientConfig.java:33 |
 | GCS_BUCKET_NAME | (없음) | miriart-be | GCS 버킷명 | application.yml → miriart.gcs.bucket | application.yml:24 |
-| GCP_PROJECT_ID | (없음) | miriart-ai | Vertex/GCS 프로젝트 ID | config.py → gcp_project_id, cloudbuild --set-env-vars | miriart-ai/app/core/config.py:22 |
-| GCP_REGION | (없음) | miriart-ai | 리전 | config.py → gcp_region | config.py:23 |
-| GCS_BUCKET_NAME | (없음) | miriart-ai | GCS 버킷명 | config.py → gcs_bucket_name | config.py:24 |
-| GOOGLE_APPLICATION_CREDENTIALS | (없음) | miriart-ai | 로컬 인증 JSON 경로 | config.py. Cloud Run 불필요 | config.py:25 |
 | VITE_API_BASE_URL | (없음) | FE | BE API Base URL | import.meta.env (Vite), 빌드 시 주입 | src/shared/api/miriartApi.ts |
 | PORT, ALLOWED_ORIGIN, GEMINI_API_KEY | — | server | 서버 포트, CORS origin, Gemini API 키 | process.env (server) | server/index.ts:19, 24, 55 |
 
@@ -284,10 +273,9 @@
 
 | 경로 | 방식 | 소스(파일/라인) |
 |------|------|------------------|
-| Cloud Run (BE) → Cloud SQL | **Socket Factory** / 인스턴스 연결(Unix 소켓). --add-cloudsql-instances=miriarts:asia-northeast3:miriart-mysql. Private IP 직결 아님 | docs/MiriArt_BE_CloudRun_CloudSQL_FIX.md:4–9, miriart-be/build.gradle:56–57 |
-| Cloud Run (BE) → Redis | **VPC 커넥터** miriart-connector, **Private IP** (10.15.105.203). --vpc-egress=private-ranges-only | docs/MiriArt_BE_CloudRun_CloudSQL_FIX.md §3, §6 |
-| Cloud Run (BE) → miriart-ai | HTTPS, FASTAPI_INTERNAL_URL. miriart-ai는 --no-allow-unauthenticated → IAM(roles/run.invoker) 호출 | docs/MiriArt_GCP_INFRA.md §2, §4 |
-| miriart-ai | **인터넷 직접 노출 없음**(내부 전용). BE만 호출 | miriart-ai/cloudbuild.yaml:26 |
+| Cloud Run (BE) → Cloud SQL | **Socket Factory** / 인스턴스 연결(Unix 소켓). --add-cloudsql-instances=miriarts:asia-northeast3:miriart-mysql. Private IP 직결 아님 | miriart-be/build.gradle:56-57 (mysql-socket-factory-connector), miriart-be/scripts/cloudrun-redeploy.sh |
+| Cloud Run (BE) → Redis | **VPC 커넥터** miriart-connector(10.8.0.0/28), **Private IP** (10.15.105.203). --vpc-egress=private-ranges-only | miriart-be/scripts/cloudrun-redeploy.sh --vpc-connector, --vpc-egress |
+| Cloud Run (BE) → 외부 AI 서비스 | HTTPS, FASTAPI_INTERNAL_URL. (외부 서비스 배포·IAM은 별도 레포에서 관리) | application.yml:19, WebClientConfig.java:33 |
 
 ### 4.2 인증/인가 & CORS
 
@@ -309,36 +297,70 @@
 | 서비스 | 설정 | FE 도메인 연관 | 소스(파일/라인) |
 |--------|------|----------------|------------------|
 | miriart-be | SecurityConfig에서 CORS 설정. allowedOrigins: `http://localhost:3000`, `http://localhost:5173`, `https://miri-art.vercel.app`. allowCredentials: true. allowedMethods: GET, POST, PUT, PATCH, DELETE, OPTIONS. allowedHeaders: * | FE prod: https://miri-art.vercel.app, dev: http://localhost:5173, http://localhost:3000. **allowedOrigins에 없는 FE 도메인으로 배포 시 CORS 차단 발생** → 새 도메인 사용 시 SecurityConfig 갱신 필요. | SecurityConfig.java:93-96 |
-| miriart-ai | CORS 미들웨어 없음. BE만 호출 | — | miriart-ai/app/main.py |
 | server | **(현재 비활성 / future use)** origin: ALLOWED_ORIGIN \|\| '*', methods: GET, POST, OPTIONS, allowedHeaders: Content-Type, Authorization | ALLOWED_ORIGIN으로 제한 가능 | server/index.ts:23–27 |
 
 #### 인증 실패 시 응답 (401)
 
-`anyRequest().authenticated()`에 걸리는 경로에 인증 없이 접근 시 Spring Security `authenticationEntryPoint`가 **401** 반환. 응답 body: `{"code":"AUTH001","message":"인증이 필요합니다."}` (Content-Type application/json). *소스: SecurityConfig.java:72-76*
+`anyRequest().authenticated()`에 걸리는 경로에 인증 없이 접근 시 Spring Security `authenticationEntryPoint`가 **401** 반환. 응답 body: `{"code":"AUTH009","message":"인증이 필요합니다."}` (ErrorCode.AUTH_REQUIRED, Content-Type application/json). *소스: SecurityConfig*
 
-#### 인증 필터·BE→AI 내부 호출
+#### 인증 필터·BE→외부 AI 서비스 호출
 
 - **JWT 인증**: `JwtAuthenticationFilter`(OncePerRequestFilter)가 요청에서 JWT를 추출·검증하고 SecurityContext에 인증 정보를 설정. *소스: JwtAuthenticationFilter.java*
-- **BE→miriart-ai 호출**: `WebClientConfig`에서 구성한 WebClient가 `FASTAPI_INTERNAL_URL`로 AI 서비스 호출. Cloud Run 배포 시 miriart-ai는 `--no-allow-unauthenticated`이므로 **IAM(roles/run.invoker)** 으로 BE 서비스 계정이 AI를 호출. *소스: WebClientConfig.java, AiProxyService.java*
-- 상세 필터 체인·OIDC 교환 로직은 SecurityConfig 및 관련 필터 클래스 기준. 문서 갭 검수: *docs/BE_CODE_AUDIT_GAP_REPORT_FINAL.md* §6.
+- **BE→외부 AI 서비스**: `WebClientConfig`에서 구성한 WebClient가 `FASTAPI_INTERNAL_URL`로 외부 AI 서비스를 호출. *소스: WebClientConfig.java, AiProxyService.java*
+- 상세 필터 체인·OIDC 교환 로직은 SecurityConfig 및 관련 필터 클래스 기준. *소스: SecurityConfig.java, JwtAuthenticationFilter*
 
 ### 4.3 서비스 계정 & IAM
 
-*소스: docs/MiriArt_GCP_INFRA.md §2. 구체 리소스 정책은 문서 범위 내.*
+*BE 배포·GCP 콘솔 기준. 구체 리소스 정책은 GCP IAM 콘솔·배포 스크립트 참고.*
 
 | 서비스 계정 | 용도 | 역할 (문서 기준) |
 |-------------|------|-------------------|
 | miriart-be-runner | BE Cloud Run 런타임 | roles/storage.objectAdmin, roles/run.invoker, roles/cloudsql.client, roles/secretmanager.secretAccessor |
-| miriart-ai-runner | AI Cloud Run 런타임 | roles/aiplatform.user, roles/storage.objectAdmin |
 | miriart-cloudbuild | CI/CD 파이프라인 | roles/run.admin, roles/iam.serviceAccountUser, roles/artifactregistry.writer, roles/storage.objectAdmin |
 | miriart-local-dev | 로컬 개발(키파일) | roles/aiplatform.user, roles/storage.objectAdmin |
 
 ### 4.4 API 구현 현황(검증됨)
 
-*코드·설정 기준으로 확인된 API·데이터·에러 정책만 기재. FSD/PRD 상세는 각 문서 참고.*  
-*예외 코드(ErrorCode)·전역 핸들러(I-P-O-E)·CORS·엔드포인트 일람: **docs/MiriArt_API_CONTRACT.md §9(ErrorCode), §10(코드 기준 검증), §8(FastAPI Internal 프로덕션 명세)**.*
+*코드·설정 기준으로 확인된 API·데이터·에러 정책만 기재. FSD/PRD 상세는 각 문서 참고. 엔드포인트·ErrorCode 전수는 아래 표(실 코드 라인 기준). 상세 계약·엔드포인트별 에러: **docs/MiriArt_API_CONTRACT.md**.*
 
-#### 구현된 엔드포인트(인증 필요)
+#### 구현된 엔드포인트 전수(코드 기준)
+
+*소스: miriart-be/.../controller/*.java. 인증 필요 여부는 SecurityConfig permitAll 제외 시 authenticated.*
+
+| 메서드 | 경로 | 컨트롤러:라인 |
+|--------|------|----------------|
+| POST | /api/auth/token | AuthController:62 |
+| POST | /api/auth/refresh | AuthController:75 |
+| POST | /api/auth/logout | AuthController:91 |
+| GET | /api/users/me | UserController:39 |
+| PATCH | /api/users/me/profile | UserController:46 |
+| GET | /api/users/me/plan | UserController:54 |
+| POST | /api/analyses | AnalysisController:47 |
+| GET | /api/analyses | AnalysisController:63 |
+| GET | /api/analyses/{id} | AnalysisController:79 |
+| GET | /api/images/{id}/url | ImageController:46 |
+| POST | /api/chat | AiChatController:43 |
+| GET | /api/chat/sessions?analysisId= | ChatSessionController:45 |
+| GET | /api/chat/sessions | ChatSessionController:56 |
+| GET | /api/chat/sessions/{sessionKey} | ChatSessionController:72 |
+| GET | /api/chat/sessions/{sessionKey}/messages | ChatSessionController:82 |
+| GET | /api/posts | PostController:39 |
+| GET | /api/posts/{id} | PostController:54 |
+| POST | /api/posts | PostController:63 |
+| PUT | /api/posts/{id} | PostController:72 |
+| DELETE | /api/posts/{id} | PostController:82 |
+| POST | /api/posts/{postId}/accept/{answerId} | PostController:91 |
+| POST | /api/posts/{postId}/answers | AnswerController:36 |
+| PUT | /api/posts/{postId}/answers/{answerId} | AnswerController:53 |
+| DELETE | /api/posts/{postId}/answers/{answerId} | AnswerController:65 |
+| POST | /api/likes/toggle | LikeController:27 |
+| POST | /api/comments | CommentController:24 |
+| PUT | /api/comments/{id} | CommentController:32 |
+| DELETE | /api/comments/{id} | CommentController:41 |
+| POST | /api/posts/{postId}/report | ReportController:24 |
+| POST | /api/answers/{answerId}/report | ReportController:34 |
+
+#### 구현된 엔드포인트(인증 필요·용도 요약)
 
 | 경로 | 용도 | 비고 |
 |------|------|------|
@@ -347,7 +369,7 @@
 | GET /api/users/me/plan | 플랜·월 한도·사용량·잔여 | PlanType(FREE/BASIC/PREMIUM) monthlyLimit, AnalysisService.getUsedThisMonth 연동. *소스: UserController.java:48–52, PlanType.java, UserService.java:66–81* |
 | POST /api/analyses | 작품 분석 시작 | 202 + analysisId. needsProfile=true일 때만 월 한도 체크, 초과 시 CR001(402). FREE=5회/월. *소스: AnalysisController.java, AnalysisService.java (PlanType.FREE=5)* |
 | GET /api/analyses, GET /api/analyses/{id} | 분석 목록·단건 | 본인만. 없으면 AN003(404). *소스: AnalysisController.java:57–69* |
-| POST /api/chat | AI 멘토 채팅 | FastAPI /internal/ai/chat 호출, Redis 세션 갱신. *소스: AiChatController.java:37–42, AiProxyService.java:97–98* |
+| POST /api/chat | AI 멘토 채팅 | 외부 AI 서비스 호출, Redis 세션 갱신. *소스: AiChatController.java:37–42, AiProxyService.java* |
 | GET /api/images/{id}/url | 분석 이미지 Signed URL | id=analysisId, ImageUrlResponse, I001/F005 |
 | GET /api/chat/sessions | 채팅 세션 목록 | page, size, grade, Page&lt;ChatSessionResponse&gt; |
 | GET /api/posts, GET /api/posts/{id} | 게시글 목록·단건 | permitAll |
@@ -373,14 +395,61 @@
 
 MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat_sessions.sql`로 생성됨. BE 엔티티 `ChatSession`, `GET /api/chat/sessions`로 세션 목록 조회 가능. 채팅 **메시지**는 Redis(`miriart:chat:session:{sessionId}`)에만 저장. *소스: miriart-be/.../entity/ChatSession.java, db/migration/V5__create_chat_sessions.sql, ChatSessionController.java*
 
+#### BE→외부 AI API 계약 요약(코드 기준)
+
+*BE가 외부 AI 서비스를 호출할 때 사용하는 경로·DTO·에러 매핑. 상세 스펙은 외부 레포 기준.*
+
+| 항목 | 값 | 소스(파일/라인) |
+|------|-----|------------------|
+| 분석 호출 | POST /internal/ai/analyze | AiProxyService.java:59 |
+| 채팅 호출 | POST /internal/ai/chat | AiProxyService.java:103 |
+| 요청 DTO(분석) | InternalAnalyzeRequest (gcsUri, analysisType, problemText) | domain/ai/dto/InternalAnalyzeRequest.java |
+| 응답 DTO(분석) | InternalAnalyzeResponse | domain/ai/dto/InternalAnalyzeResponse.java |
+| 요청 DTO(채팅) | InternalChatRequest (modelType, message, stickyContext, history, imageBase64, imageMimeType) | domain/ai/dto/InternalChatRequest.java, AiProxyService.java:93-100 |
+| 응답 DTO(채팅) | InternalChatResponse (text, groundingUrls, quickReplies) | domain/ai/dto/InternalChatResponse.java |
+| 에러 매핑 | AiErrorMapper.toErrorCode(statusCode, bodyCode, forAnalyze), AiErrorResponse 파싱 | AiErrorMapper.java, AiProxyService.java parseAiErrorCode(177-186) |
+| 타임아웃 | 60초 | AiProxyService.java:42, 71, 115 |
+
 #### 미구현(코드 검색 기준)
 
 - **성적/입시 전용 API**: `/api/theory`, `/api/universities`, `/api/line` 컨트롤러·전용 서비스 없음. grade·universityPredictions는 분석·유저 도메인 필드로만 사용. → §7 TODO-008.
 
+#### ErrorCode 요약(코드 기준)
+
+*소스: miriart-be/.../exception/ErrorCode.java (라인 23–98). 401 미인증 진입점: SecurityConfig.java:79–80 (ErrorCode.AUTH_REQUIRED).*
+
+| 코드 | HTTP | 메시지 | ErrorCode.java 라인 |
+|------|------|--------|----------------------|
+| C001–C006 | 400/405/500/403/404 | 공통(입력값·메서드·서버오류·접근거부·엔티티없음) | 23–28 |
+| AUTH001–AUTH009 | 400/401/502 | 인증(OAuth·토큰·리프레시·만료·401 AUTH009) | 31–44 |
+| M001–M003 | 404/409/400 | 회원(없음·닉네임중복·이미삭제) | 47–50 |
+| F001–F005 | 400/500/502 | 파일·이미지(Signed URL) | 53–57 |
+| AN001–AN004 | 502/504/404/429 | 분석(AI연결·타임아웃·없음·레이트리밋) | 60–63 |
+| I001 | 404 | 이미지 없음 | 66 |
+| CR001–CR002 | 402/400 | 크레딧(한도초과·플랜업그레이드) | 69–71 |
+| AI001–AI004 | 502/504/429 | AI 채팅 | 74–77 |
+| CS001 | 404 | 채팅 세션 없음 | 81 |
+| CM001–CM007 | 404/400/403/409 | 커뮤니티(게시글·답변·채택·좋아요·신고) | 85–98 |
+
+**401 미인증 시**: SecurityConfig authenticationEntryPoint가 ErrorCode.AUTH_REQUIRED 사용 → `{"code":"AUTH009","message":"인증이 필요합니다."}` 반환. *소스: SecurityConfig.java:79-80*
+
 #### 전역 에러 정책(참조용)
 
-- **BusinessException** → GlobalExceptionHandler → ErrorCode 기반 HTTP status·code·message. *소스: GlobalExceptionHandler.java:35–40, ErrorCode.java*
+- **BusinessException** → GlobalExceptionHandler → ErrorCode 기반 HTTP status·code·message. *소스: GlobalExceptionHandler.java:36-38, ErrorCode.java*
 - **DataAccessException / DB 커넥션 실패** 전용 핸들러 없음 → Exception 핸들러로 500 + C003. *소스: GlobalExceptionHandler.java:99–104*
+
+#### 트랜잭션·락·예외 요약(코드 기준)
+
+*소스: miriart-be **/*Service.java, PostRepository, AnswerCommandService, GlobalExceptionHandler.*
+
+| 구분 | 위치 | 설명 |
+|------|------|------|
+| **@Transactional** | AnalysisFailHandler:47,64,87; ChatSessionService:39,50,87; PostCommandService:37,74,94; AnswerCommandService:45,80,112,125; CommentCommandService:33,77,88; ReportService:32; LikeCommandService:38; UserService:46; TokenRefreshService:43; PostQueryService(클래스):29; AnalysisService:112,123; CustomOAuth2UserService:42; PersonaService:37; ReputationService:35; AnalysisCleanupScheduler:29 | TX 경계. startAnalysis는 @Transactional 없음(오케스트레이션만). |
+| **락(채택)** | PostRepository:39-41 | @Lock(LockModeType.PESSIMISTIC_WRITE), findByIdForUpdate(Long id) |
+| **락 호출** | AnswerCommandService:82 | acceptAnswer 내 postRepository.findByIdForUpdate(postId) |
+| **BusinessException → 핸들러** | GlobalExceptionHandler:36-38 | handleBusinessException(BusinessException e) → ErrorCode 기반 응답 |
+
+*주요 throw 위치(일부): AnalysisController:58(F003); AuthController:81(AUTH004); TokenRefreshService:47,54(AUTH006,AUTH004); PostCommandService:44,77,97; AnswerCommandService:49,52,55,58,83,85,88,91,94,97,115,128; AnalysisService:67,71,102,115; UserService:53(M002); UserRepository:29(M001); ChatSessionService:92,112; AnalysisFailHandler:67,103(CR001).*
 
 ---
 
@@ -392,16 +461,17 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 
 | 서비스 | 배포 방식 | 상태 | 소스(파일/라인) |
 |--------|-----------|------|------------------|
-| miriart-ai | Cloud Build + Cloud Run 자동 배포 (cloudbuild.yaml 기반). Docker 빌드 → Artifact Registry 푸시 → gcloud run deploy | OK (자동 배포) | miriart-ai/cloudbuild.yaml 전체 |
-| miriart-be | Gradle + Dockerfile + docker push(또는 Cloud Build submit) + gcloud run deploy. **스크립트**: `miriart-be/scripts/cloudrun-redeploy.ps1` (PowerShell, Cloud Build submit → deploy). 로컬 Docker 빌드 시 gradlew CRLF 처리·JAR 경로는 Dockerfile 참고 (§5.3). | 수동/스크립트 배포. 중기: Cloud Build 이식 예정 (TODO-004). | miriart-be/scripts/cloudrun-redeploy.ps1, miriart-be/Dockerfile |
+| miriart-be | Gradle + Dockerfile + docker push(또는 Cloud Build submit) + gcloud run deploy. **스크립트**: `miriart-be/scripts/cloudrun-redeploy.ps1` (PowerShell), cloudrun-redeploy.sh (WSL/배시). 로컬 Docker 빌드 시 gradlew CRLF 처리·JAR 경로는 Dockerfile 참고 (§5.3). | 수동/스크립트 배포. 중기: Cloud Build 이식 예정 (TODO-004). | miriart-be/scripts/cloudrun-redeploy.ps1, miriart-be/Dockerfile |
 | Frontend | Vercel 프로젝트를 통한 Git push 기반 자동 빌드/배포 (추론) | OK (FE 배포 SSOT는 Vercel 설정) | README.md:82–100, 157, docs/SSOT/miriarts_central.md:223 |
 | server | Dockerfile만 존재. 배포 파이프라인/Cloud Run 정의 없음 | **(현재 비활성 / future use)** | server/Dockerfile |
+
+외부 AI 서비스 배포는 별도 레포에서 관리.
 
 ### 5.2 Cloud Run 배포 파라미터 SSOT
 
 #### miriart-be (문서 기준)
 
-*소스: miriart-be/scripts/cloudrun-redeploy.ps1:18-31, docs/MiriArt_GCP_INFRA.md §4*
+*소스: miriart-be/scripts/cloudrun-redeploy.ps1:18-31, cloudrun-redeploy.sh*
 
 현재는 아래 파라미터를 **gcloud run deploy** 명령으로 로컬 스크립트/수동 배포 시 사용한다. (Cloud Build 파이프라인은 아직 없음, TODO-004.)
 
@@ -416,7 +486,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | --vpc-egress | private-ranges-only | :74 |
 | --no-allow-unauthenticated | 사용 | :69 |
 | --set-secrets | SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SPRING_DATA_REDIS_HOST, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET, FRONTEND_OAUTH_SUCCESS_URL (각 :latest). **현행 배포는 cloudrun-redeploy.sh** (WSL/배시) 기준이며, ps1은 레거시 변수명(DB_*, REDIS_HOST) 사용 가능성 있음. | cloudrun-redeploy.sh:33 |
-| --set-env-vars | SPRING_PROFILES_ACTIVE=prod, FASTAPI_INTERNAL_URL=(miriart-ai Cloud Run URL), GCS_BUCKET_NAME=miriart-bucket | cloudrun-redeploy.ps1:30, cloudrun-redeploy.sh:34 |
+| --set-env-vars | SPRING_PROFILES_ACTIVE=prod, FASTAPI_INTERNAL_URL=(외부 AI 서비스 URL), GCS_BUCKET_NAME=miriart-bucket | cloudrun-redeploy.ps1:30, cloudrun-redeploy.sh:34 |
 
 #### 5.3 BE Docker 빌드·Actuator (참고)
 
@@ -426,20 +496,6 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | **JAR 경로** | Gradle 기본 출력은 `build/libs/*.jar`. Dockerfile COPY는 `--from=builder /app/build/libs/*.jar`. | miriart-be/Dockerfile:26, build.gradle |
 | **Actuator health** | Cloud Run에서 `/actuator/health` 500 시 NoResourceFoundException 가능. application-prod.yml에 `management.endpoints.web.exposure.include: health` 명시. | miriart-be/src/main/resources/application-prod.yml:53–60 |
 | **분석·패치 문서** | GET /api/posts 500(컨트롤러 없음 → PostController 추가), Cloud Run health 500(Actuator 노출·경로) 원인·해결은 miriart-be/docs 내 분석 문서 참고. | miriart-be/docs/GET_api_posts_500_분석_패치.md, CloudRun_health_500_분석_패치.md |
-
-#### miriart-ai (cloudbuild.yaml 기준)
-
-*소스: miriart-ai/cloudbuild.yaml:17–33*
-
-| 항목 | 값 | 소스(파일/라인) |
-|------|-----|------------------|
-| 이미지 | asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-ai:$COMMIT_SHA | cloudbuild.yaml:23 |
-| 포트 | 8080 | :28 |
-| 메모리/CPU | 1Gi, 1 | :29–30 |
-| 타임아웃 | 120 | :31 |
-| 동시성, min/max 인스턴스 | 미기재 | — |
-| --set-env-vars | GCP_PROJECT_ID=miriarts, GCP_REGION=asia-northeast3, GCS_BUCKET_NAME=miriart-bucket | :32 |
-| --set-secrets | 없음 | — |
 
 ---
 
@@ -452,7 +508,6 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | 서비스 | 엔드포인트 | 인증 | 비고 | 소스(파일/라인) |
 |--------|-------------|------|------|------------------|
 | miriart-be | GET /actuator/health | permitAll | Spring Boot Actuator. **prod**: application-prod.yml에 management.endpoints.web.exposure.include: health 명시. 로드밸런서/배포 검사용. | SecurityConfig.java:60, application-prod.yml:53–60, build.gradle:65 |
-| miriart-ai | GET /health | 없음 | 응답 {"status": "ok"} | miriart-ai/app/main.py:37–41 |
 | server | **(현재 비활성 / future use)** GET /health | 없음 | 응답 { status, timestamp } | server/index.ts:34–36 |
 
 ### 6.2 로그 & 모니터링 현황
@@ -461,7 +516,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 |------|------|------------------|
 | Cloud Logging / Monitoring / Trace | 전용 설정·SDK 없음. Spring Cloud GCP는 storage만 사용. **(추론: 기본 로그 수준만 사용)** | miriart-be/build.gradle |
 | BE 예외 로깅 | GlobalExceptionHandler: 예외 유형별 log.error. 미처리 예외는 `log.error("Unhandled Exception: ", e)` (스택 포함). request/response body·헤더 직접 로깅 없음 | miriart-be/.../GlobalExceptionHandler.java:36–102, AiProxyService.java:71, 110 |
-| AI/server | FastAPI lifespan 경고, server console.error. body/헤더 로깅 없음 | miriart-ai/app/main.py:24, server/index.ts:46–48 |
+| server | **(현재 비활성)** console.error. body/헤더 로깅 없음 | server/index.ts:46–48 |
 | 알람/대시보드 | 코드·문서에 Cloud Monitoring 알람/대시보드 설정 없음. **(추론: 별도 설계 필요)** → TODO-006 | — |
 
 **BE 로그 설정**: `miriart-be/src/main/resources/logback-spring.xml`. **프로파일별**: dev — 일별 롤링 파일(miriart-be.log), ERROR 전용 파일(miriart-be-error.log), maxHistory 7일/14일; prod — 기본 console 출력 또는 Cloud Logging 수집. *소스: logback-spring.xml*
@@ -472,13 +527,12 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 
 **목적**: 인프라 관련 미완료 항목을 ID와 함께 정리해, 체크리스트·우선순위 정렬에 사용함.
 
-*소스: docs/MiriArt_GCP_INFRA.md §12 및 관련 문서.*
+*소스: 본 문서 §2·§5·운영 확인.*
 
 | ID | 항목 | 중요도 | 설명 |
 |----|------|--------|------|
 | TODO-001 | 카카오 OAuth Secret 미등록 | High | 카카오 개발자 콘솔 발급 후 miriart-kakao-client-id, miriart-kakao-client-secret Secret Manager 등록 |
 | TODO-002 | Google OAuth 운영 리다이렉트 URI 추가 | Medium | BE Cloud Run URL `https://miriart-be-946560105497.asia-northeast3.run.app/login/oauth2/code/google` 를 Google 콘솔 승인된 리다이렉트 URI에 추가. **검증:** §3.3 로그인 기준 확정값의 수동 확인 체크리스트 참고. |
-| TODO-003 | miriart-ai 실제 이미지 빌드 + Cloud Run 배포 | High | 문서상 placeholder. Dockerfile·cloudbuild.yaml 있으나 실제 배포 완료 여부 문서 외 확인 필요 |
 | TODO-004 | BE용 CI/CD 파이프라인 | Medium | 현재는 Gradle + Dockerfile + docker push + gcloud run deploy를 사용하는 로컬 스크립트 기반 수동 배포. 중기 목표는 이 절차를 그대로 Cloud Build 파이프라인으로 옮겨 main→prod 자동 배포를 구성하는 것. |
 | TODO-005 | FCM API | Low | Phase C5 추가 예정 (fcm.googleapis.com) |
 | TODO-006 | 관측성(알람·대시보드) 미구축 | Medium | Cloud Monitoring 알람/대시보드 없음. 기본 로그만 사용. 별도 설계 필요 |
@@ -509,7 +563,6 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | 항목 | 현재 상태 | 참고 섹션 / TODO |
 |------|-----------|-------------------|
 | miriart-be 자동 배포 | 수동 배포(로컬 스크립트로 표준화됨). 단기 목표는 표준화된 수동 배포 유지, 중기 목표는 Cloud Build 자동화 (TODO-004) | §5.1. Gradle+Dockerfile+gcloud 기반 수동/스크립트 배포 → **TODO-004** |
-| miriart-ai 자동 배포 | OK | §5.1. cloudbuild.yaml 기반 |
 | FE (Vercel 배포) | OK (Vercel 파이프라인에 의해 자동 배포) | FE 배포 세부 설정은 Vercel 프로젝트가 SSOT이며, 이 인프라 문서는 개요만 제공. README.md, docs/SSOT/miriarts_central.md |
 | server 배포 파이프라인 | (현재 비활성 / future use) | §5.1. Dockerfile만 존재 |
 | 롤백 전략 문서/절차 | 미흡 | §5. 문서에 롤백 절차 없음. BE 수동 배포 의존 → **TODO-004** 연관 |
@@ -520,13 +573,12 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 |------|-----------|-------------------|
 | BE Cloud Run min/max 인스턴스 | 미흡 | §5.2. 문서에 미기재 → **TODO-007** |
 | BE Cloud Run 동시성·타임아웃 | 미흡 | §5.2. 문서에 미기재 → **TODO-007** |
-| AI Cloud Run 동시성·min/max | 미흡 | §5.2. cloudbuild에 동시성·min/max 없음. 타임아웃 120s만 명시 |
 
 ### 관측성
 
 | 항목 | 현재 상태 | 참고 섹션 / TODO |
 |------|-----------|-------------------|
-| 헬스체크 엔드포인트 | OK | §6.1. BE /actuator/health, AI /health |
+| 헬스체크 엔드포인트 | OK | §6.1. BE /actuator/health |
 | 로그 레벨·구조 | OK (기본 수준) | §6.2. GlobalExceptionHandler 등 앱 로그 존재. 전용 구조화 로그/트레이스 미설정 |
 | 알람/대시보드 | 미구현 | §6.2. Cloud Monitoring 알람/대시보드 없음 → **TODO-006** |
 
@@ -536,7 +588,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 |------|-----------|-------------------|
 | 시크릿 관리 방식 | OK | §2, §3.2. Secret Manager 사용, BE는 --set-secrets 주입. 카카오 미등록 → **TODO-001** |
 | 서비스 계정 권한 | OK (문서 기준) | §4.3. 역할 문서화됨 |
-| 공개 엔드포인트 보호 | OK (BE/AI) | §4.2. BE는 JWT·permitAll 구분, AI는 --no-allow-unauthenticated. CORS는 SecurityConfig에서 설정 (§4.2) |
+| 공개 엔드포인트 보호 | OK (BE) | §4.2. BE는 JWT·permitAll 구분. CORS는 SecurityConfig에서 설정 (§4.2) |
 
 ### 데이터
 

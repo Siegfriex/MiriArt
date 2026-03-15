@@ -5,7 +5,6 @@
 
 import type { AnalysisResult } from '../model/types';
 import type { ChatSessionDto } from '../api/schemas/chatSession';
-import { debugSummaryText } from './debugStickyContext';
 
 function formatScore(v: number): string {
   return Number.isInteger(v) ? String(v) : v.toFixed(1);
@@ -87,26 +86,10 @@ export function buildSummaryText(
 ): string | undefined {
   if (analysis) {
     const text = buildSummaryTextFromAnalysis(analysis);
-    debugSummaryText(
-      'analysis',
-      {
-        grade: analysis.grade,
-        totalScore: analysis.totalScore,
-        hasRadarData: !!analysis.radarData,
-        universityPredictionsLength: analysis.universityPredictions?.length ?? 0,
-      },
-      text || undefined
-    );
     return text || undefined;
   }
   if (sessionMeta) {
-    const text = buildSummaryTextFromSession(sessionMeta);
-    debugSummaryText(
-      'session',
-      { grade: sessionMeta.grade, totalScore: sessionMeta.totalScore },
-      text
-    );
-    return text;
+    return buildSummaryTextFromSession(sessionMeta);
   }
   return undefined;
 }

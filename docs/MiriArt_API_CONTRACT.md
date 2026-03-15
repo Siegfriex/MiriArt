@@ -6,7 +6,7 @@
 
 ## 인증 실패 (401)
 
-인증이 필요한 경로에 `Authorization` 헤더 없이 접근 시 **401 Unauthorized**. Body: `{"code":"AUTH001","message":"인증이 필요합니다."}` (JSON). 상세 인증·CORS는 `docs/SSOT/miriarts_infra.md` §4.2 참조.
+인증이 필요한 경로에 `Authorization` 헤더 없이 접근 시 **401 Unauthorized**. Body: `{"code":"AUTH009","message":"인증이 필요합니다."}` (JSON). *소스: SecurityConfig.java:79-80 (ErrorCode.AUTH_REQUIRED).* 상세 인증·CORS는 docs/SSOT/miriarts_infra.md §4.2 참조.
 
 ---
 
@@ -38,46 +38,79 @@
 
 ## 목록 API 페이징·정렬
 
-| API | page 기본값 | size 기본값 | size 상한 | sort 기본 |
-|-----|-------------|-------------|-----------|-----------|
-| GET /api/analyses | 0 | 20 | 100 | createdAt, DESC |
-| GET /api/chat/sessions | 0 | 20 | 미제한 | (구현 기준) |
-| GET /api/posts | cursor 기반 (page 없음) | 20 | (구현 기준) | (cursor·sort 파라미터) |
+| API | page 기본값 | size 기본값 | size 상한 | sort 기본 | 소스(파일:라인) |
+|-----|-------------|-------------|-----------|-----------|------------------|
+| GET /api/analyses | 0 | 20 | 100 | createdAt, DESC | AnalysisController:66 |
+| GET /api/chat/sessions | 0 | 20 | 미제한 | (미명시) | ChatSessionController:59-63 |
+| GET /api/posts | (cursor) | 20 | 미제한 | type, sort, grade, domain | PostController:44-45 |
 
-*소스: BE_CODE_AUDIT_GAP_REPORT_FINAL §2.1, AnalysisController, ChatSessionController, PostController*
+*소스: 위 컨트롤러 파일:라인. 상세: docs/SSOT/miriarts_infra.md §4.4.*
 
 ---
 
 ## 엔드포인트·Request/Response·에러 참조 (코드 기준 SSOT)
 
-전체 엔드포인트 목록·Request/Response 타입·검증·에러 코드 매핑의 **단일 기준**은 실 코드와 **docs/BE_CODE_AUDIT_GAP_REPORT_FINAL.md** §2.4.1(엔드포인트별 Request/Response 요약), §2.4.2(엔드포인트별 가능 에러 코드)이다. 본 문서의 "이미지 Signed URL", "목록 API 페이징·정렬" 등은 그 일부를 계약 관점에서 요약한 것이다.
+전체 엔드포인트 전수·컨트롤러:라인은 **docs/SSOT/miriarts_infra.md §4.4** (구현된 엔드포인트 전수 표). ErrorCode 전수는 miriarts_infra §4.4 ErrorCode 요약(ErrorCode.java:23-98, 401 진입점 SecurityConfig.java:79-80). FE 요청/응답 검증은 **src/shared/api/schemas/*.ts** 및 **src/shared/api/miriartApi.ts** 기준.
 
-| 경로 | 메서드 | Request (요약) | Response (요약) | 에러 참조 |
-|------|--------|----------------|-----------------|-----------|
-| /api/auth/token | POST | TokenExchangeRequest | TokenExchangeResponse | §2.4.2 |
-| /api/auth/refresh | POST | (쿠키 refreshToken) | TokenRefreshResponse | §2.4.2 |
-| /api/auth/logout | POST | (쿠키) | 204 | — |
-| /api/users/me | GET | — | UserProfileResponse | §2.4.2 |
-| /api/users/me/profile | PATCH | UserProfileUpdateRequest | UserProfileResponse | §2.4.2 |
-| /api/users/me/plan | GET | — | UserPlanResponse | §2.4.2 |
-| /api/analyses | POST | image, analysisType, problemText(optional) | AnalysisStartResponse 202 | §2.4.2 |
-| /api/analyses | GET | Pageable | Page&lt;AnalysisDetailResponse&gt; | §2.4.2 |
-| /api/analyses/{id} | GET | id | AnalysisDetailResponse | §2.4.2 |
-| /api/images/{id}/url | GET | id(analysisId) | ImageUrlResponse | §2.4.2 (I001, F005) |
-| /api/chat | POST | ChatRequest | ChatResponse | §2.4.2 |
-| /api/chat/sessions | GET | page, size, grade | Page&lt;ChatSessionResponse&gt; | §2.4.2 |
-| /api/posts | GET | type, sort, grade, domain, cursor, size | PostsFeedPageResponse | §2.4.2 |
-| /api/posts/{id} | GET | id | PostDetailResponse | §2.4.2 |
-| /api/posts | POST | CreatePostRequest | PostDetailResponse 201 | §2.4.2 |
-| /api/posts/{id} | PUT | CreatePostRequest | PostDetailResponse | §2.4.2 |
-| /api/posts/{id} | DELETE | — | 204 | §2.4.2 |
-| /api/posts/{postId}/accept/{answerId} | POST | — | success | §2.4.2 |
-| /api/posts/{postId}/answers | POST | CreateAnswerRequest | Long 201 | §2.4.2 |
-| /api/posts/{postId}/answers/{answerId} | PUT/DELETE | CreateAnswerRequest / — | success / 204 | §2.4.2 |
-| /api/likes/toggle | POST | LikeToggleRequest | LikeToggleResponse | §2.4.2 |
-| /api/comments | POST | CreateCommentRequest | CommentResponse 201 | §2.4.2 |
-| /api/comments/{id} | PUT/DELETE | CreateCommentRequest / — | CommentResponse / 204 | §2.4.2 |
-| /api/posts/{postId}/report | POST | ReportRequest(optional) | success 201 | §2.4.2 |
-| /api/answers/{answerId}/report | POST | ReportRequest(optional) | success 201 | §2.4.2 |
+| 경로 | 메서드 | Request (요약) | Response (요약) | 컨트롤러:라인 |
+|------|--------|----------------|-----------------|----------------|
+| /api/auth/token | POST | TokenExchangeRequest | TokenExchangeResponse | AuthController:62 |
+| /api/auth/refresh | POST | (쿠키 refreshToken) | TokenRefreshResponse | AuthController:75 |
+| /api/auth/logout | POST | (쿠키) | 204 | AuthController:91 |
+| /api/users/me | GET | — | UserProfileResponse | UserController:39 |
+| /api/users/me/profile | PATCH | UserProfileUpdateRequest | UserProfileResponse | UserController:46 |
+| /api/users/me/plan | GET | — | UserPlanResponse | UserController:54 |
+| /api/analyses | POST | image, analysisType, problemText(optional) | AnalysisStartResponse 202 | AnalysisController:47 |
+| /api/analyses | GET | Pageable | Page&lt;AnalysisDetailResponse&gt; | AnalysisController:63 |
+| /api/analyses/{id} | GET | id | AnalysisDetailResponse | AnalysisController:79 |
+| /api/images/{id}/url | GET | id(analysisId) | ImageUrlResponse | ImageController:46 (I001, F005) |
+| /api/chat | POST | ChatRequest | ChatResponse | AiChatController:43 |
+| /api/chat/sessions | GET | page, size, grade | Page&lt;ChatSessionResponse&gt; | ChatSessionController:56 |
+| /api/chat/sessions?analysisId= | GET | analysisId | ChatSessionResponse | ChatSessionController:45 |
+| /api/chat/sessions/{sessionKey} | GET | sessionKey | ChatSessionResponse | ChatSessionController:72 |
+| /api/chat/sessions/{sessionKey}/messages | GET | sessionKey | List&lt;ChatMessageDto&gt; | ChatSessionController:82 |
+| /api/posts | GET | type, sort, grade, domain, cursor, size | PostsFeedPageResponse | PostController:39 |
+| /api/posts/{id} | GET | id | PostDetailResponse | PostController:54 |
+| /api/posts | POST | CreatePostRequest | PostDetailResponse 201 | PostController:63 |
+| /api/posts/{id} | PUT | CreatePostRequest | PostDetailResponse | PostController:72 |
+| /api/posts/{id} | DELETE | — | 204 | PostController:82 |
+| /api/posts/{postId}/accept/{answerId} | POST | — | success | PostController:91 |
+| /api/posts/{postId}/answers | POST | CreateAnswerRequest | Long 201 | AnswerController:36 |
+| /api/posts/{postId}/answers/{answerId} | PUT/DELETE | CreateAnswerRequest / — | success / 204 | AnswerController:53, 65 |
+| /api/likes/toggle | POST | LikeToggleRequest | LikeToggleResponse | LikeController:27 |
+| /api/comments | POST | CreateCommentRequest | CommentResponse 201 | CommentController:24 |
+| /api/comments/{id} | PUT/DELETE | CreateCommentRequest / — | CommentResponse / 204 | CommentController:32, 41 |
+| /api/posts/{postId}/report | POST | ReportRequest(optional) | success 201 | ReportController:24 |
+| /api/answers/{answerId}/report | POST | ReportRequest(optional) | success 201 | ReportController:34 |
 
-*상세 DTO 필드·검증·에러 코드 문자열은 BE_CODE_AUDIT_GAP_REPORT_FINAL §2.4, §2.4.1·§2.4.2 및 코드 기준.*
+*상세 DTO·에러 코드: docs/SSOT/miriarts_infra.md §4.4 ErrorCode 요약(ErrorCode.java). FE 스키마: src/shared/api/schemas/*.ts.*
+
+---
+
+## 엔드포인트별 발생 가능 에러(ErrorCode)
+
+*처리: GlobalExceptionHandler.java:36-38. 트랜잭션·락·throw 위치 요약: docs/SSOT/miriarts_infra.md §4.4 트랜잭션·락·예외 요약.*
+
+| API/플로우 | 발생 가능 ErrorCode (코드) | HTTP | throw 위치(파일:라인) |
+|------------|---------------------------|------|----------------------|
+| POST /api/auth/token | OAUTH_CODE_INVALID(AUTH002), INTERNAL_SERVER_ERROR(C003) | 400, 500 | OAuth2TokenExchangeService:58, 61 |
+| POST /api/auth/refresh | REFRESH_TOKEN_EXPIRED(AUTH006), TOKEN_INVALID(AUTH004) | 401 | TokenRefreshService:47, 54 |
+| GET /api/users/me | MEMBER_NOT_FOUND(M001) | 404 | UserRepository:29 |
+| PATCH /api/users/me/profile | DUPLICATE_NICKNAME(M002) | 409 | UserService:53 |
+| POST /api/analyses | FILE_EMPTY(F001), INVALID_FILE_TYPE(F004), FILE_UPLOAD_FAILED(F003), AI_ANALYSIS_FAILED(AN001), CREDIT_LIMIT_EXCEEDED(CR001) | 400, 500, 502, 402 | AnalysisService:67,71; AnalysisController:58; AnalysisFailHandler:103 |
+| GET /api/analyses/{id} | ANALYSIS_NOT_FOUND(AN003) | 404 | AnalysisService:115 |
+| GET /api/images/{id}/url | IMAGE_NOT_FOUND(I001), IMAGE_URL_GENERATION_FAILED(F005) | 404, 502 | GcsSignedUrlService:62,66,72,79,86,103 |
+| POST /api/chat | AI_CHAT_*(AI001-AI004), CHAT_SESSION_NOT_FOUND(CS001), ANALYSIS_NOT_FOUND(AN003) | 404, 502, 504, 429 | ChatSessionService, AiProxyService |
+| GET /api/chat/sessions, sessions/{key} | ANALYSIS_NOT_FOUND, CHAT_SESSION_NOT_FOUND | 404 | ChatSessionService:92, 112; ChatSessionKeyResolver:119 |
+| GET/POST/PUT/DELETE /api/posts | POST_NOT_FOUND(CM001), INVALID_INPUT_VALUE(C001), HANDLE_ACCESS_DENIED(C005) | 400, 403, 404 | PostCommandService:44,77,97; PostQueryService:58,99 |
+| POST accept | POST_NOT_FOUND, ENTITY_NOT_FOUND(C006), ANSWER_ALREADY_ACCEPTED(CM003), ACCEPT_FORBIDDEN(CM004), POST_DEADLINE_PASSED(CM005) | 400, 403, 404 | AnswerCommandService:49,52,55,58,83,85,88,91,94,97 |
+| POST /api/posts/{id}/answers | POST_NOT_FOUND, INVALID_INPUT_VALUE, ANSWER_ALREADY_ACCEPTED, POST_DEADLINE_PASSED | 400, 404 | AnswerCommandService:49-58 |
+| PUT/DELETE answer | ENTITY_NOT_FOUND, HANDLE_ACCESS_DENIED, ANSWER_ALREADY_ACCEPTED | 400, 403, 404 | AnswerCommandService:115,117,128,130,133 |
+| POST /api/likes/toggle | POST_NOT_FOUND, ENTITY_NOT_FOUND, LIKE_ALREADY_EXISTS(CM006), INVALID_INPUT_VALUE | 400, 404, 409 | LikeCommandService:63,86,88,89 |
+| POST/PUT/DELETE /api/comments | POST_NOT_FOUND, ENTITY_NOT_FOUND, INVALID_INPUT_VALUE, HANDLE_ACCESS_DENIED | 400, 403, 404 | CommentCommandService:40,47,51,80,82,91,93 |
+| POST report | POST_NOT_FOUND, ENTITY_NOT_FOUND, REPORT_ALREADY_EXISTS(CM007) | 404, 409 | ReportService:37,40,46,60 |
+
+- **401**: 인증 없음 → AUTH009(진입점 SecurityConfig.java:79-80). 토큰 만료/무효 → AUTH004, AUTH006. *TokenRefreshService:47,54.*
+- **402**: CR001(크레딧 한도 초과). *AnalysisFailHandler:103.*
+- **404**: CM001, C006, AN003, CS001, I001, M001 등. *각 서비스 orElseThrow (miriarts_infra §4.4 트랜잭션·락·예외 요약).*
+- **409**: M002, CM006, CM007. *UserService:53, LikeCommandService:63, ReportService:46,60.*

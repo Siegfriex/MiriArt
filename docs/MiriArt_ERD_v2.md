@@ -1,9 +1,10 @@
-# MiriArt ERD v2.0 — MySQL 전체 스키마
+# MiriArt ERD v2.1 — MySQL 전체 스키마
 
 > **목적**: MiriArt MySQL 데이터베이스 전체 스키마 (Cariv ERD + Legacy ERD + Community 통합)
-> **버전**: 2.0 | **작성일**: 2026-02-22
+> **버전**: 2.1 | **작성일**: 2026-03-15 | 실 DB(miriart_prod) 역추출 기준 검증·수정
 > **DB 환경**: MySQL 8.x + Redis (키 설계 포함)
-> **Cariv BE 참조**: `H:\n_0221\02_21dys\BE` — 패턴 참조만, 수정 없음
+> **실제 스키마 SSOT**: 코드(miriart-be 엔티티·Flyway V5/V6)·본 문서가 단일 기준. 테이블·컬럼 변경 시 엔티티 및 Flyway와 동기화.
+>
 
 ---
 
@@ -20,7 +21,6 @@ erDiagram
     USERS ||--o{ REPUTATION_LEDGER : "earns"
     USERS ||--o{ REPORTS : "files"
     USERS ||--o{ PERSONAS : "has"
-    PLANS ||--o{ USERS : "subscribes"
     POSTS ||--o{ ANSWERS : "receives"
     POSTS ||--o{ COMMENTS : "has"
     POSTS ||--o{ LIKES : "receives"
@@ -36,21 +36,24 @@ erDiagram
 
 ## 1. Phase 별 테이블 목록
 
-| 테이블 | Phase | 설명 |
-|--------|-------|------|
-| `users` | **P1** | 사용자 계정 (소셜 기반) |
-| `plans` | **P1** | 구독 플랜 마스터 |
-| `analysis_usage_logs` | **P1** | 월별 분석 사용 카운트 |
-| `analyses` | **P1** | 작품 분석 결과 |
-| `chat_sessions` | **P2** | AI 채팅 세션 (P1: Redis) |
-| `chat_messages` | **P2** | AI 채팅 메시지 (P1: Redis) |
-| `posts` | **C1** | 커뮤니티 게시글 |
-| `answers` | **C1** | Q&A 답변 |
-| `comments` | **C1** | 댓글 |
-| `likes` | **C1** | 좋아요 |
-| `personas` | **C1** | 가명 시스템 |
-| `reputation_ledger` | **C1** | 평판 포인트 이력 |
-| `reports` | **C4** | 신고 |
+*소스: miriart-be 엔티티(domain/.../entity/*.java), Flyway V5·V6(db/migration/V5__create_chat_sessions.sql, V6__add_model_type_to_chat_sessions.sql).*
+
+| 테이블 | Phase | 설명 | 소스(코드) |
+|--------|-------|------|------------|
+| `users` | **P1** | 사용자 계정 (소셜 기반) | User.java |
+| `plans` | **P1** | **DB에 존재하지 않음** — users.plan_type ENUM만 사용 | PlanType enum 참조, 테이블 미사용 |
+| `analysis_usage_logs` | **P1** | 월별 분석 사용 카운트 | AnalysisUsageLog.java |
+| `analyses` | **P1** | 작품 분석 결과 | Analysis.java |
+| `chat_sessions` | **P2** | AI 채팅 세션 (P1: Redis) | ChatSession.java, V5, V6 |
+| `chat_messages` | **P2** | AI 채팅 메시지 (P1: Redis) | Redis 저장, DB 테이블 없음 |
+| `posts` | **C1** | 커뮤니티 게시글 | Post.java |
+| `answers` | **C1** | Q&A 답변 | Answer.java |
+| `comments` | **C1** | 댓글 | Comment.java |
+| `likes` | **C1** | 좋아요 | Like.java |
+| `personas` | **C1** | 가명 시스템 | Persona.java |
+| `reputation_ledger` | **C1** | 평판 포인트 이력 | ReputationLedger.java |
+| `reports` | **C1** | 신고 | Report.java |
+| `flyway_schema_history` | — | Flyway 관리 테이블 (문서 범위 외) | Flyway 자동 생성 |
 
 ---
 
@@ -64,7 +67,7 @@ erDiagram
 ```sql
 CREATE TABLE users (
     id                  BIGINT          NOT NULL AUTO_INCREMENT,
-    provider            ENUM('KAKAO', 'GOOGLE') NOT NULL,
+    provider            ENUM('GOOGLE','KAKAO') NOT NULL,
     provider_user_id    VARCHAR(100)    NOT NULL,
     email               VARCHAR(200)    NULL,
     nickname            VARCHAR(30)     NULL,
@@ -72,18 +75,18 @@ CREATE TABLE users (
         COMMENT '고1/고2/고3/재수/N수',
     domain              VARCHAR(30)     NULL
         COMMENT '기초디자인/기초소양/수채화/소묘/사고의전환/만화·애니',
-    role                ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
-    needs_profile       BOOLEAN         NOT NULL DEFAULT TRUE
+    plan_type           ENUM('BASIC','FREE','PREMIUM') NOT NULL DEFAULT 'FREE',
+    role                ENUM('ADMIN','USER') NOT NULL DEFAULT 'USER',
+    needs_profile       bit(1)          NOT NULL DEFAULT TRUE
         COMMENT '온보딩 완료 여부. TRUE=미완료, FALSE=완료',
     reputation_score    INT             NOT NULL DEFAULT 0,
     reputation_level    INT             NOT NULL DEFAULT 1
         COMMENT '1~12 레벨',
-    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at          datetime(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at          datetime(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     UNIQUE KEY uq_provider (provider, provider_user_id),
-    UNIQUE KEY uq_nickname (nickname),
-    INDEX idx_email (email)
+    UNIQUE KEY uq_nickname (nickname)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -100,6 +103,8 @@ public class User extends BaseEntity {
     private String grade;
     private String domain;
     @Enumerated(EnumType.STRING)
+    private PlanType planType;               // FREE | BASIC | PREMIUM
+    @Enumerated(EnumType.STRING)
     private UserRole role;                   // USER | ADMIN
     private boolean needsProfile = true;
     private int reputationScore = 0;
@@ -111,39 +116,7 @@ public class User extends BaseEntity {
 
 ### 2.2 `plans`
 
-> 구독 플랜 마스터 테이블. 플랜별 월 한도 관리.
-
-```sql
-CREATE TABLE plans (
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    plan_type       ENUM('FREE', 'BASIC', 'PREMIUM') NOT NULL UNIQUE,
-    monthly_limit   INT             NOT NULL
-        COMMENT 'FREE=5, BASIC=10, PREMIUM=99999(무제한). P1 기준',
-    price           INT             NOT NULL DEFAULT 0
-        COMMENT '월 가격 (원). FREE=0, BASIC=19900, PREMIUM=49900',
-    description     VARCHAR(200)    NULL,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- 초기 데이터
-INSERT INTO plans (plan_type, monthly_limit, price) VALUES
-    ('FREE', 5, 0),
-    ('BASIC', 10, 19900),
-    ('PREMIUM', 99999, 49900);
-```
-
-> **v1 크레딧 설계 기준**: `users` 테이블에 `plan_type` 컬럼 없이, 향후 `user_subscriptions` 테이블로 확장.
-> Phase 1에서는 모든 사용자를 `FREE`로 간주하거나, `users`에 `plan_type` 컬럼 추가로 단순 운영.
-> **실제 운영**: `plans` 테이블은 미사용. `users.plan_type`(ENUM)만 사용. *스키마 SSOT: 엔티티·Flyway·본 문서.*
-
-**`users` 테이블 plan 컬럼 추가 (Phase 1 단순화)**:
-```sql
-ALTER TABLE users
-    ADD COLUMN plan_type ENUM('FREE', 'BASIC', 'PREMIUM') NOT NULL DEFAULT 'FREE'
-    AFTER domain;
-```
+> plans 테이블은 실 DB(miriart_prod)에 존재하지 않는다. 플랜은 users.plan_type ENUM('BASIC','FREE','PREMIUM')으로 관리. 향후 구독 결제 도입 시 별도 테이블 설계 예정.
 
 ---
 
@@ -157,9 +130,9 @@ CREATE TABLE analysis_usage_logs (
     user_id         BIGINT      NOT NULL,
     analysis_id     BIGINT      NULL
         COMMENT '연결된 analyses.id',
-    billing_year_month  CHAR(7) NOT NULL
+    billing_year_month  VARCHAR(7) NOT NULL
         COMMENT 'YYYY-MM 형식. 예: 2026-02',
-    created_at      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_month (user_id, billing_year_month)
@@ -187,7 +160,7 @@ CREATE TABLE analyses (
         COMMENT 'GCS 이미지 URL (gs://...)',
     image_url               TEXT            NOT NULL
         COMMENT '공개 접근 URL (https://storage.googleapis.com/...)',
-    analysis_type           ENUM('basic', 'major') NOT NULL DEFAULT 'basic',
+    analysis_type           VARCHAR(50)     NOT NULL,
     problem_text            VARCHAR(500)    NULL
         COMMENT '문제/맥락 입력 (선택)',
     status                  ENUM('PENDING', 'COMPLETED', 'FAILED') NOT NULL DEFAULT 'PENDING',
@@ -199,11 +172,9 @@ CREATE TABLE analyses (
     comment                 TEXT            NULL,
     university_predictions  JSON            NULL
         COMMENT '[{"university":"홍익대학교","major":"시각디자인","line":"HIGH","probability":68,"similarAcceptedCount":14}]',
-    embedding               BLOB            NULL
-        COMMENT '1408-dim 벡터 (Phase 4 유사작 검색용)',
-    completed_at            TIMESTAMP       NULL,
-    created_at              TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    completed_at            datetime(6)     NULL,
+    created_at              datetime(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at              datetime(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_created (user_id, created_at DESC),
@@ -211,8 +182,6 @@ CREATE TABLE analyses (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
-
-> **실제 운영**: `analyses.embedding` 컬럼은 현재 DB에 없음(Phase 4 유사작 검색 설계). 실 스키마는 엔티티·Flyway·본 문서 기준. `analysis_type`은 실DB varchar(10).
 
 ---
 
@@ -223,22 +192,28 @@ CREATE TABLE analyses (
 
 ### 3.1 `chat_sessions` *(Phase 2 활성화)*
 
+*소스: ChatSession.java, db/migration/V5__create_chat_sessions.sql, V6__add_model_type_to_chat_sessions.sql. 실제 컬럼: id, user_id, analysis_id, session_key, model_type(V6), title, last_message, message_count, created_at, updated_at.*
+
 ```sql
 CREATE TABLE chat_sessions (
     id              BIGINT      NOT NULL AUTO_INCREMENT,
     user_id         BIGINT      NOT NULL,
     analysis_id     BIGINT      NULL
         COMMENT '연결된 작품 분석 (없으면 NULL — 일반 채팅)',
+    session_key     VARCHAR(36) NOT NULL UNIQUE,
     model_type      VARCHAR(20) NOT NULL DEFAULT 'CHAT_PRO'
-        COMMENT 'CHAT_PRO/FAST/THINKING/SEARCH/IMAGE_EDIT',
-    title           VARCHAR(200) NULL
-        COMMENT '자동 생성 또는 사용자 지정 세션 제목',
-    created_at      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        COMMENT 'V6 추가. CHAT_PRO/FAST/THINKING/SEARCH/IMAGE_EDIT',
+    title           VARCHAR(100) NOT NULL DEFAULT '새 채팅',
+    last_message    TEXT        NULL,
+    message_count   INT         NOT NULL DEFAULT 0,
+    created_at      datetime(6) NOT NULL,
+    updated_at      datetime(6) NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (analysis_id) REFERENCES analyses(id) ON DELETE SET NULL,
-    INDEX idx_user_created (user_id, created_at DESC)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (analysis_id) REFERENCES analyses(id),
+    INDEX idx_cs_user_updated (user_id, updated_at DESC),
+    INDEX idx_cs_user_analysis (user_id, analysis_id),
+    INDEX idx_cs_session_key (session_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -269,7 +244,7 @@ CREATE TABLE chat_messages (
 
 ## 4. Phase C — Community 테이블
 
-> Community Design v1.0 (`MIRIART_HOME_COMMUNITY_DESIGN_v1.md §6`) 기반.
+> 커뮤니티 테이블 설계는 Community Design v1.0 기반. *소스: miriart-be/.../community/entity/*.java.*
 
 ### 4.1 `personas` *(Phase C1)*
 
@@ -303,7 +278,7 @@ CREATE TABLE posts (
     user_id         BIGINT      NOT NULL,
     persona_id      BIGINT      NULL
         COMMENT '익명 게시 시 연결. NULL=실명',
-    type            ENUM('free', 'qna') NOT NULL DEFAULT 'free',
+    type            ENUM('FREE','QNA') NOT NULL DEFAULT 'FREE',
     status          ENUM('OPEN', 'SOLVED', 'EXPIRED', 'CLOSED') NOT NULL DEFAULT 'OPEN'
         COMMENT 'OPEN=진행중, SOLVED=채택완료, EXPIRED=마감미채택, CLOSED=관리자',
     title           VARCHAR(100) NOT NULL,
@@ -319,11 +294,13 @@ CREATE TABLE posts (
     view_count      INT         NOT NULL DEFAULT 0,
     like_count      INT         NOT NULL DEFAULT 0,
     answer_count    INT         NOT NULL DEFAULT 0,
+    comment_count   INT         NOT NULL DEFAULT 0
+        COMMENT '댓글 수. CommentCommandService create/delete 시 갱신. PostRepository.incrementCommentCount',
     accepted_answer_id  BIGINT  NULL,
-    deadline_at     TIMESTAMP   NULL
+    deadline_at     datetime(6) NULL
         COMMENT 'Q&A 마감 시간. NULL=자유글',
-    created_at      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at      datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at      datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL,
@@ -332,6 +309,8 @@ CREATE TABLE posts (
     INDEX idx_popularity (like_count DESC, answer_count DESC, created_at DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
+> **TX·락**: `accepted_answer_id`·`answer_count` 갱신은 AnswerCommandService.acceptAnswer (PostRepository.findByIdForUpdate PESSIMISTIC_WRITE 사용), Answer 작성/삭제 시 increment/decrement. `comment_count`는 CommentCommandService create/delete 시 갱신(PostRepository.incrementCommentCount). *소스: PostRepository.java:39-41, 48-50, AnswerCommandService.java:82, PostCommandService/AnswerCommandService/CommentCommandService.*
 
 ---
 
@@ -346,9 +325,9 @@ CREATE TABLE answers (
     content     TEXT        NOT NULL,
     image_urls  JSON        NULL,
     like_count  INT         NOT NULL DEFAULT 0,
-    is_accepted BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_accepted bit(1)      NOT NULL DEFAULT FALSE,
+    created_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -365,13 +344,13 @@ CREATE TABLE answers (
 ```sql
 CREATE TABLE comments (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
-    parent_type ENUM('post', 'answer') NOT NULL,
+    parent_type ENUM('ANSWER','POST') NOT NULL,
     parent_id   BIGINT      NOT NULL,
     user_id     BIGINT      NOT NULL,
     persona_id  BIGINT      NULL,
     content     VARCHAR(500) NOT NULL,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL,
@@ -387,9 +366,9 @@ CREATE TABLE comments (
 CREATE TABLE likes (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
     user_id     BIGINT      NOT NULL,
-    target_type ENUM('post', 'answer', 'comment') NOT NULL,
+    target_type ENUM('ANSWER','COMMENT','POST') NOT NULL,
     target_id   BIGINT      NOT NULL,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE KEY uq_like (user_id, target_type, target_id),
@@ -414,14 +393,14 @@ CREATE TABLE reputation_ledger (
     ref_type    VARCHAR(20) NULL
         COMMENT 'answer / post / comment',
     ref_id      BIGINT      NULL,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_created (user_id, created_at DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-**평판 포인트 룰** (Community Design v1.0 §4.1):
+**평판 포인트 룰** (Community Design v1.0 기반):
 
 | reason | delta | 설명 |
 |--------|-------|------|
@@ -435,20 +414,21 @@ CREATE TABLE reputation_ledger (
 
 ---
 
-### 4.7 `reports` *(Phase C4)*
+### 4.7 `reports` *(Phase C1)*
 
 ```sql
 CREATE TABLE reports (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
-    reporter_id BIGINT      NOT NULL,
-    target_type ENUM('post', 'answer', 'comment') NOT NULL,
+    user_id     BIGINT      NOT NULL,
+    target_type ENUM('POST','ANSWER') NOT NULL,
     target_id   BIGINT      NOT NULL,
-    reason      VARCHAR(200) NULL,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reason      VARCHAR(500) NULL,
+    created_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at  datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
-    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uq_report (reporter_id, target_type, target_id),
-    INDEX idx_target (target_type, target_id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_report (user_id, target_type, target_id),
+    INDEX idx_report_target (target_type, target_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -472,15 +452,22 @@ CREATE TABLE reports (
 
 | 테이블 | 인덱스 | 용도 |
 |--------|--------|------|
-| `analyses` | `(user_id, created_at DESC)` | 내 분석 목록 최신순 |
-| `analyses` | `(user_id, grade)` | 등급 필터링 |
-| `analysis_usage_logs` | `(user_id, billing_year_month)` | 월별 사용량 COUNT |
-| `posts` | `(type, status)` | Q&A 미해결 필터 |
-| `posts` | `(grade_scope, domain_scope, created_at DESC)` | 스코프별 피드 |
-| `posts` | `(like_count DESC, created_at DESC)` | 인기 피드 |
-| `answers` | `(post_id, created_at ASC)` | 답변 시간순 |
-| `comments` | `(parent_type, parent_id, created_at ASC)` | 댓글 목록 |
-| `reputation_ledger` | `(user_id, created_at DESC)` | 유저 평판 이력 |
+| `analyses` | `idx_user_created (user_id, created_at DESC)` | 내 분석 목록 최신순 |
+| `analyses` | `idx_user_grade (user_id, grade)` | 등급 필터링 |
+| `analyses` | `idx_status (status)` | 상태별 조회 |
+| `analysis_usage_logs` | `idx_user_month (user_id, billing_year_month)` | 월별 사용량 COUNT |
+| `chat_sessions` | `idx_cs_user_updated (user_id, updated_at DESC)` | 유저별 최신 세션 |
+| `chat_sessions` | `idx_cs_user_analysis (user_id, analysis_id)` | 유저+분석 조합 조회 |
+| `chat_sessions` | `idx_cs_session_key (session_key)` | 세션 키 조회 |
+| `posts` | `idx_type_status (type, status)` | Q&A 미해결 필터 |
+| `posts` | `idx_scope_created (grade_scope, domain_scope, created_at DESC)` | 스코프별 피드 |
+| `posts` | `idx_popularity (like_count DESC, answer_count DESC, created_at DESC)` | 인기 피드 |
+| `answers` | `idx_post_created (post_id, created_at ASC)` | 답변 시간순 |
+| `answers` | `idx_post_accepted (post_id, is_accepted)` | 채택 답변 조회 |
+| `comments` | `idx_parent (parent_type, parent_id, created_at ASC)` | 댓글 목록 |
+| `likes` | `idx_target (target_type, target_id)` | 대상별 좋아요 조회 |
+| `reputation_ledger` | `idx_user_created (user_id, created_at DESC)` | 유저 평판 이력 |
+| `reports` | `idx_report_target (target_type, target_id)` | 신고 대상 조회 |
 
 ---
 
@@ -488,7 +475,7 @@ CREATE TABLE reports (
 
 | 항목 | 값 |
 |------|-----|
-| Version | 2.0 |
-| Date | 2026-02-22 |
-| Based on | Legacy ERD v1.1, Cariv ERD 패턴, Community Design v1.0 §6 |
+| Version | 2.1 |
+| Date | 2026-03-15 |
+| Based on | Legacy ERD v1.1, Cariv ERD 패턴, Community Design v1.0 기반 (커뮤니티 테이블), 실 DB(miriart_prod) 역추출 검증 |
 | Phase | P1 (users/analyses/plans/usage_logs) → P2 (chat) → C (community) |

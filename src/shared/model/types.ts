@@ -43,7 +43,7 @@ export enum Sender {
   AI = 'AI',
 }
 
-/** 채팅 메시지 한 건. id, 발신자, 타입, 내용, 타임스탬프, 출처 URL, 퀵리플라이 등 */
+/** 채팅 메시지 한 건. id, 발신자, 타입, 내용, 타임스탬프, 출처 URL, 퀵리플라이 등. Structured Chat v3: sectionType/sectionTitle/isLastSection */
 export interface Message {
   id: string;
   sender: Sender;
@@ -53,6 +53,9 @@ export interface Message {
   isThinking?: boolean;
   groundingUrls?: string[];
   quickReplies?: string[];
+  sectionType?: 'strength' | 'improvement' | 'action' | 'summary';
+  sectionTitle?: string;
+  isLastSection?: boolean;
 }
 
 /** 수정 범위: 전체 재구성 또는 세부 조정 */

@@ -4,12 +4,22 @@
 
 import { z } from 'zod';
 
+/** Structured Chat v3: POST /api/chat 응답의 섹션 한 건. strength | improvement | action */
+export const chatSectionSchema = z.object({
+  type: z.enum(['strength', 'improvement', 'action']),
+  title: z.string(),
+  text: z.string(),
+});
+export type ChatSection = z.infer<typeof chatSectionSchema>;
+
 /**
- * POST /api/chat 응답. 실제 API JSON: text, groundingUrls?, quickReplies?, sessionKey, sessionId(하위호환).
- * FE는 sessionKey 우선 사용. 둘 다 없으면 new-session replace 불가.
+ * POST /api/chat 응답. 실제 API JSON: text, summary?, sections?, groundingUrls?, quickReplies?, sessionKey, sessionId(하위호환).
+ * FE는 sessionKey 우선 사용. sections 있으면 구조화 UX, 없으면 단일 버블 fallback.
  */
 export const chatResponseSchema = z.object({
   text: z.string(),
+  summary: z.string().nullable().optional(),
+  sections: z.array(chatSectionSchema).nullable().optional(),
   sessionId: z.string().optional(),
   sessionKey: z.string().optional(),
   groundingUrls: z.array(z.string()).optional(),

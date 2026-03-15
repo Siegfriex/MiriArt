@@ -25,8 +25,6 @@ import type { ChatSessionDto } from '../../../shared/api/schemas/chatSession';
 import type { StickyContext } from '../../../shared/api/schemas/chat';
 import { shouldLoadSessionByKey } from '../../../shared/lib/chatRouteParam';
 import { buildSummaryText } from '../../../shared/lib/stickyContextSummary';
-import { debugStickyContext } from '../../../shared/lib/debugStickyContext';
-
 /**
  * analysis + sessionMeta로 StickyContext 구성. summaryText는 buildSummaryText로 생성.
  * handleSend에서는 이 함수만 호출해 grade/score/fixScope 등을 직접 조합하지 않음.
@@ -53,7 +51,6 @@ function buildStickyContext(
       ...(analysis.targetUniversity ? { targetUniversity: analysis.targetUniversity } : {}),
       ...(summaryText ? { summaryText } : {}),
     };
-    debugStickyContext('buildStickyContext (analysis)', ctx);
     return ctx;
   }
 
@@ -64,7 +61,6 @@ function buildStickyContext(
       fixScope: sessionMeta.fixScope ?? 'DetailTuning',
       ...(summaryText ? { summaryText } : {}),
     };
-    debugStickyContext('buildStickyContext (sessionMeta)', ctx);
     return ctx;
   }
 
@@ -82,6 +78,8 @@ function getStickyContextDisplay(
     fixScope: analysis?.fixScope ?? session?.fixScope ?? 'DetailTuning',
   };
 }
+
+const DEFAULT_QUICK_REPLIES = ['구도 분석 요청', '색감 피드백', '합격 확률 보기'] as const;
 
 const DEFAULT_GREETING: Message = {
   id: 'greeting',
@@ -225,7 +223,6 @@ export const ChatRoom: React.FC = () => {
         ...(history.length > 0 ? { history } : {}),
         ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
       };
-      debugStickyContext('POST /api/chat body.stickyContext', requestBody.stickyContext ?? null);
 
       // URL/라우팅은 sessionKey만 사용. new-session일 때 sessionKey 미전달 → BE가 새 세션 생성. sessionId는 BE 하위호환용(일부 BE가 기대할 수 있음).
       const response = await ChatApi.sendMessage(requestBody);
@@ -236,18 +233,57 @@ export const ChatRoom: React.FC = () => {
         navigate(ROUTES.CHAT_ROOM(nextKey), { replace: true });
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: Sender.AI,
-          type: MessageType.TEXT,
-          content: response.text,
-          timestamp: Date.now(),
-          groundingUrls: response.groundingUrls,
-          quickReplies: response.quickReplies ?? ['구도 분석 요청', '색감 피드백', '합격 확률 보기'],
-        },
-      ]);
+      const baseId = String(Date.now() + 1);
+      const now = Date.now();
+
+      if ((response.sections ?? []).length > 0) {
+        const summaryMsg: Message | null = response.summary
+          ? {
+              id: `${baseId}-summary`,
+              sender: Sender.AI,
+              type: MessageType.TEXT,
+              content: response.summary,
+              timestamp: now,
+              sectionType: 'summary',
+              isLastSection: false,
+            }
+          : null;
+
+        const sectionMsgs: Message[] = response.sections!.map((sec, idx) => {
+          const isLast = idx === response.sections!.length - 1;
+          return {
+            id: `${baseId}-${idx}`,
+            sender: Sender.AI,
+            type: MessageType.TEXT,
+            content: sec.text,
+            timestamp: now,
+            sectionType: sec.type,
+            sectionTitle: sec.title,
+            isLastSection: isLast,
+            groundingUrls: isLast ? (response.groundingUrls ?? []) : undefined,
+            quickReplies: isLast ? (response.quickReplies ?? [...DEFAULT_QUICK_REPLIES]) : undefined,
+          };
+        });
+
+        setMessages((prev) => [
+          ...prev,
+          ...(summaryMsg ? [summaryMsg] : []),
+          ...sectionMsgs,
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: baseId,
+            sender: Sender.AI,
+            type: MessageType.TEXT,
+            content: response.text,
+            timestamp: now,
+            groundingUrls: response.groundingUrls,
+            quickReplies: response.quickReplies ?? [...DEFAULT_QUICK_REPLIES],
+          },
+        ]);
+      }
     } catch {
       // ApiService 내부에서 Toast 처리됨
       // 실패한 메시지 표시 (이미 userMsg가 추가된 상태)
