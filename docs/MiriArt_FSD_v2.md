@@ -3,10 +3,11 @@
 > **목적**: MiriArt MVP 기능명세 (F1~F8 + Community Phase C). Phase 구분·I-P-O-E·코드 기준 검증.
 > **버전**: 2.0 | **작성일**: 2026-02-22 | **최종 수정**: 2026-03-10
 > **기반**: Legacy FSD v1.3, 확정 결정 세트, Community Design v1.0
-> **검증 기준**: 아래 모든 “소스”는 실제 코드·파일·라인 기준. 소스는 miriart-be 실제 Java 라인 기준. 구현·예외·엔드포인트는 miriarts_infra §4.4, API_CONTRACT §9·§10 참조.
-> **요청/응답 스키마·에러코드 전체·토큰 보안 전제**는 **MiriArt_API_CONTRACT.md** §1~§9 참조. 본 FSD는 기능 흐름·Process·BE 라인 위주.
+> **검증 기준**: 아래 모든 “소스”는 실제 코드·파일·라인 기준. 소스는 miriart-be·FE 코드만. AI 서비스 내부는 별도 관리. 구현·엔드포인트 전수는 docs/SSOT/miriarts_infra.md §4.4. 예외·에러코드는 miriarts_infra §4.4 ErrorCode 요약·docs/MiriArt_API_CONTRACT.md 참조.
+> **요청/응답 스키마·에러코드 전체·토큰 보안 전제**는 **MiriArt_API_CONTRACT.md** (인증·페이징·엔드포인트·엔드포인트별 발생 가능 에러 등) 참조. 본 FSD는 기능 흐름·Process·BE 라인 위주.
+> **TX·에러 상세**(트랜잭션 경계·락·예외 경로·크리티컬 플로우): docs/SSOT/miriarts_infra.md §4.4 트랜잭션·락·예외 요약, MiriArt_API_CONTRACT.md "엔드포인트별 발생 가능 에러".
 
-**선행 조건·가정**: 모든 API(토큰·리프레시 제외)는 JWT 인증. FE는 `VITE_API_BASE_URL`로 BE만 호출. BE는 `FASTAPI_INTERNAL_URL`(miriart.fastapi.internal-url)로 AI 호출. *miriarts_infra §1.2.*
+**선행 조건·가정**: 모든 API(토큰·리프레시 제외)는 JWT 인증. FE는 `VITE_API_BASE_URL`로 BE만 호출. BE는 분석/채팅 시 외부 AI 서비스를 호출(설정: miriart.fastapi.internal-url). *miriarts_infra §1.2.*
 
 ---
 
@@ -25,9 +26,9 @@
 | C1 | 커뮤니티 피드 CRUD | **C1** | - | `GET/POST/PUT/DELETE /api/posts`, `POST/PUT/DELETE /api/posts/{postId}/answers`, `POST/PUT/DELETE /api/comments`, `POST /api/likes/toggle`, `POST /api/posts/{postId}/report`, `POST /api/answers/{answerId}/report` | **구현됨** |
 | C2 | Q&A 채택 + 마감 자동화 | **C2** | - | `POST /api/posts/{postId}/accept/{answerId}` | **일부 구현됨** (채택 구현됨. 마감 자동화 배치 미구현) |
 | C3 | 평판 시스템 | **C3** | - | 채택 시 ReputationService.addReputationForAnswerAccepted | **일부 구현됨** (채택 시 평판 지급) |
-| C4 | AI 연결 (요약/초안) | **C4** | - | `/internal/ai/summarize-answers` | **미구현(향후)** |
+| C4 | AI 연결 (요약/초안) | **C4** | - | (외부 AI 연동) | **미구현(향후)** |
 
-**참조**: 구현·엔드포인트·CORS — miriarts_infra §4.2·§4.4. 예외·ErrorCode·FastAPI 명세 — API_CONTRACT §9·§10·§8. 상세 — PRD §4.1, `MiriArt_레포_전제_코드문서_정의_정리.md`.
+**참조**: 구현·엔드포인트 전수·CORS — docs/SSOT/miriarts_infra.md §4.2·§4.4. 예외·ErrorCode — miriarts_infra §4.4 ErrorCode 요약, docs/MiriArt_API_CONTRACT.md. 상세 — PRD §4.1.
 
 **PRD 대응**: 본 FSD F1~F6·C1~C4는 **PRD §4.1 갭 분석·§5.1 Phase**와 1:1 대응. 플랜별 권한(Free 5회/월 등)은 **PRD §2.2**; F3 분석 한도(온보딩 완료 시 한도 스킵)·F6 getPlan으로 노출. F4 이미지편집은 현재 플랜 체크 없음, 향후 CR002·Basic 이상 적용 예정.
 
@@ -37,11 +38,11 @@
 |------|----------------|--------|------|
 | F1 | miriart.auth.cookie-same-site (prod: None), JWT secret, miriart.frontend.oauth-success-url | Redis(OAuth code 60초 TTL), JWT | *application.yml:16,19,29; application-prod.yml:44-48* |
 | F2 | — | MySQL(users) | |
-| F3 | miriart.fastapi.internal-url, miriart.gcs.bucket, multipart 10MB | GCS, FastAPI, MySQL(analyses, analysis_usage_logs) | *application.yml:19,24,17-18* |
-| F4 | miriart.fastapi.internal-url | Redis(채팅 세션 72h), FastAPI | *miriarts_infra §4.4* |
+| F3 | miriart.fastapi.internal-url, miriart.gcs.bucket, multipart 10MB | GCS, 외부 AI 서비스, MySQL(analyses, analysis_usage_logs) | *application.yml:19,24,17-18* |
+| F4 | miriart.fastapi.internal-url | Redis(채팅 세션 72h), 외부 AI 서비스 | *miriarts_infra §4.4* |
 | F5 | — | MySQL(analyses) | |
 | F6 | — | MySQL(users, analysis_usage_logs) | |
-| C1 | — | MySQL(posts, answers, comments, likes, reputation_ledger) | posts·answers·comments·likes·report·채택 API 구현됨 |
+| C1 | — | MySQL(posts, answers, comments, likes, reports, personas, reputation_ledger) | posts·answers·comments·likes·report·채택 API 구현됨 |
 
 *상세: miriarts_infra §3·§4.*
 
@@ -52,12 +53,12 @@
 | F1 | users, (Redis oauth2:code) | ERD §2.1 users |
 | F2 | users | ERD §2.1 |
 | F3 | analyses, analysis_usage_logs, users, (GCS) | ERD §2.2 analyses, §2.3 analysis_usage_logs |
-| F4 | (Redis chat:session), chat_sessions(MySQL) | — |
+| F4 | (Redis chat:session), chat_sessions(MySQL) | ERD §3.1 chat_sessions |
 | F5 | analyses | ERD §2.2 |
 | F6 | users, analysis_usage_logs | ERD §2.1, §2.3 |
-| C1 | posts, answers, comments, likes, reputation_ledger | ERD §3 posts 등 |
+| C1 | posts, answers, comments, likes, reports, personas, reputation_ledger | ERD §4 community 테이블 |
 
-*엔티티·컬럼 상세: 설계는 `MiriArt_ERD_v2.md` §2·§3. **실제 DB 스키마 SSOT**는 엔티티·Flyway·MiriArt_ERD_v2 기준. mysql_erd_v1.md는 미생성 상태.*
+*엔티티·컬럼 상세: 설계는 `MiriArt_ERD_v2.md` §2·§3. **실제 DB 스키마 SSOT**는 엔티티·Flyway·MiriArt_ERD_v2 기준.*
 
 ### 1.3 용어·약어
 
@@ -69,13 +70,13 @@
 | CR001 | 이번 달 분석 한도 초과 (402) |
 | AN003 | 분석 없음 또는 타인 분석 조회 (404) |
 
-*에러코드 전체: API_CONTRACT §9.*
+*에러코드 전체: API_CONTRACT "엔드포인트별 발생 가능 에러" 및 상단 에러 설명.*
 
 ### 1.4 공통: 에러 시 사용자 플로우·API 버전
 
-- **401** → FE는 `POST /api/auth/refresh` 재시도 후, 실패 시 `/auth/login` 리다이렉트. *API_CONTRACT §0.*
+- **401** → FE는 `POST /api/auth/refresh` 재시도 후, 실패 시 `/auth/login` 리다이렉트. *API_CONTRACT "인증 실패 (401)".*
 - **402(CR001)** → F3 업로드 시 "크레딧 부족" 안내 후 플랜/결제 유도.
-- **전역 예외**(DataAccessException 미처리 등) → 500 + C003. *miriarts_infra §4.4, API_CONTRACT §10.*
+- **전역 예외**(DataAccessException 미처리 등) → 500 + C003. *miriarts_infra §4.4, API_CONTRACT.*
 - **API 버전**: 현재 버전 접두어 없음. v1 도입 시 FSD·API_CONTRACT 동시 갱신.
 
 ### 1.5 기능별 FE 라우트·화면
@@ -163,7 +164,7 @@ needsProfile === false → /app/home
 | 구분 | 내용 | 소스(파일/라인) |
 |------|------|------------------|
 | **Input** | `POST /api/analyses` multipart: `@RequestPart("image")` MultipartFile, `@RequestParam("analysisType")` String, `@RequestParam(value="problemText", required=false)` String | `AnalysisController.java:41-46` — startAnalysis 파라미터. Analysis 엔티티 problem_text length 500은 `Analysis.java:51-52` |
-| **Process** | 1. `image == null \|\| image.isEmpty()` → F001 2. **needsProfile=true일 때만** 크레딧 한도 체크(usedThisMonth ≥ monthlyLimit → CR001). needsProfile=false면 스킵. 3. GCS 업로드 4. analyses INSERT PENDING 5. FastAPI analyze 호출 6. complete/fail + save 7. analysis_usage_logs INSERT 8. AnalysisStartResponse 반환 | `AnalysisService.java` startAnalysis() — 한도 체크 `if (user.isNeedsProfile()) { ... }`. PlanType.FREE=5. `AiProxyService.java:51-75` analyze() |
+| **Process** | 1. `image == null \|\| image.isEmpty()` → F001 2. **needsProfile=true일 때만** 크레딧 한도 체크(usedThisMonth ≥ monthlyLimit → CR001). needsProfile=false면 스킵. 3. GCS 업로드 4. analyses INSERT PENDING 5. 외부 AI 서비스 analyze 호출 6. complete/fail + save 7. analysis_usage_logs INSERT 8. AnalysisStartResponse 반환 | `AnalysisService.java` startAnalysis() — 한도 체크 `if (user.isNeedsProfile()) { ... }`. PlanType.FREE=5. `AiProxyService.java:51-75` analyze() |
 | **Output** | 202 Accepted. body `AnalysisStartResponse`: analysisId(String.valueOf(analysis.getId())), status(analysis.getStatus().name()), message(고정 "분석 중입니다. 약 8초 소요됩니다.") | `AnalysisController.java:49` `ResponseEntity.accepted().body(ApiResponse.success(result))`; `AnalysisStartResponse.java:22-27` from() |
 | **Exception** | F001(64-66), CR001(73-75), F003(50-53 컨트롤러 catch IOException→FILE_UPLOAD_FAILED), AN001/AN002(AiProxyService 62-73) | `AnalysisService.java:64-66, 73-75`; `AnalysisController.java:50-53`; `ErrorCode.java:45,54,47,50-51` |
 
@@ -175,7 +176,7 @@ needsProfile === false → /app/home
 504(AN002) → "분석 시간이 초과됐습니다. 잠시 후 다시 시도해주세요."
 ```
 
-**비기능 제약**: 분석 응답 목표 약 8초; FastAPI 타임아웃은 WebClient 설정 기준. *API_CONTRACT·miriarts_infra.*  
+**비기능 제약**: 분석 응답 목표 약 8초; 외부 AI 서비스 호출 타임아웃은 WebClient 설정 기준. *API_CONTRACT·miriarts_infra.*  
 **인수 조건**: 이미지 있음·한도 내 시 202 + analysisId; status=PENDING 후 COMPLETED 확인(폴링/웹소켓).
 
 ---
@@ -189,7 +190,7 @@ needsProfile === false → /app/home
 | 구분 | 내용 | 소스(파일/라인) |
 |------|------|------------------|
 | **Input** | `POST /api/chat` body `ChatRequest`: message(@NotBlank), modelType(기본 "CHAT_PRO"), sessionId, stickyContext, imageBase64, imageMimeType, history | `AiChatController.java:37-42` — `@PostMapping`, `@RequestBody @Valid ChatRequest request`; `ChatRequest.java:22-30` 필드 |
-| **Process** | 1. sessionId 없으면 UUID 생성 2. `InternalChatRequest.builder()` (modelType, message, stickyContext, history, imageBase64, imageMimeType) 3. `fastapiWebClient.post().uri("/internal/ai/chat").bodyValue(internalRequest)` 4. 5xx→AI_CHAT_FAILED, Timeout→AI_CHAT_TIMEOUT 5. 응답 수신 후 `updateSessionHistory(sessionId, chatRequest, response)` — Redis에 `[{"role":"user","text":...},{"role":"model","text":...}]` JSON 저장 6. `ChatResponse.builder()` 반환. **플랜/CR002 검사 없음** | `AiProxyService.java:83-126` chat(). 85-87 sessionId, 88-96 InternalChatRequest, 97-114 WebClient, 116-119 updateSessionHistory, 121-125 build. `AiProxyService.java:133-156` updateSessionHistory() |
+| **Process** | 1. sessionId 없으면 UUID 생성 2. `InternalChatRequest.builder()` (modelType, message, stickyContext, history, imageBase64, imageMimeType) 3. WebClient가 외부 AI 서비스 호출 4. 5xx→AI_CHAT_FAILED, Timeout→AI_CHAT_TIMEOUT 5. 응답 수신 후 `updateSessionHistory(sessionId, chatRequest, response)` — Redis에 `[{"role":"user","text":...},{"role":"model","text":...}]` JSON 저장 6. `ChatResponse.builder()` 반환. **플랜/CR002 검사 없음** | `AiProxyService.java:83-126` chat(). 85-87 sessionId, 88-96 InternalChatRequest, 97-114 WebClient, 116-119 updateSessionHistory, 121-125 build. `AiProxyService.java:133-156` updateSessionHistory() |
 | **Output** | `ChatResponse`: text, groundingUrls, quickReplies, sessionId | `AiProxyService.java:121-125` builder; `ChatResponse.java:19-23` 필드. `AiChatController.java:42` `ApiResponse.success(response)` |
 | **Exception** | AI_CHAT_FAILED(5xx), AI_CHAT_TIMEOUT(30초). CR002 채팅 경로 미사용 | `AiProxyService.java:102-104, 106-107, 110-113`; `ErrorCode.java:59-60` |
 
@@ -202,8 +203,8 @@ needsProfile === false → /app/home
 ```
 *실제 저장값은 history 배열만. sessionId/userId 등 메타는 키/별도 저장 없음.*
 
-**비기능 제약**: FastAPI 채팅 호출 타임아웃 30초; 초과 시 AI_CHAT_TIMEOUT.  
-**인수 조건**: message 필수·FastAPI 200 시 200 + text; sessionId 유지·history 연속 대화 확인.
+**비기능 제약**: 외부 AI 서비스 채팅 호출 타임아웃 30초; 초과 시 AI_CHAT_TIMEOUT.  
+**인수 조건**: message 필수·외부 서비스 200 시 200 + text; sessionId 유지·history 연속 대화 확인.
 
 **현 FE 연결**: `ApiService.chat(params)` → `POST /api/chat` (경로 동일) + `Authorization: Bearer` 헤더 추가
 
@@ -269,7 +270,7 @@ needsProfile === false → /app/home
 
 ### C1: 커뮤니티 피드 CRUD
 
-**구현 상태**: **구현됨**. GET/POST/PUT/DELETE /api/posts, answers·comments·likes·report·채택(accept) API 구현. PostQueryService, PostCommandService, AnswerCommandService, CommentCommandService, LikeController, ReportController. *소스: BE_CODE_AUDIT_GAP_REPORT_FINAL §2.1, miriarts_infra §4.4*
+**구현 상태**: **구현됨**. GET/POST/PUT/DELETE /api/posts, answers·comments·likes·report·채택(accept) API 구현. PostQueryService, PostCommandService, AnswerCommandService, CommentCommandService, LikeController, ReportController. *소스: docs/SSOT/miriarts_infra.md §4.4 구현된 엔드포인트 전수(PostController:39,54,63,72,82,91; AnswerController:36,53,65; CommentController:24,32,41; LikeController:27; ReportController:24,34)*
 
 **I-P-O-E 요약**
 
@@ -290,7 +291,7 @@ needsProfile === false → /app/home
 
 ### C2: Q&A 채택 + 마감 자동화
 
-**구현 상태**: **일부 구현됨**. 채택 구현됨. POST /api/posts/{postId}/accept/{answerId}, AnswerCommandService.acceptAnswer, ReputationService 호출. PostStatus.OPEN·deadlineAt 검사. *소스: PostController.java:90-96, AnswerCommandService.java:81-106*
+**구현 상태**: **일부 구현됨**. 채택 구현됨. POST /api/posts/{postId}/accept/{answerId}, AnswerCommandService.acceptAnswer(:80), ReputationService 호출. 채택 시 Post 행 락: PostRepository.findByIdForUpdate(PESSIMISTIC_WRITE) — PostRepository.java:39-41, 호출 AnswerCommandService.java:82. PostStatus.OPEN·deadlineAt 검사. *소스: PostController.java:90-96, AnswerCommandService.java:81-106*
 
 **미구현(향후)**: 마감 자동화(배치로 deadline_at 경과 시 EXPIRED 전환 등). **PRD §5.1 Phase C** 참조.
 
@@ -310,9 +311,9 @@ needsProfile === false → /app/home
 
 ### C4: AI 연결 (Q&A 요약/초안)
 
-**구현 상태**: **미구현(향후)**. FastAPI에는 `/internal/ai/summarize-answers`, `/internal/ai/draft-from-question` 스텁(501)만 존재. *miriart-ai/app/routers/ai.py:51-76*. **PRD §5.1 Phase C** 참조.
+**구현 상태**: **미구현(향후)**. 외부 AI 연동(요약/초안). 별도 레포·별도 에이전트 관리. **PRD §5.1 Phase C** 참조.
 
-**설계 예정**: FE → POST /api/posts/{id}/ai-summary → BE가 답변 수집 후 FastAPI summarize-answers → FE AiSummaryCard.
+**설계 예정**: FE → POST /api/posts/{id}/ai-summary → BE가 답변 수집 후 외부 AI 서비스 호출 → FE AiSummaryCard.
 
 ---
 
@@ -324,7 +325,7 @@ needsProfile === false → /app/home
 | ApiService.chat(params) | POST /api/chat | Bearer | ChatRequest 필드 동일 |
 | ApiService.editImage(params) | POST /api/chat (modelType: IMAGE_EDIT) | Bearer | 단일 채팅 API로 통합 |
 
-**교체**: gemini.ts → miriartApi.ts (또는 동등 모듈). analyzeArtwork 시 formData에 image, analysisType, problemText; Authorization 헤더 필수. *API_CONTRACT §11 참조.*
+**교체**: gemini.ts → miriartApi.ts (또는 동등 모듈). analyzeArtwork 시 formData에 image, analysisType, problemText; Authorization 헤더 필수. *API_CONTRACT 엔드포인트·Request 참조.*
 
 ---
 
@@ -359,4 +360,4 @@ flowchart TD
 | Phase | P1 (F1~F6) / P2 (F7~F8) / C (C1~C4) |
 | 검증 | I-P-O-E별 **miriart-be 실제 Java 라인** 명시(컨트롤러·서비스·DTO·Repository). 구현/설계/미구현 구분. |
 | BE 코드 정합 (최종) | F1 AuthController 54-59 + OAuth2TokenExchangeService 51-88. F2 UserController 41-45 + UserService 47-60. F3 AnalysisController 41-55 + AnalysisService 59-121. F4 AiChatController 37-42 + AiProxyService 83-126·133-156. F5 AnalysisController 57-62·65-69 + AnalysisService 129-132·138-141 + AnalysisRepository 19·21. F6 UserController 48-53 + UserService 67-81. C1 PostController 31-35 + findAll(pageable). |
-| 문서 갱신 규칙 | BE/API/인프라 변경 시: (1) 해당 기능 I-P-O-E·소스 라인 반영, (2) API_CONTRACT §9·§10·엔드포인트 목록 동기화, (3) miriarts_infra §4.4 구현 현황 필요 시 수정. PRD Phase 변경 시 §1 표·F7/F8/C2~C4 구현 상태·PRD 참조 문구 갱신. |
+| 문서 갱신 규칙 | BE/API/인프라 변경 시: (1) 해당 기능 I-P-O-E·소스 라인 반영, (2) API_CONTRACT·miriarts_infra §4.4 엔드포인트 목록 동기화, (3) miriarts_infra §4.4 구현 현황 필요 시 수정. PRD Phase 변경 시 §1 표·F7/F8/C2~C4 구현 상태·PRD 참조 문구 갱신. |

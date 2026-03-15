@@ -1,94 +1,84 @@
-# Docker 빌드 및 배포 프롬프트
+# MiriArt BE Docker 빌드·푸시·배포 프롬프트
 
-아래 프롬프트를 복사해서 Cursor/챗에 붙여넣으면, Docker 빌드·배포 작업을 요청할 수 있습니다.
-
----
-
-## 1) 전체 서비스 Docker 빌드
-
-```
-이 프로젝트를 Docker로 빌드해줘.
-
-- miriart-be: Spring Boot (Gradle, Java 17), Dockerfile 있음. 루트는 miriart-be/
-- server: Node.js, Dockerfile 있음. 루트는 server/
-- miriart-ai: Python (FastAPI), Dockerfile 있음. 루트는 miriart-ai/
-
-각 서비스별로:
-1. 해당 디렉터리에서 Docker 이미지 빌드 (이미지 이름은 서비스명 기반으로, 예: miriart-be, miriart-server, miriart-ai)
-2. 빌드에 필요한 명령어나 스크립트를 알려주거나 작성해줘
-3. 필요하면 docker-compose.yml로 한 번에 빌드/실행할 수 있게 해줘
-```
+> miriart-be 전용. 외부 AI 서비스는 별도 레포에서 관리.
+> 배포 파라미터 SSOT: `docs/SSOT/miriarts_infra.md` §5.2
 
 ---
 
-## 2) 특정 서비스만 빌드·실행
-
-```
-[miriart-be / server / miriart-ai] 서비스를 Docker로 빌드하고 로컬에서 실행해줘.
-
-- 이미지 이름과 컨테이너 이름 규칙 제안
-- 포트 매핑 (각각 8080 등)
-- 필요한 환경 변수(application-prod, .env 등) 반영 방법
-- 실행용 docker run 예시 또는 docker-compose 서비스 정의
-```
-
----
-
-## 3) 프로덕션 배포용 이미지 빌드
-
-```
-프로덕션 배포용 Docker 이미지를 빌드해줘.
-
-- [miriart-be / server / miriart-ai] 기준으로
-- multi-stage 빌드 유지, 불필요한 파일 제외
-- 태그 규칙: 이미지이름:latest, 이미지이름:버전(또는 git sha)
-- 레지스트리 푸시용 명령어 예시 (예: Docker Hub, GCR, ECR) 알려줘
-```
-
----
-
-## 4) docker-compose로 로컬/스테이징 실행
-
-```
-docker-compose로 로컬(또는 스테이징) 환경을 구성해줘.
-
-- miriart-be, server, miriart-ai를 각각 서비스로 정의
-- 내부 통신용 네트워크, 포트 노출
-- 환경별 설정(application-dev, .env) 적용 방법
-- 한 번에 빌드 후 실행하는 방법 설명
-```
-
----
-
-## 5) CI/CD에서 Docker 빌드·배포 (요약 요청)
-
-```
-CI/CD 파이프라인에서 이 프로젝트를 Docker로 빌드하고 배포하는 단계를 설계해줘.
-
-- GitHub Actions / GitLab CI / Jenkins 등 (원하는 것 지정)
-- Docker 이미지 빌드 → 레지스트리 푸시 → 배포(Cloud Run, ECS, Kubernetes 등) 순서
-- 시크릿(API 키, DB 비밀번호)은 환경 변수나 Secret Manager 사용, Dockerfile에 넣지 않기
-```
-
----
-
-## 빠른 참조: 수동 빌드 명령어
+## 1. WSL에서 Docker 빌드·푸시
 
 ```bash
-# miriart-be (프로젝트 루트가 MiriArt일 때)
-docker build -t miriart-be:latest ./miriart-be
+cd ~/projects-wsl/MiriArt/miriart-be
 
-# server
-docker build -t miriart-server:latest ./server
+IMAGE="asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-be:latest"
 
-# miriart-ai
-docker build -t miriart-ai:latest ./miriart-ai
+# 빌드
+docker build -t $IMAGE .
+
+# 레지스트리 인증 (최초 1회)
+gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
+
+# 푸시
+docker push $IMAGE
 ```
 
-실행 예시 (포트만 맞추면 됨):
+---
+
+## 2. (선택) 로컬 컨테이너 실행 테스트
 
 ```bash
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod miriart-be:latest
-docker run -p 8081:8080 miriart-server:latest
-docker run -p 8082:8080 miriart-ai:latest
+docker run --rm -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=dev \
+  -e SPRING_DATASOURCE_URL="jdbc:mysql://host.docker.internal:3306/miriart_dev?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul" \
+  $IMAGE
 ```
+
+---
+
+## 3. GCP Cloud Run 배포 (gcloud CLI)
+
+```bash
+PROJECT_ID="miriarts"
+REGION="asia-northeast3"
+IMAGE="asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-be:latest"
+SA="miriart-be-runner@miriarts.iam.gserviceaccount.com"
+INSTANCE="miriarts:asia-northeast3:miriart-mysql"
+
+gcloud run deploy miriart-be \
+  --image=$IMAGE \
+  --region=$REGION \
+  --platform=managed \
+  --no-allow-unauthenticated \
+  --service-account=$SA \
+  --port=8080 \
+  --memory=1Gi \
+  --add-cloudsql-instances=$INSTANCE \
+  --vpc-connector=miriart-connector \
+  --vpc-egress=private-ranges-only \
+  --set-secrets=SPRING_DATASOURCE_URL=miriart-db-url:latest,SPRING_DATASOURCE_USERNAME=miriart-db-username:latest,SPRING_DATASOURCE_PASSWORD=miriart-db-password:latest,SPRING_DATA_REDIS_HOST=miriart-redis-host:latest,JWT_ACCESS_SECRET=miriart-jwt-access-secret:latest,JWT_REFRESH_SECRET=miriart-jwt-refresh-secret:latest,GOOGLE_CLIENT_ID=miriart-google-client-id:latest,GOOGLE_CLIENT_SECRET=miriart-google-client-secret:latest,KAKAO_CLIENT_ID=miriart-kakao-client-id:latest,KAKAO_CLIENT_SECRET=miriart-kakao-client-secret:latest,FRONTEND_OAUTH_SUCCESS_URL=miriart-frontend-oauth-url:latest \
+  --set-env-vars="SPRING_PROFILES_ACTIVE=prod,FASTAPI_INTERNAL_URL=https://miriart-ai-946560105497.asia-northeast3.run.app,GCS_BUCKET_NAME=miriart-bucket" \
+  --project=$PROJECT_ID
+```
+
+---
+
+## 4. 한 번에 하기 (빌드·푸시·배포)
+
+WSL 배시 스크립트 사용:
+
+```bash
+cd ~/projects-wsl/MiriArt/miriart-be
+./scripts/cloudrun-redeploy.sh
+```
+
+- `gcloud builds submit`으로 이미지 빌드·푸시 후, 이어서 `gcloud run deploy` 실행.
+- 전제: `gcloud` 로그인, 프로젝트 `miriarts`, VPC 커넥터 `miriart-connector` 및 시크릿 존재.
+
+---
+
+## 5. GCP 콘솔에서 "풀 앤 디플로이"
+
+1. [Cloud Run 콘솔](https://console.cloud.google.com/run?project=miriarts) → 리전 **asia-northeast3** 선택
+2. 서비스 `miriart-be` 클릭
+3. **"새 리비전 배포"** → 컨테이너 이미지 URL에 `asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-be:latest` 입력
+4. 나머지 설정 유지 → **"배포"** 클릭

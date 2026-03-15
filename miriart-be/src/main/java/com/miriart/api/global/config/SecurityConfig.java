@@ -2,6 +2,7 @@ package com.miriart.api.global.config;
 
 import com.miriart.api.domain.auth.oauth2.CustomOAuth2UserService;
 import com.miriart.api.domain.auth.oauth2.OAuth2LoginSuccessHandler;
+import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.security.JwtAuthenticationFilter;
 import com.miriart.api.global.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -76,9 +77,10 @@ public class SecurityConfig {
                 })
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            ErrorCode ec = ErrorCode.AUTH_REQUIRED;
+                            response.setStatus(ec.getHttpStatus().value());
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"code\":\"AUTH001\",\"message\":\"인증이 필요합니다.\"}");
+                            response.getWriter().write("{\"code\":\"" + ec.getCode() + "\",\"message\":\"" + ec.getMessage() + "\"}");
                         })
                 )
                 .oauth2Login(oauth2 -> oauth2

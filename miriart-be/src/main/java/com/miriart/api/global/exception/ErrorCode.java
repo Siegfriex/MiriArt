@@ -40,6 +40,8 @@ public enum ErrorCode {
     OAUTH_USER_INFO_FAILED(HttpStatus.BAD_GATEWAY, "AUTH007", "OAuth 사용자 정보 조회에 실패했습니다"),
     // [보류] OAuth 토큰 교환 실패 전용 — P1 미사용
     OAUTH_TOKEN_EXCHANGE_FAILED(HttpStatus.BAD_GATEWAY, "AUTH008", "OAuth 토큰 교환에 실패했습니다"),
+    /** 401 미인증 시 SecurityConfig authenticationEntryPoint에서 사용. AUTH001은 OAuth 미지원 전용. */
+    AUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH009", "인증이 필요합니다."),
 
     // Member (회원)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "회원을 찾을 수 없습니다"),

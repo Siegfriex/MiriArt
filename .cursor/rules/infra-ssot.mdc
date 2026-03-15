@@ -1,25 +1,22 @@
 ---
-description: 인프라·배포·환경설정·GCP·SSOT 문서 작업 시 참고할 규칙과 문서 위치
-globs: 
+description: 인프라·배포·환경설정·GCP·SSOT 문서 작업 시 참고할 규칙
+globs:
   - "docs/SSOT/**"
-  - "docs/MiriArt_*INFRA*.md"
-  - "docs/MiriArt_BE_CloudRun*.md"
-  - "docs/mysql_erd_v1.md"
   - "docs/MiriArt_ERD_v2.md"
-  - "docs/IDE_에이전트*.md"
+  - "docs/MiriArt_API_CONTRACT.md"
   - "miriart-be/**/application*.yml"
-  - "miriart-ai/**/config.py"
-  - "**/cloudbuild*.yaml"
+  - "miriart-be/scripts/cloudrun-redeploy*"
   - "**/Dockerfile"
 ---
 
 # 인프라·SSOT 작업 시
 
-- **SSOT**: 인프라/배포/환경 관련 사실은 `docs/SSOT/miriarts_infra.md`를 기준으로 한다. 변경 전에 해당 섹션을 먼저 수정한다.
-- **스키마 SSOT**: 실제 DB(MySQL) 테이블·컬럼·인덱스의 단일 참조는 `docs/mysql_erd_v1.md`(역추출·정합성 §4)이다. 설계/Phase 확장용 스키마는 `docs/MiriArt_ERD_v2.md`. 스키마·엔티티 변경 시 mysql_erd_v1 재추출 또는 §4 정합성 점검·ERD_v2와 조율.
-- **시크릿**: 환경변수/Secret 이름·용도·흐름만 기술하고, **실제 값은 절대 기재하지 않는다**.
-- **근거**: 코드·설정·문서에서 확인된 내용만 서술한다. 확인되지 않으면 **(추론)**으로 표기한다.
-- **세션 리셋/첫 인지**: 레포 상태를 다시 파악할 때는 `.cursor/INFRA_SSOT_GUIDE.md`와 `docs/SSOT/miriarts_infra.md`(운영 요약·§1)를 참고한다. `docs/IDE_에이전트_올인원_프롬프트_v2_요약.md`가 있으면 추가 참고.
-- **에이전트 변경 후 SSOT 반영**: 인프라/배포/설정 관련 코드·설정·문서를 수정한 경우, (1) `docs/SSOT/miriarts_infra.md` 해당 섹션(§2~§5·§7)을 즉시 갱신하고, (2) `docs/SSOT/CHANGELOG_infra.md`에 **날짜·에이전트 롤·구체적 수정 내역**을 한 줄 이상 추가한다. 지침: `.cursor/INFRA_SSOT_GUIDE.md` §5.
+- **코드가 SSOT**: 문서는 코드를 따른다. `miriart-ai`, `miriart-ai-legacy` 경로는 참조하지 않는다(별도 레포 관리).
+- **문서 레포**: SSOT 정본은 [miriart_docs](https://github.com/Siegfriex/miriart_docs). 코드 레포 `docs/`는 로컬 미러. 최종 반영은 miriart_docs PR.
+- **인프라 SSOT**: `docs/SSOT/miriarts_infra.md` 기준. 변경 전 해당 섹션 먼저 수정.
+- **스키마 SSOT**: 엔티티·Flyway·`docs/MiriArt_ERD_v2.md` (실 DB 역추출 검증 완료).
+- **시크릿**: 이름·용도·흐름만 기술. **실제 값 기재 금지**.
+- **에이전트 변경 후**: (1) SSOT 해당 섹션 갱신, (2) `CHANGELOG_infra.md` 이력 추가, (3) miriart_docs PR.
+- **7개 문서 체계**: docs/ 하위에는 PRD_v2, FSD_v2, ERD_v2, API_CONTRACT, SSOT 3종만 존재.
 
-자세한 지침: `.cursor/INFRA_SSOT_GUIDE.md`
+자세한 지침: `.claude/INFRA_SSOT_GUIDE.md`

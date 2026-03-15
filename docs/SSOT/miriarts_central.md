@@ -25,11 +25,14 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 
 ### 1-1. package.json 요약
 
+*소스: 루트 package.json (engines:6-8, dependencies:17-29, devDependencies:30-35, overrides:36).*
+
 | 구분 | 키 | 버전 (package.json) |
 |------|----|---------------------|
 | **engines** | node | >=18.0.0 |
 | | npm | >=9.0.0 |
-| **dependencies** | @google/genai | ^1.41.0 |
+| **dependencies** | @tanstack/react-query | ^5.62.0 |
+| | @google/genai | ^1.41.0 |
 | | clsx | ^2.1.0 |
 | | framer-motion | ^11.0.0 |
 | | lucide-react | ^0.574.0 |
@@ -41,6 +44,7 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 | | zod | ^4.3.6 |
 | | zustand | ^4.5.0 |
 | **devDependencies** | @tailwindcss/vite | ^4.2.0 |
+| | @playwright/test | ^1.58.2 |
 | | @types/node | ^22.14.0 |
 | | @vitejs/plugin-react | ^5.0.0 |
 | | typescript | ~5.8.2 |
@@ -73,20 +77,23 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 | clsx | 2.1.1 |
 | tailwind-merge | 2.6.1 |
 | zod | 4.3.6 |
+| @tanstack/react-query | 5.90.21 |
+| typescript | 5.8.3 |
 
 ### 1-4. 프론트엔드 데이터 패칭/상태 관리 정책 (v1)
 
-- **현재** FE에는 **@tanstack/react-query**가 도입되어 있으며, 세션 목록·채팅·분석 등에서 useQuery/useMutation 사용. (문서 정책은 과거 v1 기준이었으며, 코드 반영으로 정정함.)
-- 데이터 패칭은 ApiService + **React Query** 및 필요 시 Zustand 조합으로 구현됨.
-- ApiService 레이어에서 다음을 공통 처리한다.
-  - 인증 토큰 자동 첨부
-  - 공통 에러 포맷 처리
-  - (필요 시) Zod 기반 응답 스키마 검증
-- v2 이후, 트래픽이 높고 캐싱 이득이 큰 엔드포인트에 한해 React Query 도입을 재검토한다.
+*소스: src/shared/api/miriartApi.ts, useSessionList.ts, useChatMutation.ts 등.*
+
+- **현재** FE에는 **@tanstack/react-query**가 도입되어 있으며, 세션 목록·채팅·분석 등에서 useQuery/useMutation 사용.
+- 데이터 패칭은 miriartApi (apiFetch) + **React Query** 및 필요 시 Zustand 조합으로 구현됨.
+- apiFetch 레이어에서 인증 토큰 자동 첨부(getAuthHeaders), 401 시 refreshToken 재시도, 공통 에러 포맷(handleApiError) 처리. 필요 시 Zod 기반 응답 스키마 검증(schemas/*.ts).
+- 토큰 없을 때 API 호출 방지: useSessionList(enabled: !!tokenManager.getAccessToken()), Home/Archive에서 getAccessToken() 체크 후 getList 호출.
 
 ---
 
 ## 2. 메인 백엔드(miriart-be) Gradle 의존성·플러그인
+
+*소스: miriart-be/build.gradle (plugins:1-4, Java toolchain:10-12), miriart-be/gradle/wrapper/gradle-wrapper.properties:3 (Gradle 9.2.1).*
 
 ### 2-1. plugins 블록
 
@@ -131,9 +138,12 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 | implementation | org.springdoc:springdoc-openapi-starter-webmvc-ui | 2.8.6 | Swagger UI |
 | compileOnly | org.projectlombok:lombok | (BOM) | Lombok |
 | annotationProcessor | org.projectlombok:lombok | (BOM) | Lombok |
+| implementation | org.flywaydb:flyway-core | (BOM) | Flyway migration |
+| implementation | org.flywaydb:flyway-mysql | (BOM) | Flyway MySQL |
 | testImplementation | org.springframework.boot:spring-boot-starter-test | (BOM) | Test |
 | testImplementation | org.springframework.security:spring-security-test | (BOM) | Test |
 | testRuntimeOnly | org.junit.platform:junit-platform-launcher | (BOM) | Test |
+| testImplementation | org.wiremock:wiremock-standalone | 3.3.1 | API Mock Test |
 | developmentOnly | org.springframework.boot:spring-boot-devtools | (BOM) | Dev |
 
 **기타 설정**
@@ -143,35 +153,9 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 
 ---
 
-## 3. AI 서비스(miriart-ai) Python 의존성
+## 3. 외부 AI 서비스 의존성
 
-### 3-1. requirements.txt → 표
-
-| 패키지 | 요구 버전 |
-|--------|-----------|
-| fastapi | 0.115.8 |
-| uvicorn[standard] | 0.34.0 |
-| google-cloud-aiplatform | 1.79.0 |
-| google-cloud-storage | 2.19.0 |
-| pydantic | 2.10.6 |
-| pydantic-settings | 2.7.1 |
-| python-multipart | 0.0.20 |
-| httpx | 0.27.2 |
-| python-dotenv | 1.0.1 |
-
-### 3-2. requirements.txt vs pip list (실제 설치 버전)
-
-| 패키지 | 요구 버전 (requirements.txt) | 실제 설치 (pip list) | 일치 |
-|--------|-----------------------------|------------------------|------|
-| fastapi | 0.115.8 | 0.115.8 | ✅ |
-| uvicorn | 0.34.0 | 0.34.0 | ✅ |
-| google-cloud-aiplatform | 1.79.0 | 1.79.0 | ✅ |
-| google-cloud-storage | 2.19.0 | 2.19.0 | ✅ |
-| pydantic | 2.10.6 | 2.10.6 | ✅ |
-| pydantic-settings | 2.7.1 | 2.7.1 | ✅ |
-| python-multipart | 0.0.20 | 0.0.20 | ✅ |
-| httpx | 0.27.2 | 0.27.2 | ✅ |
-| python-dotenv | 1.0.1 | 1.0.1 | ✅ |
+AI 서비스 의존성(Python, requirements.txt, Dockerfile, cloudbuild 등)은 **별도 레포에서 관리**한다. 본 레포에서는 미참조.
 
 ---
 
@@ -183,19 +167,15 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 |------|-------------------|--------|----------------------------|
 | **miriart-be/Dockerfile** | builder: eclipse-temurin:17-jdk-jammy | — | — |
 | | runtime: eclipse-temurin:17-jre-jammy | 8080 | ENTRYPOINT ["java", "-jar", "/app.jar"] |
-| **miriart-ai/Dockerfile** | python:3.11-slim | 8080 | CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"] |
 | **server/Dockerfile** | node:20-slim (builder & runner) | 8080 | CMD ["node", "dist/index.js"] |
 
 - **BE:** JAR 복사 경로 `COPY --from=builder /app/build/libs/*.jar app.jar` (Gradle 기본 출력 build/libs 사용).
-- **server/Dockerfile 용도:** `server/`는 **Express + @google/genai 기반 Node API 서버**(이미지 분석·편집·채팅 라우트). 현재 운영 AI 서비스는 **miriart-ai(FastAPI)**이며, server는 과거 FE 연동용 또는 별도 Cloud Run 배포 옵션으로 보인다. (루트는 Vite SPA라 `dist/index.html` 구조이며, server는 자체 `npm run build` → `dist/index.js`로 별도 앱이다.)
+- **server/Dockerfile 용도:** `server/`는 **Express + @google/genai 기반 Node API 서버**. **(현재 비활성 / future use)**. 루트는 Vite SPA, server는 별도 앱.
+- **외부 AI 서비스:** Dockerfile·배포는 별도 레포에서 관리.
 
 ### 4-2. Cloud Build
 
-| 파일 | 사용 이미지 (빌드) | 푸시/배포 이미지 | 대상 서비스 | 지역 |
-|------|--------------------|-------------------|-------------|------|
-| miriart-ai/cloudbuild.yaml | gcr.io/cloud-builders/docker (빌드) | asia-northeast3-docker.pkg.dev/miriarts/miriart-images/miriart-ai:$COMMIT_SHA | miriart-ai (Cloud Run) | asia-northeast3 |
-
-- 배포 옵션: --port=8080, --no-allow-unauthenticated, --memory=1Gi, --cpu=1, --timeout=120
+BE/FE용 Cloud Build 파이프라인은 문서·스크립트 기준 수동/스크립트 배포. 외부 AI 서비스 배포는 별도 레포에서 관리.
 
 ### 4-3. Spring application*.yml 핵심 값
 
@@ -210,19 +190,27 @@ v1 동안 `miriart-ai/requirements.txt`를 변경하는 모든 PR은, 반드시 
 | | spring.data.redis | host: localhost, port: 6379 |
 | | OAuth2 | kakao / google (client-id/secret 환경변수) |
 | application-prod.yml | server.port | ${PORT:8080} |
-| | spring.datasource | url/user/password from env (DB_URL, DB_USERNAME, DB_PASSWORD) |
-| | spring.data.redis | host: ${REDIS_HOST}, port: 6379 |
+| | server.forward-headers-strategy | framework |
+| | spring.datasource.url/username/password | ${SPRING_DATASOURCE_URL}, ${SPRING_DATASOURCE_USERNAME}, ${SPRING_DATASOURCE_PASSWORD} (Secret 주입) |
+| | spring.datasource.hikari | connection-timeout: 30000, maximum-pool-size: 10, initialization-fail-timeout: 30000 |
+| | spring.data.redis | host: ${SPRING_DATA_REDIS_HOST}, port: 6379 |
+| | spring.flyway | enabled: true, baseline-on-migrate: true, baseline-version: 6, locations: classpath:db/migration |
+| | spring.jpa.hibernate.ddl-auto | validate |
+| | miriart.auth.cookie-same-site | None (prod) |
+| | miriart.jwt.secret | access: ${JWT_ACCESS_SECRET}, refresh: ${JWT_REFRESH_SECRET} |
+| | miriart.jwt.expiration | access: ${JWT_ACCESS_EXPIRATION_MS:900000}, refresh: ${JWT_REFRESH_EXPIRATION_MS:604800000} |
+| | management.endpoints.web.exposure | include: health |
 | | OAuth2 | google만 (client-id/secret from env) |
 
 ### 4-4. v1 배포 구조 정책
 
 v1 출시 전까지의 배포 구조는 다음과 같이 유지한다.
 
-- **AI 서비스 (`miriart-ai`):** Cloud Build → Artifact Registry → Cloud Run 자동 배포 파이프라인 사용
 - **메인 백엔드 (`miriart-be`):** Gradle + Dockerfile 기반 수동 또는 스크립트형 배포
 - **프론트엔드 (React/Vite SPA):** Vercel를 사용한 SPA 배포
+- **외부 AI 서비스:** 별도 레포에서 관리
 
-BE/FE용 Cloud Build 파이프라인 추가 및 배포 구조 통합은 v1 이후 단계에서 검토한다.
+BE용 Cloud Build 파이프라인 추가는 v1 이후 단계에서 검토한다.
 
 ---
 
@@ -268,17 +256,21 @@ BE/FE용 Cloud Build 파이프라인 추가 및 배포 구조 통합은 v1 이�
 | MySQL Connector | BOM (Spring Boot 관리) |
 | mysql-socket-factory-connector-j-8 | 1.25.1 |
 
-**AI**
+**AI** *(별도 레포 miriart-ai 기준, 2026-03-15 검증)*
 
 | 라이브러리 | 버전 |
 |------------|------|
 | fastapi | 0.115.8 |
-| uvicorn | 0.34.0 |
-| google-cloud-aiplatform | 1.79.0 |
-| google-cloud-storage | 2.19.0 |
-| httpx | 0.27.2 |
+| uvicorn[standard] | 0.34.0 |
+| google-genai | >=1.5.0 |
+| google-cloud-storage | >=2.18.0 |
+| google-auth | >=2.35.0 |
 | pydantic | 2.10.6 |
 | pydantic-settings | 2.7.1 |
+| httpx | >=0.27.0 |
+| python-multipart | 0.0.20 |
+| python-dotenv | 1.0.1 |
+| python-json-logger | >=3.0.0 |
 
 ### 5-3. 컨테이너 이미지/포트/엔드포인트 표
 
@@ -309,6 +301,7 @@ BE/FE용 Cloud Build 파이프라인 추가 및 배포 구조 통합은 v1 이�
 | 2 | server/Dockerfile | 루트 Vite와 별도 앱(Express, dist/index.js). | 용도는 4-1절에 한 줄 코멘트로 명시함. |
 | 3 | FE lock 버전 | 배포 재현성은 lock 기준. | 이 문서에 lock 버전 표기함. |
 | 4 | Cloud Build | miriart-ai만 cloudbuild.yaml 있음. | BE/FE 배포 방식이 별도면 SSOT에 "배포 경로"만 명시. |
+| 5 | AI 패키지 | google-cloud-aiplatform → google-genai로 마이그레이션됨. | SSOT §5-2 업데이트 완료(2026-03-15). |
 
 ---
 

@@ -538,7 +538,7 @@ export function handleApiError(error: unknown): string {
       AUTH002: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.',
       AUTH004: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.', // refresh: 쿠키 미전송 또는 Redis 불일치
       AUTH006: '로그인 세션이 만료됐습니다. 다시 로그인해주세요.', // refresh: RT 만료·변조
-      AUTH009: 'AI 서비스 인증에 일시 문제가 있습니다. 잠시 후 다시 시도해주세요.',
+      AUTH009: '인증이 필요합니다. 로그인해 주세요.',
       ...COMMUNITY_MESSAGES,
     };
     return messages[code] || body?.message || '오류가 발생했습니다.';
