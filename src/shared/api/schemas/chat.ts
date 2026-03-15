@@ -18,8 +18,8 @@ export type ChatSection = z.infer<typeof chatSectionSchema>;
  */
 export const chatResponseSchema = z.object({
   text: z.string(),
-  summary: z.string().optional(),
-  sections: z.array(chatSectionSchema).optional(),
+  summary: z.string().nullable().optional(),
+  sections: z.array(chatSectionSchema).nullable().optional(),
   sessionId: z.string().optional(),
   sessionKey: z.string().optional(),
   groundingUrls: z.array(z.string()).optional(),
