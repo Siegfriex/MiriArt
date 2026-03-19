@@ -258,7 +258,9 @@
       "Bash(echo:*)",
       "Bash(cd:*)",
       "Bash(which vercel:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }

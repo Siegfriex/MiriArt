@@ -8,6 +8,18 @@
 
 ## 이력
 
+### 2026-03-19 | 행동 로그 v2.0 prod 배포 (rev 00050)
+- **Flyway V7/V8**: `user_events`, `user_cohorts` 테이블 생성 (prod DB `miriart_prod`).
+- **AsyncConfig**: `@EnableAsync` + `eventExecutor` 빈 (core=2, max=5, queue=100, logAndDiscard).
+- **SecurityConfig**: `POST /api/events` permitAll 추가.
+- **EventLoggingService**: `@Async("eventExecutor")` + `REQUIRES_NEW` TX. `EventPublisher` 인터페이스 어댑터.
+- **인스트루먼트**: AnalysisService(ANALYSIS_UPLOADED/COMPLETED), ChatSessionService(CHAT_STARTED/CHAT_MESSAGE_SENT), GlobalExceptionHandler(ERROR_OCCURRED).
+- **FE**: `usePageView` 훅 (AppRouter.tsx), `eventsApi.ts` (native fetch, fire-and-forget), `sessionKey.ts`.
+- **CohortBatchScheduler**: 매일 02:30 증분 집계 (25h 윈도우). `DataIntegrityViolationException` race condition 방어.
+- **배포 이슈**: (1) prod에 user_events 수동 생성 상태 → DDL `IF NOT EXISTS` 추가. (2) `first_analysis_grade CHAR(1)` vs Hibernate VARCHAR 불일치 → `columnDefinition="char(1)"` 수정. (3) source 컬럼 누락 → `ALTER TABLE ADD COLUMN` 수동 실행.
+- **ERD v2.1→v2.2**: user_events, user_cohorts 테이블 + 인덱스 반영.
+- **API_CONTRACT**: `POST /api/events` 엔드포인트 추가.
+
 ### 2026-03-15 | ERD v2.1 실 DB 역추출 검증·수정
 - **검증 소스**: GCP Cloud SQL(miriart_prod) INFORMATION_SCHEMA 역추출 — 테이블 12개, 컬럼 전수, 인덱스 전수, FK 전수.
 - **MiriArt_ERD_v2.md v2.0→v2.1**: (1) `plans` 테이블 — DDL 제거, "DB에 존재하지 않음" 명시. (2) `reports` — reporter_id→user_id, target_type ENUM('POST','ANSWER') (comment 제거), reason varchar(500), updated_at 추가. (3) `analyses.analysis_type` — ENUM→varchar(50). (4) `analyses.embedding` — 컬럼 제거(DB에 없음). (5) ENUM 케이싱 전체 uppercase 통일(FREE/QNA/POST/ANSWER 등). (6) TIMESTAMP→datetime(6) 전체 통일. (7) users.idx_email 제거(DB에 없음). (8) §6 인덱스 전략에 chat_sessions·reports 인덱스 추가.

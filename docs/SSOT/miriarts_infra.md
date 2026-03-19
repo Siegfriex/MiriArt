@@ -1,4 +1,4 @@
-# MiriArt 인프라 SSOT v1.2
+# MiriArt 인프라 SSOT v1.3
 
 > **목적**: MiriArt GCP 인프라/배포/운영 관련 **단일 참조 문서(Single Source of Truth, SSOT)**.  
 > **규칙**: 실제 시크릿 값은 기재하지 않음. 환경변수/Secret 이름·용도·흐름만 기술. 코드·설정·문서에서 확인되지 않은 내용은 **(추론)**으로 표기.
@@ -13,6 +13,7 @@
 - **주요 GCP 리소스**: Cloud Run(miriart-be), Cloud SQL(MySQL miriart-mysql), Memorystore Redis(miriart-redis), GCS(miriart-bucket, miriart-build-cache), Secret Manager(DB/JWT/OAuth 등), Artifact Registry(miriart-images). 외부 AI 서비스는 별도 관리.
 - **인프라 TODO Top 3**: (1) BE 자동 배포/CI 부재 — Gradle+Dockerfile+gcloud 기반 수동/스크립트 배포, 중기에는 Cloud Build로 이식 예정 (TODO-004). (2) 카카오 OAuth Secret 미등록 (TODO-001). (3) 관측성 부족 — 알람·대시보드 미구축 (TODO-006).
 - **장애 시 먼저 확인할 위치**: (1) BE 헬스 `GET /actuator/health` (인증 불필요). (2) Cloud Logging에서 miriart-be 로그 및 GlobalExceptionHandler/스택 로그.
+- **행동 로그 파이프라인** (v2.0, 2026-03-19 배포 rev 00050): FE `usePageView` → `POST /api/events`(permitAll) → `EventLoggingService`(@Async) → `user_events` 테이블. BE 인스트루먼트: AnalysisService/ChatSessionService/GlobalExceptionHandler에서 비동기 이벤트 발행. 매일 02:30 `CohortBatchScheduler`가 `user_cohorts` 집계. *소스: AsyncConfig.java, EventLoggingService.java, CohortBatchScheduler.java. Flyway V7/V8. ERD v2.2.*
 - **참조 금지**: 본 레포 내 `miriart-ai`, `miriart-ai-legacy` 폴더는 문서·에이전트가 참조하지 않는다. AI 서비스는 별도 레포·별도 에이전트 관리.
 
 ---
@@ -145,7 +146,7 @@
 ### Secret Manager (주요 Secret ID)
 
 | Secret ID | 용도 | 매핑(서비스 → env) | 소스(파일/라인) |
-|-----------|------|---------------------|------------------|  
+|-----------|------|---------------------|------------------|
 | miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → SPRING_DATASOURCE_URL | application-prod.yml:12, miriart-be/scripts/cloudrun-redeploy.sh --set-secrets (SPRING_DATASOURCE_URL=miriart-db-url:latest) |
 | miriart-db-username | MySQL 사용자명 | miriart-be → SPRING_DATASOURCE_USERNAME | 동일 |
 | miriart-db-password | MySQL 비밀번호 | miriart-be → SPRING_DATASOURCE_PASSWORD | 동일 |
@@ -285,12 +286,13 @@
 
 | URL 패턴 | 접근 | 소스(파일/라인) |
 |----------|------|------------------|
-| /api/auth/** | permitAll | SecurityConfig.java:55 |
-| /oauth2/**, /login/oauth2/** | permitAll | :56 |
-| GET /api/posts/**, GET /api/answers/** | permitAll | :57–58. **GET /api/answers/** 는 permitAll이지만 해당 경로에 매핑된 컨트롤러가 없어 요청 시 404. AnswerController는 `/api/posts/{postId}/answers`만 매핑. |
-| /swagger-ui/**, /v3/api-docs/** | permitAll | :59 |
-| /actuator/health | permitAll | :60 |
-| 그 외 | authenticated() (JWT) | :62 |
+| /api/auth/** | permitAll | SecurityConfig.java:67 |
+| /oauth2/**, /login/oauth2/** | permitAll | :68 |
+| GET /api/posts/** | permitAll | :69 |
+| /swagger-ui/**, /v3/api-docs/** | permitAll (dev only) | :72-73 |
+| POST /api/events | permitAll | :70 (행동 로그 이벤트 수집, eventType 화이트리스트 검증) |
+| /actuator/health | permitAll | :75 |
+| 그 외 | authenticated() (JWT) | :77 |
 
 #### CORS
 
@@ -359,6 +361,7 @@
 | DELETE | /api/comments/{id} | CommentController:41 |
 | POST | /api/posts/{postId}/report | ReportController:24 |
 | POST | /api/answers/{answerId}/report | ReportController:34 |
+| POST | /api/events | EventsController:30 (permitAll, 행동 로그) |
 
 #### 구현된 엔드포인트(인증 필요·용도 요약)
 
@@ -507,7 +510,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 
 | 서비스 | 엔드포인트 | 인증 | 비고 | 소스(파일/라인) |
 |--------|-------------|------|------|------------------|
-| miriart-be | GET /actuator/health | permitAll | Spring Boot Actuator. **prod**: application-prod.yml에 management.endpoints.web.exposure.include: health 명시. 로드밸런서/배포 검사용. | SecurityConfig.java:60, application-prod.yml:53–60, build.gradle:65 |
+| miriart-be | GET /actuator/health | permitAll | Spring Boot Actuator. **prod**: application-prod.yml에 management.endpoints.web.exposure.include: health 명시. 로드밸런서/배포 검사용. | SecurityConfig.java:75, application-prod.yml:53–60, build.gradle:65 |
 | server | **(현재 비활성 / future use)** GET /health | 없음 | 응답 { status, timestamp } | server/index.ts:34–36 |
 
 ### 6.2 로그 & 모니터링 현황
