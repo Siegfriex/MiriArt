@@ -295,6 +295,7 @@ export const ResultDetail: React.FC = () => {
         <ComparisonAccordion
           tiers={displayResult.comparisonTiers ?? []}
           hasAcceptedArtwork={displayResult.hasAcceptedArtwork}
+          onAskMentor={handleAskMentor}
         />
       </div>
 

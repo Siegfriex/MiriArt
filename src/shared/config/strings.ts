@@ -137,6 +137,8 @@ export const STRINGS = {
   RESULT_FIXSCOPE_TUNING: '디테일 개선 권장',
   RESULT_COMPARISON_TITLE: '합격 비교',
   RESULT_COMPARISON_LOCKED: '합격작은 현재 준비중입니다..!',
+  /** 합격 비교 잠금 시 AI 챗봇 유도 멘트 */
+  RESULT_COMPARISON_LOCKED_CTA: '이 작품에 대해 궁금한 점이 있으면 AI 멘토에게 질문해보세요!',
   /** 결과 상세 — 채팅에서 쓰는 분석 코멘트와 동일한 "그림 평가" 섹션 제목 */
   RESULT_EVALUATION_TITLE: '그림 평가',
   /** 그림 평가 상단 — 5요소와 연계된 심층 평가임을 안내 */

@@ -7,14 +7,17 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Lock } from 'lucide-react';
+import { ChevronDown, Lock, MessageCircle } from 'lucide-react';
 import { ComparisonTier } from '../../shared/model/types';
 import { H2, H3, BodyText } from '../../shared/ui/Typography';
+import { Button } from '../../shared/ui/Button';
 import { STRINGS } from '../../shared/config/strings';
 
 interface ComparisonAccordionProps {
   tiers: ComparisonTier[];
   hasAcceptedArtwork?: boolean;
+  /** 잠금 시 AI 멘토로 유도하는 버튼 클릭 핸들러 */
+  onAskMentor?: () => void;
 }
 
 const TIER_STYLES: Record<ComparisonTier['level'], {
@@ -95,10 +98,11 @@ const TierSection: React.FC<{ tier: ComparisonTier }> = ({ tier }) => {
   );
 };
 
-/** 비교 아코디언. tiers, hasAcceptedArtwork. @참조 ResultDetail Page */
+/** 비교 아코디언. tiers, hasAcceptedArtwork, onAskMentor. @참조 ResultDetail Page */
 export const ComparisonAccordion: React.FC<ComparisonAccordionProps> = ({
   tiers,
   hasAcceptedArtwork = false,
+  onAskMentor,
 }) => {
   return (
     <section>
@@ -114,13 +118,26 @@ export const ComparisonAccordion: React.FC<ComparisonAccordionProps> = ({
           ))}
         </div>
 
-        {/* 합격작 미업로드 시 잠금 오버레이 */}
+        {/* 합격작 미업로드 시 잠금 오버레이 + AI 멘토 유도 */}
         {!hasAcceptedArtwork && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface/80 rounded-xl backdrop-blur-sm">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface/80 rounded-xl backdrop-blur-sm p-6">
             <div className="w-12 h-12 bg-surface-alt rounded-full flex items-center justify-center mb-3 border border-border-default">
               <Lock size={20} className="text-text-mid" />
             </div>
-            <H3 className="text-center text-sm">{STRINGS.RESULT_COMPARISON_LOCKED}</H3>
+            <H3 className="text-center text-sm mb-1">{STRINGS.RESULT_COMPARISON_LOCKED}</H3>
+            <BodyText className="text-center text-xs text-text-mid mb-4">
+              {STRINGS.RESULT_COMPARISON_LOCKED_CTA}
+            </BodyText>
+            {onAskMentor && (
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={onAskMentor}
+              >
+                <MessageCircle size={16} />
+                {STRINGS.RESULT_ASK_MENTOR}
+              </Button>
+            )}
           </div>
         )}
       </div>
