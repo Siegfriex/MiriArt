@@ -253,6 +253,18 @@ export const ResultDetail: React.FC = () => {
           </div>
         </section>
 
+        {/* 그림 평가 — 채팅 세션 stickyContext의 분석 코멘트와 동일한 데이터(comment/summaryComment) */}
+        {(displayResult.summaryComment ?? displayResult.comment)?.trim() && (
+          <section>
+            <H2 className="mb-3">{STRINGS.RESULT_EVALUATION_TITLE}</H2>
+            <div className="bg-surface-alt rounded-2xl border border-border-default p-5">
+              <BodyText className="text-text-primary whitespace-pre-wrap">
+                {(displayResult.summaryComment ?? displayResult.comment)?.trim()}
+              </BodyText>
+            </div>
+          </section>
+        )}
+
         {!hasGradeInput && (
           <div className="bg-surface-alt rounded-xl p-4 border border-primary-lime/20 flex items-center justify-between gap-3">
             <BodyText className="text-sm text-text-mid flex-1">{STRINGS.RESULT_GRADE_INPUT_CTA}</BodyText>

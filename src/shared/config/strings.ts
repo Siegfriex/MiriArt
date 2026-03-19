@@ -131,7 +131,9 @@ export const STRINGS = {
   RESULT_FIXSCOPE_REBUILD: '구조 재설계 필요',
   RESULT_FIXSCOPE_TUNING: '디테일 개선 권장',
   RESULT_COMPARISON_TITLE: '합격 비교',
-  RESULT_COMPARISON_LOCKED: '합격작을 업로드하면 비교분석이 활성화됩니다',
+  RESULT_COMPARISON_LOCKED: '합격작은 현재 준비중입니다..!',
+  /** 결과 상세 — 채팅에서 쓰는 분석 코멘트와 동일한 "그림 평가" 섹션 제목 */
+  RESULT_EVALUATION_TITLE: '그림 평가',
   RESULT_GRADE_INPUT_CTA: '성적을 입력하면 합격 확률을 볼 수 있어요',
   RESULT_GRADE_INPUT_BUTTON: '입력하기',
   RESULT_REANALYZE: '재평가하기',
