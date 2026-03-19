@@ -286,10 +286,10 @@
 
 | URL 패턴 | 접근 | 소스(파일/라인) |
 |----------|------|------------------|
-| /api/auth/** | permitAll | SecurityConfig.java:55 |
-| /oauth2/**, /login/oauth2/** | permitAll | :56 |
-| GET /api/posts/**, GET /api/answers/** | permitAll | :57–58. **GET /api/answers/** 는 permitAll이지만 해당 경로에 매핑된 컨트롤러가 없어 요청 시 404. AnswerController는 `/api/posts/{postId}/answers`만 매핑. |
-| /swagger-ui/**, /v3/api-docs/** | permitAll | :59 |
+| /api/auth/** | permitAll | SecurityConfig.java:67 |
+| /oauth2/**, /login/oauth2/** | permitAll | :68 |
+| GET /api/posts/** | permitAll | :69 |
+| /swagger-ui/**, /v3/api-docs/** | permitAll (dev only) | :72-73 |
 | POST /api/events | permitAll | :70 (행동 로그 이벤트 수집, eventType 화이트리스트 검증) |
 | /actuator/health | permitAll | :75 |
 | 그 외 | authenticated() (JWT) | :77 |
@@ -510,7 +510,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 
 | 서비스 | 엔드포인트 | 인증 | 비고 | 소스(파일/라인) |
 |--------|-------------|------|------|------------------|
-| miriart-be | GET /actuator/health | permitAll | Spring Boot Actuator. **prod**: application-prod.yml에 management.endpoints.web.exposure.include: health 명시. 로드밸런서/배포 검사용. | SecurityConfig.java:60, application-prod.yml:53–60, build.gradle:65 |
+| miriart-be | GET /actuator/health | permitAll | Spring Boot Actuator. **prod**: application-prod.yml에 management.endpoints.web.exposure.include: health 명시. 로드밸런서/배포 검사용. | SecurityConfig.java:75, application-prod.yml:53–60, build.gradle:65 |
 | server | **(현재 비활성 / future use)** GET /health | 없음 | 응답 { status, timestamp } | server/index.ts:34–36 |
 
 ### 6.2 로그 & 모니터링 현황
