@@ -258,7 +258,8 @@
       "Bash(echo:*)",
       "Bash(cd:*)",
       "Bash(which vercel:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(bash scripts/cloudrun-redeploy.sh 2>&1)"
     ]
   }
 }

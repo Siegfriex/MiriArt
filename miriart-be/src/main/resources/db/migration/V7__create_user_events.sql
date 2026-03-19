@@ -1,6 +1,6 @@
 -- V7__create_user_events.sql
 -- 행동 로그 기반 코호트 분석: 이벤트 수집 테이블
-CREATE TABLE user_events (
+CREATE TABLE IF NOT EXISTS user_events (
     id          BIGINT        NOT NULL AUTO_INCREMENT,
     user_id     BIGINT        NULL,
     session_key VARCHAR(64)   NULL,

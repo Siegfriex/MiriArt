@@ -1,6 +1,6 @@
 -- V8__create_user_cohorts.sql
 -- 행동 로그 기반 코호트 분석: 유저별 코호트 집계 테이블
-CREATE TABLE user_cohorts (
+CREATE TABLE IF NOT EXISTS user_cohorts (
     id                   BIGINT      NOT NULL AUTO_INCREMENT,
     user_id              BIGINT      NOT NULL UNIQUE,
     first_topic          VARCHAR(30) NULL,
