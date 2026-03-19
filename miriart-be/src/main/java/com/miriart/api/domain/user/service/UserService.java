@@ -9,11 +9,15 @@ import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 사용자 프로필·플랜 조회/수정 서비스.
@@ -33,6 +37,20 @@ import java.time.format.DateTimeFormatter;
 public class UserService {
 
     private final UserRepository userRepository;
+
+    @Value("${miriart.auth.budget-exempt-emails:}")
+    private String budgetExemptEmailsConfig;
+
+    private Set<String> getBudgetExemptEmails() {
+        if (budgetExemptEmailsConfig == null || budgetExemptEmailsConfig.isBlank()) {
+            return Set.of();
+        }
+        return Stream.of(budgetExemptEmailsConfig.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+    }
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
@@ -67,7 +85,14 @@ public class UserService {
     public UserPlanResponse getPlanInfo(Long userId, long usedThisMonth) {
         User user = userRepository.findByIdOrThrow(userId);
         int monthlyLimit = user.getPlanType().getMonthlyLimit();
-        long remaining = Math.max(0, monthlyLimit - usedThisMonth);
+        long remaining;
+        String email = user.getEmail();
+        if (email != null && !email.isBlank() && getBudgetExemptEmails().contains(email.trim().toLowerCase())) {
+            remaining = 99_999L;
+            monthlyLimit = 99_999;
+        } else {
+            remaining = Math.max(0, monthlyLimit - usedThisMonth);
+        }
 
         LocalDate billingPeriodStart = LocalDate.now().withDayOfMonth(1);
 

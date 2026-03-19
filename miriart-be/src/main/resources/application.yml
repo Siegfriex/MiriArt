@@ -27,6 +27,8 @@ miriart:
   auth:
     # Lax: 로컬 same-site. None: prod cross-site(Vercel↔Cloud Run)에서 refresh 쿠키 전송용
     cookie-same-site: Lax
+    # 크레딧 한도 미적용(버짓 해제) 이메일. 쉼표 구분. Google 로그인 이메일과 일치하면 한도 체크 생략
+    budget-exempt-emails: ${BUDGET_EXEMPT_EMAILS:6siegfriex@gmail.com,6siegfriex@argo.ai.kr}
   fastapi:
     internal-url: ${FASTAPI_INTERNAL_URL:http://localhost:8000}
   jwt:

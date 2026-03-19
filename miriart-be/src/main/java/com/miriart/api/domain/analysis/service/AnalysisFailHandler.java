@@ -16,10 +16,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * AnalysisService의 트랜잭션 경계를 담당하는 헬퍼.
@@ -43,6 +48,21 @@ public class AnalysisFailHandler {
     private final AnalysisUsageLogRepository usageLogRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+
+    /** 크레딧 한도 미적용 이메일(쉼표 구분). 해당 구글 계정은 버짓 해제. */
+    @Value("${miriart.auth.budget-exempt-emails:}")
+    private String budgetExemptEmailsConfig;
+
+    private Set<String> getBudgetExemptEmails() {
+        if (budgetExemptEmailsConfig == null || budgetExemptEmailsConfig.isBlank()) {
+            return Set.of();
+        }
+        return Stream.of(budgetExemptEmailsConfig.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+    }
 
     @Transactional
     public Analysis savePending(Long userId, FileUploadResult uploadResult,
@@ -95,6 +115,11 @@ public class AnalysisFailHandler {
 
     private void checkCreditLimit(User user, Long userId) {
         if (!user.isNeedsProfile()) {
+            String email = user.getEmail();
+            if (email != null && !email.isBlank() && getBudgetExemptEmails().contains(email.trim().toLowerCase())) {
+                log.debug("크레딧 한도 미적용(버짓 해제) - userId: {}, email: {}", userId, email);
+                return;
+            }
             String billingYearMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
             long usedThisMonth = usageLogRepository.countByUserIdAndBillingYearMonth(userId, billingYearMonth);
             int monthlyLimit = user.getPlanType().getMonthlyLimit();
