@@ -111,13 +111,7 @@ public class AnalysisService {
             }
             log.info("분석 실패 - analysisId: {}, userId: {}, cause: {}", analysis.getId(), userId, e.getMessage());
 
-            // 이벤트: ERROR_OCCURRED (분석 실패)
-            Map<String, Object> errorExtra = new HashMap<>();
-            errorExtra.put("path", "/api/analyses");
-            errorExtra.put("http_status", 502);
-            errorExtra.put("error_code", "AN001");
-            errorExtra.put("analysis_id", analysis.getId());
-            eventPublisher.publish("ERROR_OCCURRED", userId, null, null, errorExtra);
+            // ERROR_OCCURRED는 GlobalExceptionHandler에서 단일 발행 (이중 기록 방지)
 
             if (e instanceof BusinessException) {
                 throw e;
