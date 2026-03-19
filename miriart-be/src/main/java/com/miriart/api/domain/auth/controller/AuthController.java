@@ -78,6 +78,9 @@ public class AuthController {
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenFromCookie(request);
         if (refreshToken == null) {
+            String ua = request.getHeader("User-Agent");
+            boolean isInApp = ua != null && ua.matches("(?i).*(KAKAOTALK|NAVER\\(inapp|Line/|Instagram|FBAN|FBAV).*");
+            log.warn("Refresh token cookie missing - isInApp: {}, UA: {}", isInApp, ua);
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
         TokenRefreshResponse result = tokenRefreshService.refresh(refreshToken, response);

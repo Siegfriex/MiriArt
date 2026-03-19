@@ -22,6 +22,7 @@ import type { StickyContext } from './schemas/chat';
 import { API_BASE } from '../config/api';
 import type { RequestClass } from '../config/requestPolicy';
 import { REQUEST_POLICY, DEFAULT_REQUEST_CLASS } from '../config/requestPolicy';
+import { isInAppBrowser } from '../lib/inAppBrowser';
 
 // ─── 에러 클래스 ───────────────────────────────────────────────────────────────
 /** API 에러. status, message 보유. 402=크레딧 부족, 408=타임아웃 등 */
@@ -41,6 +42,43 @@ export function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// ─── Refresh 실패 카운터 (cross-page-load 루프 차단) ────────────────────────────
+// 키: miriart_refresh_fail_count, miriart_refresh_fail_ts
+// 정책: 60초 내 2회 초과 시 리다이렉트 대신 에러 상태 플래그 세팅
+const REFRESH_FAIL_COUNT_KEY = 'miriart_refresh_fail_count';
+const REFRESH_FAIL_TS_KEY = 'miriart_refresh_fail_ts';
+const REFRESH_FAIL_WINDOW_MS = 60_000;
+const REFRESH_FAIL_MAX = 2;
+
+function getRefreshFailCount(): { count: number; ts: number } {
+  try {
+    const count = parseInt(sessionStorage.getItem(REFRESH_FAIL_COUNT_KEY) || '0', 10);
+    const ts = parseInt(sessionStorage.getItem(REFRESH_FAIL_TS_KEY) || '0', 10);
+    return { count, ts };
+  } catch {
+    return { count: 0, ts: 0 };
+  }
+}
+
+function incrementRefreshFailCount(): number {
+  const now = Date.now();
+  const prev = getRefreshFailCount();
+  // 윈도우 밖이면 카운터 리셋
+  const count = (now - prev.ts < REFRESH_FAIL_WINDOW_MS) ? prev.count + 1 : 1;
+  try {
+    sessionStorage.setItem(REFRESH_FAIL_COUNT_KEY, String(count));
+    sessionStorage.setItem(REFRESH_FAIL_TS_KEY, String(now));
+  } catch { /* sessionStorage 접근 불가 시 무시 */ }
+  return count;
+}
+
+function clearRefreshFailCount(): void {
+  try {
+    sessionStorage.removeItem(REFRESH_FAIL_COUNT_KEY);
+    sessionStorage.removeItem(REFRESH_FAIL_TS_KEY);
+  } catch { /* 무시 */ }
+}
+
 // ─── Refresh Token 인터셉터가 포함된 fetch 래퍼 ────────────────────────────────
 let isRefreshing = false;
 let refreshPromise: Promise<void> | null = null;
@@ -57,12 +95,24 @@ async function refreshToken(): Promise<void> {
     useUserStore.getState().clearAuth();
     const isDevSkipAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_SKIP_AUTH !== 'false';
     if (!isDevSkipAuth) {
-      sessionStorage.setItem('miriart_session_expired', '1');
-      window.location.href = '/auth/login';
+      const failCount = incrementRefreshFailCount();
+      if (failCount > REFRESH_FAIL_MAX) {
+        // 루프 차단: 60초 내 2회 초과 — 리다이렉트 대신 세션 에러 플래그만 세팅.
+        // Login.tsx에서 인앱 안내 또는 에러 배너 표시.
+        sessionStorage.setItem('miriart_session_expired', '1');
+        if (!window.location.pathname.startsWith('/auth/login')) {
+          window.location.href = '/auth/login';
+        }
+        // 추가 리다이렉트 하지 않음 — 루프 끊기
+      } else {
+        sessionStorage.setItem('miriart_session_expired', '1');
+        window.location.href = '/auth/login';
+      }
     }
     throw new ApiError(401, 'Refresh token expired');
   }
   refreshFailed = false;
+  clearRefreshFailCount();
   const json = await res.json();
   const payload = (json as { data?: unknown }).data ?? json;
   const parsed = refreshResponseSchema.safeParse(payload);
