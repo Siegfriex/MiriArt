@@ -6,7 +6,7 @@
 
 ## 인증 실패 (401)
 
-인증이 필요한 경로에 `Authorization` 헤더 없이 접근 시 **401 Unauthorized**. Body: `{"code":"AUTH009","message":"인증이 필요합니다."}` (JSON). *소스: SecurityConfig.java:79-80 (ErrorCode.AUTH_REQUIRED).* 상세 인증·CORS는 docs/SSOT/miriarts_infra.md §4.2 참조.
+인증이 필요한 경로에 `Authorization` 헤더 없이 접근 시 **401 Unauthorized**. Body: `{"code":"AUTH009","message":"인증이 필요합니다."}` (JSON). *소스: SecurityConfig.java:79-80 (ErrorCode.AUTH_REQUIRED).* 상세 인증·CORS는 ../infra/miriarts_infra.md §4.2 참조.
 
 ---
 
@@ -44,13 +44,13 @@
 | GET /api/chat/sessions | 0 | 20 | 미제한 | (미명시) | ChatSessionController:59-63 |
 | GET /api/posts | (cursor) | 20 | 미제한 | type, sort, grade, domain | PostController:44-45 |
 
-*소스: 위 컨트롤러 파일:라인. 상세: docs/SSOT/miriarts_infra.md §4.4.*
+*소스: 위 컨트롤러 파일:라인. 상세: ../infra/miriarts_infra.md §4.4.*
 
 ---
 
 ## 엔드포인트·Request/Response·에러 참조 (코드 기준 SSOT)
 
-전체 엔드포인트 전수·컨트롤러:라인은 **docs/SSOT/miriarts_infra.md §4.4** (구현된 엔드포인트 전수 표). ErrorCode 전수는 miriarts_infra §4.4 ErrorCode 요약(ErrorCode.java:23-98, 401 진입점 SecurityConfig.java:79-80). FE 요청/응답 검증은 **src/shared/api/schemas/*.ts** 및 **src/shared/api/miriartApi.ts** 기준.
+전체 엔드포인트 전수·컨트롤러:라인은 **../infra/miriarts_infra.md §4.4** (구현된 엔드포인트 전수 표). ErrorCode 전수는 miriarts_infra §4.4 ErrorCode 요약(ErrorCode.java:23-98, 401 진입점 SecurityConfig.java:79-80). FE 요청/응답 검증은 **src/shared/api/schemas/*.ts** 및 **src/shared/api/miriartApi.ts** 기준.
 
 | 경로 | 메서드 | Request (요약) | Response (요약) | 컨트롤러:라인 |
 |------|--------|----------------|-----------------|----------------|
@@ -83,13 +83,39 @@
 | /api/posts/{postId}/report | POST | ReportRequest(optional) | success 201 | ReportController:24 |
 | /api/answers/{answerId}/report | POST | ReportRequest(optional) | success 201 | ReportController:34 |
 
-*상세 DTO·에러 코드: docs/SSOT/miriarts_infra.md §4.4 ErrorCode 요약(ErrorCode.java). FE 스키마: src/shared/api/schemas/*.ts.*
+*상세 DTO·에러 코드: ../infra/miriarts_infra.md §4.4 ErrorCode 요약(ErrorCode.java). FE 스키마: src/shared/api/schemas/*.ts.*
+
+---
+
+## POST /api/chat 응답 상세 — Structured Chat v1 (2026-03-15)
+
+`ChatResponse` (AiChatController:43). sections가 있으면 구조화 UX, 없으면 단일 버블 fallback.
+
+| 필드 | 타입 | 필수 | 비고 |
+|------|------|------|------|
+| `text` | String | O | 하위 호환용 텍스트. sections가 있으면 "[제목]\n본문" join 문자열. |
+| `summary` | String | X (nullable) | 한 줄 핵심 요약 (50자 이내). 구조화 실패 시 null. |
+| `sections` | ChatSection[] | X (nullable) | 역할별 섹션 배열. 없으면 FE는 text만 단일 버블로 표시. |
+| `groundingUrls` | String[] | X | 출처 URL 목록. 기본 `[]`. |
+| `quickReplies` | String[] | X | 퀵 리플라이 목록. 기본 `[]`. |
+| `sessionId` | String | O | 세션 식별자. |
+| `sessionKey` | String | O | sessionId와 동일값 (@JsonGetter). FE SSOT. |
+
+**ChatSection:**
+
+| 필드 | 타입 | 비고 |
+|------|------|------|
+| `type` | String | `strength` \| `improvement` \| `action` |
+| `title` | String | 섹션 제목 |
+| `text` | String | 섹션 본문 (3~5문장) |
+
+> **저장 계층**: Redis/ChatSession에는 sections 미저장 — text만 저장 (Structured Chat v1 설계). 히스토리 재로드 시 과거 턴은 단일 버블로 표시됨.
 
 ---
 
 ## 엔드포인트별 발생 가능 에러(ErrorCode)
 
-*처리: GlobalExceptionHandler.java:36-38. 트랜잭션·락·throw 위치 요약: docs/SSOT/miriarts_infra.md §4.4 트랜잭션·락·예외 요약.*
+*처리: GlobalExceptionHandler.java:36-38. 트랜잭션·락·throw 위치 요약: ../infra/miriarts_infra.md §4.4 트랜잭션·락·예외 요약.*
 
 | API/플로우 | 발생 가능 ErrorCode (코드) | HTTP | throw 위치(파일:라인) |
 |------------|---------------------------|------|----------------------|

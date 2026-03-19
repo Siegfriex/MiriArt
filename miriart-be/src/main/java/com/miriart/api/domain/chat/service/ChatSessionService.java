@@ -7,6 +7,7 @@ import com.miriart.api.domain.analysis.entity.Analysis;
 import com.miriart.api.domain.analysis.entity.AnalysisGrade;
 import com.miriart.api.domain.analysis.repository.AnalysisRepository;
 import com.miriart.api.domain.chat.dto.ChatSessionResponse;
+import com.miriart.api.domain.event.service.EventPublisher;
 import com.miriart.api.domain.chat.entity.ChatRole;
 import com.miriart.api.domain.chat.entity.ChatSession;
 import com.miriart.api.domain.chat.repository.ChatSessionRepository;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -43,6 +46,7 @@ public class ChatSessionService {
     private final AnalysisRepository analysisRepository;
     private final UserRepository userRepository;
     private final AiProxyService aiProxyService;
+    private final EventPublisher eventPublisher;
 
     /**
      * [Phase 1] 채팅 메시지 전송. AI 호출 후 DB 메타데이터 업데이트.
@@ -56,6 +60,15 @@ public class ChatSessionService {
         session.applyMessage(ChatRole.USER, request.getMessage());
         session.applyMessage(ChatRole.MODEL, response.getText());
         chatSessionRepository.save(session);
+
+        // 이벤트: CHAT_MESSAGE_SENT
+        String truncated = request.getMessage().length() > 150
+                ? request.getMessage().substring(0, 150) : request.getMessage();
+        Map<String, Object> msgExtra = new HashMap<>();
+        msgExtra.put("model_type", session.getModelType());
+        msgExtra.put("truncated_content", truncated);
+        eventPublisher.publish("CHAT_MESSAGE_SENT", userId, request.getSessionKey(),
+                session.getId(), msgExtra);
 
         return response;
     }
@@ -86,21 +99,34 @@ public class ChatSessionService {
      */
     @Transactional
     public ChatSessionResponse getOrCreateByAnalysis(Long userId, Long analysisId) {
-        ChatSession session = chatSessionRepository.findByUserIdAndAnalysisId(userId, analysisId)
-                .orElseGet(() -> {
-                    Analysis analysis = analysisRepository.findById(analysisId)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.ANALYSIS_NOT_FOUND));
-                    String title = (analysis.getGrade() != null)
-                            ? analysis.getGrade().name() + "등급 분석 채팅"
-                            : "분석 채팅";
-                    return chatSessionRepository.save(ChatSession.builder()
-                            .user(userRepository.getReferenceById(userId))
-                            .analysis(analysis)
-                            .sessionKey(UUID.randomUUID().toString())
-                            .modelType("CHAT_PRO")
-                            .title(title)
-                            .build());
-                });
+        var existing = chatSessionRepository.findByUserIdAndAnalysisId(userId, analysisId);
+
+        ChatSession session;
+        if (existing.isPresent()) {
+            session = existing.get();
+        } else {
+            Analysis analysis = analysisRepository.findById(analysisId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ANALYSIS_NOT_FOUND));
+            String title = (analysis.getGrade() != null)
+                    ? analysis.getGrade().name() + "등급 분석 채팅"
+                    : "분석 채팅";
+            session = chatSessionRepository.save(ChatSession.builder()
+                    .user(userRepository.getReferenceById(userId))
+                    .analysis(analysis)
+                    .sessionKey(UUID.randomUUID().toString())
+                    .modelType("CHAT_PRO")
+                    .title(title)
+                    .build());
+
+            // 이벤트: CHAT_STARTED (새 세션 생성 시에만)
+            Map<String, Object> chatStartExtra = new HashMap<>();
+            chatStartExtra.put("model_type", session.getModelType());
+            chatStartExtra.put("analysis_id", analysisId);
+            chatStartExtra.put("session_key", session.getSessionKey());
+            eventPublisher.publish("CHAT_STARTED", userId, session.getSessionKey(),
+                    session.getId(), chatStartExtra);
+        }
+
         return toResponse(session);
     }
 

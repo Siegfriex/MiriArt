@@ -67,6 +67,7 @@ public class SecurityConfig {
                         auth.requestMatchers("/api/auth/**").permitAll();
                         auth.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll();
                         auth.requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll();
+                        auth.requestMatchers(HttpMethod.POST, "/api/events").permitAll();
                         // Swagger UI: dev/로컬에서만 공개, prod에서는 인증 필요
                         if (!"prod".equals(activeProfile)) {
                             auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll();
