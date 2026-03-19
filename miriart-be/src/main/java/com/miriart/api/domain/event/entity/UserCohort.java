@@ -27,7 +27,7 @@ public class UserCohort {
     @Column(length = 30)
     private String firstTopic;
 
-    @Column(length = 1)
+    @Column(columnDefinition = "char(1)")
     private String firstAnalysisGrade;
 
     private LocalDate firstVisitDate;
