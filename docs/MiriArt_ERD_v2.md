@@ -1,9 +1,9 @@
-# MiriArt ERD v2.1 — MySQL 전체 스키마
+# MiriArt ERD v2.2 — MySQL 전체 스키마
 
-> **목적**: MiriArt MySQL 데이터베이스 전체 스키마 (Cariv ERD + Legacy ERD + Community 통합)
-> **버전**: 2.1 | **작성일**: 2026-03-15 | 실 DB(miriart_prod) 역추출 기준 검증·수정
+> **목적**: MiriArt MySQL 데이터베이스 전체 스키마 (Cariv ERD + Legacy ERD + Community + 행동 로그/코호트 통합)
+> **버전**: 2.2 | **작성일**: 2026-03-19 | 행동 로그 v2.0 (Flyway V7/V8) 반영
 > **DB 환경**: MySQL 8.x + Redis (키 설계 포함)
-> **실제 스키마 SSOT**: 코드(miriart-be 엔티티·Flyway V5/V6)·본 문서가 단일 기준. 테이블·컬럼 변경 시 엔티티 및 Flyway와 동기화.
+> **실제 스키마 SSOT**: 코드(miriart-be 엔티티·Flyway V5~V8)·본 문서가 단일 기준. 테이블·컬럼 변경 시 엔티티 및 Flyway와 동기화.
 >
 
 ---
@@ -30,13 +30,15 @@ erDiagram
     ANSWERS ||--o{ REPORTS : "receives"
     PERSONAS ||--o{ POSTS : "author_persona"
     PERSONAS ||--o{ ANSWERS : "author_persona"
+    USERS ||--o{ USER_EVENTS : "generates"
+    USERS ||--o| USER_COHORTS : "belongs_to"
 ```
 
 ---
 
 ## 1. Phase 별 테이블 목록
 
-*소스: miriart-be 엔티티(domain/.../entity/*.java), Flyway V5·V6(db/migration/V5__create_chat_sessions.sql, V6__add_model_type_to_chat_sessions.sql).*
+*소스: miriart-be 엔티티(domain/.../entity/*.java), Flyway V5~V8(db/migration/V5~V8*.sql).*
 
 | 테이블 | Phase | 설명 | 소스(코드) |
 |--------|-------|------|------------|
@@ -53,6 +55,8 @@ erDiagram
 | `personas` | **C1** | 가명 시스템 | Persona.java |
 | `reputation_ledger` | **C1** | 평판 포인트 이력 | ReputationLedger.java |
 | `reports` | **C1** | 신고 | Report.java |
+| `user_events` | **LOG** | 행동 이벤트 로그 (PAGE_VIEW, ANALYSIS_*, CHAT_*, ERROR_OCCURRED) | UserEvent.java, V7 |
+| `user_cohorts` | **LOG** | 유저별 코호트 집계 (배치) | UserCohort.java, V8 |
 | `flyway_schema_history` | — | Flyway 관리 테이블 (문서 범위 외) | Flyway 자동 생성 |
 
 ---
@@ -431,6 +435,46 @@ CREATE TABLE reports (
     INDEX idx_report_target (target_type, target_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
+---
+
+## 4-B. 행동 로그 / 코호트 (Flyway V7·V8)
+
+> 행동 로그 v2.0 (2026-03-19 배포, rev 00050). 이벤트 수집 + 코호트 배치 집계.
+> *소스: UserEvent.java, UserCohort.java, V7__create_user_events.sql, V8__create_user_cohorts.sql.*
+
+### `user_events`
+
+| 컬럼 | 타입 | NULL | 기본값 | 설명 |
+|------|------|------|--------|------|
+| `id` | BIGINT | NO | AUTO_INCREMENT | PK |
+| `user_id` | BIGINT | YES | — | 유저 ID (비인증 시 NULL) |
+| `session_key` | VARCHAR(64) | YES | — | FE 브라우저 세션 UUID |
+| `event_type` | VARCHAR(50) | NO | — | PAGE_VIEW, ANALYSIS_UPLOADED, ANALYSIS_COMPLETED, CHAT_STARTED, CHAT_MESSAGE_SENT, ERROR_OCCURRED |
+| `source` | VARCHAR(20) | YES | — | WEB (BE normalize), MOBILE_WEB 등 |
+| `page` | VARCHAR(100) | YES | — | 페이지 경로 (pathname only) |
+| `referrer` | VARCHAR(200) | YES | — | 유입 경로 |
+| `related_id` | BIGINT | YES | — | 연관 엔티티 ID (analysis_id, session_id 등) |
+| `error_code` | VARCHAR(20) | YES | — | ErrorCode (ERROR_OCCURRED 전용) |
+| `extra` | JSON | YES | — | 추가 메타 (client_ts, user_agent, truncated_content 등) |
+| `created_at` | DATETIME(6) | NO | CURRENT_TIMESTAMP(6) | 생성 시각 |
+
+**인덱스**: `idx_user_created(user_id, created_at)`, `idx_event_created(event_type, created_at)`, `idx_session_key(session_key, created_at)`
+
+### `user_cohorts`
+
+| 컬럼 | 타입 | NULL | 기본값 | 설명 |
+|------|------|------|--------|------|
+| `id` | BIGINT | NO | AUTO_INCREMENT | PK |
+| `user_id` | BIGINT | NO | — | UNIQUE. 유저당 1 row |
+| `first_topic` | VARCHAR(30) | YES | — | 첫 질문 토픽 (CAREER_SCHOOL, ARTWORK_REVISION 등) |
+| `first_analysis_grade` | CHAR(1) | YES | — | 첫 분석 등급 (A~F) |
+| `first_visit_date` | DATE | YES | — | 첫 방문일 |
+| `first_chat_date` | DATE | YES | — | 첫 채팅일 |
+| `first_upload_date` | DATE | YES | — | 첫 업로드일 |
+| `created_at` | DATETIME(6) | NO | CURRENT_TIMESTAMP(6) | 생성 시각 |
+
+**인덱스**: `UNIQUE(user_id)`, `idx_topic(first_topic)`, `idx_first_visit(first_visit_date)`
 
 ---
 

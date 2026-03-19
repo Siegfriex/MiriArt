@@ -82,6 +82,7 @@
 | /api/comments/{id} | PUT/DELETE | CreateCommentRequest / — | CommentResponse / 204 | CommentController:32, 41 |
 | /api/posts/{postId}/report | POST | ReportRequest(optional) | success 201 | ReportController:24 |
 | /api/answers/{answerId}/report | POST | ReportRequest(optional) | success 201 | ReportController:34 |
+| /api/events | POST | TrackEventRequest | 200 (void) | EventsController:30 (permitAll) |
 
 *상세 DTO·에러 코드: ../infra/miriarts_infra.md §4.4 ErrorCode 요약(ErrorCode.java). FE 스키마: src/shared/api/schemas/*.ts.*
 
@@ -135,6 +136,29 @@
 | POST /api/likes/toggle | POST_NOT_FOUND, ENTITY_NOT_FOUND, LIKE_ALREADY_EXISTS(CM006), INVALID_INPUT_VALUE | 400, 404, 409 | LikeCommandService:63,86,88,89 |
 | POST/PUT/DELETE /api/comments | POST_NOT_FOUND, ENTITY_NOT_FOUND, INVALID_INPUT_VALUE, HANDLE_ACCESS_DENIED | 400, 403, 404 | CommentCommandService:40,47,51,80,82,91,93 |
 | POST report | POST_NOT_FOUND, ENTITY_NOT_FOUND, REPORT_ALREADY_EXISTS(CM007) | 404, 409 | ReportService:37,40,46,60 |
+
+---
+
+## POST /api/events — 행동 이벤트 수집 (2026-03-19)
+
+- **Auth**: **permitAll** (비인증 허용). `@AuthenticationPrincipal Long userId`는 nullable.
+- **Request**: `TrackEventRequest` *소스: TrackEventRequest.java*
+
+| 필드 | 타입 | 필수 | 검증 | 설명 |
+|------|------|------|------|------|
+| `eventType` | String | O | `@NotBlank`, `@Size(50)`, 서버 화이트리스트: `PAGE_VIEW`만 허용 | 이벤트 유형 |
+| `sessionKey` | String | X | `@Size(64)` | FE 브라우저 세션 UUID |
+| `page` | String | X | `@Size(100)` | 페이지 pathname |
+| `referrer` | String | X | `@Size(200)` | document.referrer |
+| `source` | String | X | `@Size(20)` | 클라이언트 식별 (미전송 시 BE에서 `WEB` normalize) |
+| `clientTs` | Long | X | — | 클라이언트 타임스탬프 (ms) |
+| `userAgent` | String | X | `@Size(200)` | navigator.userAgent (200자 truncate) |
+
+- **Response 200**: 빈 body. fire-and-forget.
+- **Response 400**: `eventType` 누락 또는 화이트리스트 외 값.
+- **Note**: BE에서 `@Async("eventExecutor")` + `REQUIRES_NEW` TX로 비동기 INSERT. 실패해도 비즈니스 로직에 영향 없음 (best-effort).
+
+---
 
 - **401**: 인증 없음 → AUTH009(진입점 SecurityConfig.java:79-80). 토큰 만료/무효 → AUTH004, AUTH006. *TokenRefreshService:47,54.*
 - **402**: CR001(크레딧 한도 초과). *AnalysisFailHandler:103.*
