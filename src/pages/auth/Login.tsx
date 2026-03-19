@@ -1,5 +1,5 @@
 /**
- * @fileoverview 로그인 페이지. 카카오/구글 소셜 로그인 버튼. OAuth2 리다이렉트 방식.
+ * @fileoverview 로그인 페이지. Google OAuth2 리다이렉트.
  * 이미 로그인된 경우 /app/home 또는 /onboarding으로 바로 보냄(로그인→온보딩 루프 방지).
  * @참조 AppRouter
  * @라우팅 /auth/login
@@ -19,7 +19,7 @@ import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 
 const SESSION_EXPIRED_KEY = 'miriart_session_expired';
 
-/** 로그인. 카카오/구글 OAuth2 리다이렉트. @참조 AppRouter */
+/** 로그인. Google OAuth2 리다이렉트. @참조 AppRouter */
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, profile } = useUserStore();
@@ -45,10 +45,6 @@ export const Login: React.FC = () => {
 
   if (isAuthenticated) return null;
 
-  const handleKakaoLogin = () => {
-    window.location.href = `${API_BASE}/oauth2/authorization/kakao`;
-  };
-
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE}/oauth2/authorization/google`;
   };
@@ -71,15 +67,6 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <Button
-            fullWidth
-            size="lg"
-            className="rounded-2xl h-14 text-base font-bold bg-[#FEE500] text-[#191919] hover:bg-[#F0D800]"
-            onClick={handleKakaoLogin}
-          >
-            카카오로 시작하기
-          </Button>
-
           <Button
             fullWidth
             size="lg"

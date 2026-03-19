@@ -1,5 +1,5 @@
 /**
- * @fileoverview 회원가입 페이지. 이메일, 비밀번호, 닉네임, 학년, 전공. 제출 시 로그인된 경우 PATCH 프로필 후 앱 홈으로.
+ * @fileoverview 회원가입 페이지. 비로그인 시 Google OAuth 진입 + 이메일 폼(튜토리얼 경로). 로그인된 경우 닉네임·학년·전공 PATCH 후 앱 홈.
  * P0: 로그인 시 UserApi.updateProfile 호출, 성공 시 setProfileFromApi(needsProfile=false) 후 /app/home 이동.
  * @참조 AppRouter
  * @라우팅 /auth/signup
@@ -15,6 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STRINGS } from '../../shared/config/strings';
 import { ROUTES } from '../../shared/config/routes';
+import { API_BASE } from '../../shared/config/api';
 import { FullScreenContainer } from '../../shared/ui/FullScreenContainer';
 import { useUserStore } from '../../shared/model/userStore';
 import { useToastStore } from '../../shared/model/toastStore';
@@ -92,6 +93,10 @@ export const Signup: React.FC = () => {
   const update = (key: string, val: string) =>
     setFormData((prev) => ({ ...prev, [key]: val }));
 
+  const handleGoogleSignup = () => {
+    window.location.href = `${API_BASE}/oauth2/authorization/google`;
+  };
+
   return (
     <FullScreenContainer scroll="y" className="no-scrollbar">
       <header className="h-14 flex items-center flex-shrink-0">
@@ -108,6 +113,24 @@ export const Signup: React.FC = () => {
           <H1 className="mb-2">{STRINGS.SIGNUP_TITLE}</H1>
           <BodyText className="text-text-mid">{STRINGS.SIGNUP_SUBTITLE}</BodyText>
         </div>
+
+        {!isAuthenticated && (
+          <div className="space-y-3">
+            <Button
+              fullWidth
+              size="lg"
+              variant="secondary"
+              type="button"
+              className="rounded-2xl h-14 text-base font-bold"
+              onClick={handleGoogleSignup}
+            >
+              Google로 시작하기
+            </Button>
+            <BodyText className="text-text-mid text-center text-xs">
+              SNS 가입은 Google 계정만 지원합니다.
+            </BodyText>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {[
