@@ -230,7 +230,7 @@ export const ResultDetail: React.FC = () => {
           <H2 className="mb-5">{STRINGS.RESULT_5FACTOR}</H2>
           <div className="bg-surface-alt rounded-2xl border border-border-default p-5 flex flex-col items-center gap-4">
             <RadarChart data={displayResult.radarData} size={220} />
-            <div className="w-full space-y-2">
+            <div className="w-full space-y-4">
               {(Object.entries(displayResult.radarData) as [keyof typeof displayResult.radarData, number][]).map(([key, value]) => {
                 const labels: Record<string, string> = {
                   density: STRINGS.RESULT_RADAR_DENSITY,
@@ -239,13 +239,23 @@ export const ResultDetail: React.FC = () => {
                   relevance: STRINGS.RESULT_RADAR_RELEVANCE,
                   thinking: STRINGS.RESULT_RADAR_THINKING,
                 };
+                const descs: Record<string, string> = {
+                  density: STRINGS.RESULT_RADAR_DENSITY_DESC,
+                  form: STRINGS.RESULT_RADAR_FORM_DESC,
+                  completion: STRINGS.RESULT_RADAR_COMPLETION_DESC,
+                  relevance: STRINGS.RESULT_RADAR_RELEVANCE_DESC,
+                  thinking: STRINGS.RESULT_RADAR_THINKING_DESC,
+                };
                 return (
-                  <div key={key} className="flex items-center gap-3">
-                    <span className="w-16 text-xs text-text-mid">{labels[key]}</span>
-                    <div className="flex-1 h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
-                      <div className="h-full bg-primary-lime rounded-full transition-all duration-700" style={{ width: `${value}%` }} />
+                  <div key={key} className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="w-16 text-xs text-text-mid font-medium">{labels[key]}</span>
+                      <div className="flex-1 h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
+                        <div className="h-full bg-primary-lime rounded-full transition-all duration-700" style={{ width: `${value}%` }} />
+                      </div>
+                      <span className="w-8 text-xs text-text-primary font-bold text-right">{value}</span>
                     </div>
-                    <span className="w-8 text-xs text-text-primary font-bold text-right">{value}</span>
+                    <p className="text-tiny text-text-mid pl-16 leading-snug">{descs[key]}</p>
                   </div>
                 );
               })}
@@ -253,14 +263,22 @@ export const ResultDetail: React.FC = () => {
           </div>
         </section>
 
-        {/* 그림 평가 — 채팅 세션 stickyContext의 분석 코멘트와 동일한 데이터(comment/summaryComment) */}
+        {/* 그림 평가 — 채팅 세션 stickyContext의 분석 코멘트와 동일한 데이터(comment/summaryComment). 리드/푸터로 심층 평가 맥락 강화. */}
         {(displayResult.summaryComment ?? displayResult.comment)?.trim() && (
           <section>
             <H2 className="mb-3">{STRINGS.RESULT_EVALUATION_TITLE}</H2>
-            <div className="bg-surface-alt rounded-2xl border border-border-default p-5">
-              <BodyText className="text-text-primary whitespace-pre-wrap">
-                {(displayResult.summaryComment ?? displayResult.comment)?.trim()}
-              </BodyText>
+            <div className="bg-surface-alt rounded-2xl border border-border-default p-5 space-y-4">
+              <p className="text-sm text-text-mid leading-relaxed">
+                {STRINGS.RESULT_EVALUATION_LEAD}
+              </p>
+              <div className="border-t border-border-default pt-4">
+                <BodyText className="text-text-primary whitespace-pre-wrap leading-relaxed text-[15px]">
+                  {(displayResult.summaryComment ?? displayResult.comment)?.trim()}
+                </BodyText>
+              </div>
+              <p className="text-tiny text-text-mid leading-relaxed">
+                {STRINGS.RESULT_EVALUATION_FOOTER}
+              </p>
             </div>
           </section>
         )}

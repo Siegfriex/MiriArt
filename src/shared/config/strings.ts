@@ -124,16 +124,26 @@ export const STRINGS = {
   RESULT_SCORE_LABEL: '총점',
   RESULT_5FACTOR: '5요소 분석',
   RESULT_RADAR_DENSITY: '밀도',
+  RESULT_RADAR_DENSITY_DESC: '면과 선의 밀집도, 공간 채우기. 빈 곳 없이 조형 요소가 얼마나 치밀하게 배치되었는지.',
   RESULT_RADAR_FORM: '형태력',
+  RESULT_RADAR_FORM_DESC: '형태·비율·구도의 정확성. 대상을 얼마나 정확하고 탄탄하게 표현했는지.',
   RESULT_RADAR_COMPLETION: '완성도',
+  RESULT_RADAR_COMPLETION_DESC: '전체 완결성. 마무리·마감이 갖춰져 한 작품으로서 완성되었는지.',
   RESULT_RADAR_RELEVANCE: '정합성',
+  RESULT_RADAR_RELEVANCE_DESC: '주제·문제와의 맞춤. 제시된 의도나 문제에 얼마나 잘 부합하는지.',
   RESULT_RADAR_THINKING: '사고력',
+  RESULT_RADAR_THINKING_DESC: '개념·아이디어·해석. 단순 묘사를 넘어 사고가 드러나는지.',
   RESULT_FIXSCOPE_REBUILD: '구조 재설계 필요',
   RESULT_FIXSCOPE_TUNING: '디테일 개선 권장',
   RESULT_COMPARISON_TITLE: '합격 비교',
   RESULT_COMPARISON_LOCKED: '합격작은 현재 준비중입니다..!',
   /** 결과 상세 — 채팅에서 쓰는 분석 코멘트와 동일한 "그림 평가" 섹션 제목 */
   RESULT_EVALUATION_TITLE: '그림 평가',
+  /** 그림 평가 상단 — 5요소와 연계된 심층 평가임을 안내 */
+  RESULT_EVALUATION_LEAD:
+    'AI가 구도·색감·완성도와 5요소(밀도, 형태력, 완성도, 정합성, 사고력)를 종합해 심층 평가한 내용입니다.',
+  /** 그림 평가 하단 — 5요소 점수와 함께 참고하라는 안내 */
+  RESULT_EVALUATION_FOOTER: '위 내용은 상단 5요소 점수와 각 요소 설명을 함께 참고하면 더 도움이 됩니다.',
   RESULT_GRADE_INPUT_CTA: '성적을 입력하면 합격 확률을 볼 수 있어요',
   RESULT_GRADE_INPUT_BUTTON: '입력하기',
   RESULT_REANALYZE: '재평가하기',
