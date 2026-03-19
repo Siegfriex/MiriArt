@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -68,9 +69,11 @@ public class EventLoggingService implements EventPublisher {
     public void publishError(Long userId, String path, String errorCode,
                               int httpStatus, Map<String, Object> extra) {
         try {
-            String extraJson = (extra != null && !extra.isEmpty())
-                    ? objectMapper.writeValueAsString(extra)
-                    : null;
+            // httpStatus를 extra에 병합 — DB에 별도 컬럼 없으므로 JSON에 보존
+            Map<String, Object> merged = new HashMap<>();
+            if (extra != null) merged.putAll(extra);
+            merged.put("http_status", httpStatus);
+            String extraJson = objectMapper.writeValueAsString(merged);
             UserEvent event = UserEvent.error(userId, path, errorCode, httpStatus, extraJson);
             userEventRepository.save(event);
         } catch (Exception e) {

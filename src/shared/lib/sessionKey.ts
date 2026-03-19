@@ -5,10 +5,14 @@
 const SESSION_KEY = 'miriart_session_key';
 
 export function getSessionKey(): string {
-  let key = sessionStorage.getItem(SESSION_KEY);
-  if (!key) {
-    key = crypto.randomUUID();
-    sessionStorage.setItem(SESSION_KEY, key);
+  try {
+    let key = sessionStorage.getItem(SESSION_KEY);
+    if (!key) {
+      key = crypto.randomUUID();
+      sessionStorage.setItem(SESSION_KEY, key);
+    }
+    return key;
+  } catch {
+    return crypto.randomUUID();
   }
-  return key;
 }

@@ -257,7 +257,8 @@
       "Bash(for table:*)",
       "Bash(echo:*)",
       "Bash(cd:*)",
-      "Bash(which vercel:*)"
+      "Bash(which vercel:*)",
+      "Bash(kill:*)"
     ]
   }
 }

@@ -31,7 +31,9 @@ import { ResultDetail } from '../../pages/result-detail/ui/Page';
 
 /** 앱 라우터. @참조 App */
 export const AppRouter: React.FC = () => {
-  usePageView(); // 모든 라우트 변경 시 PAGE_VIEW 자동 기록
+  // 라우트 변경 시 PAGE_VIEW 자동 기록.
+  // dev 환경 StrictMode에서 useEffect가 두 번 실행될 수 있어, 동일 pathname에 대해 PAGE_VIEW가 2회 전송될 수 있습니다.
+  usePageView();
   return (
     <Routes>
       <Route path="/" element={<Splash />} />

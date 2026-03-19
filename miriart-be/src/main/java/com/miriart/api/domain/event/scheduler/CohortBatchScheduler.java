@@ -10,17 +10,20 @@ import com.miriart.api.domain.event.util.PiiFilter;
 import com.miriart.api.domain.event.util.TopicClassifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 매일 새벽 02:30 user_events → user_cohorts 집계 배치.
- * 다중 인스턴스 대비: UNIQUE(user_id) + findByUserId 존재 체크로 멱등성 보장.
+ * 증분 처리: 직전 25시간 이벤트만 조회 (OOM 방지 + 다중 인스턴스 중복 실행 대비 여유).
+ * 멱등성: UNIQUE(user_id) + findOrCreate with race condition 방어 (try-catch DataIntegrityViolation).
  * 중기: ShedLock 또는 Cloud Scheduler + Cloud Run Jobs로 분리.
  */
 @Slf4j
@@ -37,11 +40,12 @@ public class CohortBatchScheduler {
     public void aggregateCohorts() {
         log.info("CohortBatch: 시작");
 
-        List<UserEvent> allEvents = userEventRepository.findAll();
+        // 증분 처리: 직전 25시간 이벤트만 (02:30 기준 → 전날 01:30 이후)
+        LocalDateTime since = LocalDateTime.now().minusHours(25);
+        List<UserEvent> recentEvents = userEventRepository
+                .findByUserIdIsNotNullAndCreatedAtAfter(since);
 
-        // userId별 이벤트 그룹핑 (userId가 null인 이벤트는 코호트 대상 아님)
-        Map<Long, List<UserEvent>> eventsByUser = allEvents.stream()
-                .filter(e -> e.getUserId() != null)
+        Map<Long, List<UserEvent>> eventsByUser = recentEvents.stream()
                 .collect(Collectors.groupingBy(UserEvent::getUserId));
 
         int created = 0;
@@ -51,13 +55,27 @@ public class CohortBatchScheduler {
             Long userId = entry.getKey();
             List<UserEvent> events = entry.getValue();
 
-            UserCohort cohort = userCohortRepository.findByUserId(userId)
-                    .orElseGet(() -> {
-                        UserCohort newCohort = new UserCohort(userId);
-                        return userCohortRepository.save(newCohort);
-                    });
-
-            boolean isNew = cohort.getCreatedAt() == null; // just created
+            // race condition 방어: 다중 인스턴스 동시 실행 시 UNIQUE 위반을 catch 후 기존 row 사용
+            UserCohort cohort;
+            boolean isNew;
+            var existing = userCohortRepository.findByUserId(userId);
+            if (existing.isPresent()) {
+                cohort = existing.get();
+                isNew = false;
+            } else {
+                try {
+                    cohort = userCohortRepository.saveAndFlush(new UserCohort(userId));
+                    isNew = true;
+                } catch (DataIntegrityViolationException e) {
+                    // 다른 인스턴스가 먼저 INSERT 성공 → 해당 row 사용
+                    cohort = userCohortRepository.findByUserId(userId).orElse(null);
+                    if (cohort == null) {
+                        log.warn("CohortBatch: userId={} UNIQUE 위반 후 조회도 실패, skip", userId);
+                        continue;
+                    }
+                    isNew = false;
+                }
+            }
 
             for (UserEvent event : events) {
                 LocalDate eventDate = event.getCreatedAt().toLocalDate();
@@ -89,7 +107,8 @@ public class CohortBatchScheduler {
             else updated++;
         }
 
-        log.info("CohortBatch: 완료 — created={}, updated={}", created, updated);
+        log.info("CohortBatch: 완료 — created={}, updated={}, eventsProcessed={}",
+                created, updated, recentEvents.size());
     }
 
     /**

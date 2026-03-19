@@ -77,8 +77,10 @@ public class UserEvent {
 
     public static UserEvent pageView(Long userId, String sessionKey, String source,
                                       String page, String referrer, String extra) {
+        // source null → "WEB" normalize (FE가 미전송 시 기본값)
+        String normalizedSource = (source != null && !source.isBlank()) ? source : "WEB";
         return new UserEvent("PAGE_VIEW", userId, sessionKey,
-                source, page, referrer, null, null, extra);
+                normalizedSource, page, referrer, null, null, extra);
     }
 
     public static UserEvent error(Long userId, String path, String errorCode,
