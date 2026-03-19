@@ -8,6 +8,7 @@ import com.miriart.api.domain.analysis.dto.AnalysisStartResponse;
 import com.miriart.api.domain.analysis.entity.Analysis;
 import com.miriart.api.domain.analysis.repository.AnalysisRepository;
 import com.miriart.api.domain.analysis.repository.AnalysisUsageLogRepository;
+import com.miriart.api.domain.event.service.EventPublisher;
 import com.miriart.api.global.exception.BusinessException;
 import com.miriart.api.global.exception.ErrorCode;
 import com.miriart.api.global.storage.FileCategory;
@@ -22,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
@@ -50,6 +53,7 @@ public class AnalysisService {
     private final FileStorageService fileStorageService;
     private final AiProxyService aiProxyService;
     private final AnalysisFailHandler analysisFailHandler;
+    private final EventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
 
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
@@ -78,6 +82,11 @@ public class AnalysisService {
         Analysis analysis = analysisFailHandler.savePending(userId, uploadResult, analysisType, problemText);
         log.info("분석 시작 - analysisId: {}, userId: {}, status: PENDING", analysis.getId(), userId);
 
+        // 이벤트: ANALYSIS_UPLOADED
+        Map<String, Object> uploadExtra = new HashMap<>();
+        uploadExtra.put("analysis_type", analysisType);
+        eventPublisher.publish("ANALYSIS_UPLOADED", userId, null, analysis.getId(), uploadExtra);
+
         // 4. FastAPI AI 호출 (트랜잭션 외부)
         try {
             InternalAnalyzeResponse aiResult = aiProxyService.analyze(
@@ -87,6 +96,12 @@ public class AnalysisService {
             analysisFailHandler.complete(analysis.getId(), userId, aiResult);
             log.info("분석 완료 - analysisId: {}, userId: {}, status: COMPLETED", analysis.getId(), userId);
 
+            // 이벤트: ANALYSIS_COMPLETED
+            Map<String, Object> completeExtra = new HashMap<>();
+            completeExtra.put("grade", aiResult.getGrade());
+            completeExtra.put("total_score", aiResult.getTotalScore());
+            eventPublisher.publish("ANALYSIS_COMPLETED", userId, null, analysis.getId(), completeExtra);
+
         } catch (Exception e) {
             // 6. FAILED UPDATE (PENDING이 이미 커밋되어 있으므로 조회·업데이트 가능)
             try {
@@ -95,6 +110,14 @@ public class AnalysisService {
                 log.error("markFailed 자체 실패 - analysisId: {}", analysis.getId(), failEx);
             }
             log.info("분석 실패 - analysisId: {}, userId: {}, cause: {}", analysis.getId(), userId, e.getMessage());
+
+            // 이벤트: ERROR_OCCURRED (분석 실패)
+            Map<String, Object> errorExtra = new HashMap<>();
+            errorExtra.put("path", "/api/analyses");
+            errorExtra.put("http_status", 502);
+            errorExtra.put("error_code", "AN001");
+            errorExtra.put("analysis_id", analysis.getId());
+            eventPublisher.publish("ERROR_OCCURRED", userId, null, null, errorExtra);
 
             if (e instanceof BusinessException) {
                 throw e;

@@ -256,7 +256,8 @@
       "Bash(find /home/sieg/projects-wsl/MiriArt/src/features/chat -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -10)",
       "Bash(for table:*)",
       "Bash(echo:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(which vercel:*)"
     ]
   }
 }

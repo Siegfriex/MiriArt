@@ -24,7 +24,7 @@
 ### 서비스 한 줄 정의
 
 **MiriArt(미리미대)** — Vision AI 작품 평가 + 입시 빅데이터 + 수험생 간 Q&A 커뮤니티를 결합한, 미대 입시 수험생 전용 AI 코칭 앱.  
-*소스: docs/MiriArt_PRD_v2.md §0.1.*
+*소스: ../prd/MiriArt_PRD_v2.md §0.1.*
 
 ### GCP 프로젝트·리전·환경
 
@@ -81,7 +81,7 @@
 | miriart-be | asia-northeast3 | Java 17 (Eclipse Temurin) | 1Gi (문서) | 문서에 --timeout 미기재 | 문서에 미기재 | miriart-be-runner@miriarts.iam.gserviceaccount.com | --no-allow-unauthenticated, 호출 시 IAM | miriart-be/scripts/cloudrun-redeploy.ps1:18-31, cloudrun-redeploy.sh |
 | server | (레포 내 배포 정의 없음) | Node 20 | Dockerfile만 존재 | — | — | — | **(현재 비활성 / future use)** (추론) | server/Dockerfile |
 
-프론트엔드는 GCP Cloud Run이 아닌 **Vercel**에 배포되며, FE 배포 설정의 SSOT는 Vercel 프로젝트 설정이다. *소스: README.md:82–100, 157 (Vercel 배포·연결), docs/SSOT/miriarts_central.md:223 (Vercel SPA 배포).*
+프론트엔드는 GCP Cloud Run이 아닌 **Vercel**에 배포되며, FE 배포 설정의 SSOT는 Vercel 프로젝트 설정이다. *소스: README.md:82–100, 157 (Vercel 배포·연결), ../central/miriarts_central.md:223 (Vercel SPA 배포).*
 
 ### Cloud SQL (MySQL)
 
@@ -92,7 +92,7 @@
 | 연결 방식 | Cloud Run → **Socket Factory**(Unix 소켓). JDBC URL은 Secret miriart-db-url(소켓 방식). 인스턴스 Private IP(10.99.0.3) 존재 | miriart-be/build.gradle:56-57 (mysql-socket-factory-connector), cloudrun-redeploy 시 --add-cloudsql-instances |
 | 주 DB 이름 | miriart_prod (prod), miriart_dev (dev) | miriart-be/src/main/resources/application-dev.yml:3 (miriart_dev), prod는 Secret miriart-db-url |
 | 문자셋 | utf8mb4 / utf8mb4_unicode_ci | JDBC URL 파라미터 (Secret miriart-db-url) |
-| **실제 스키마 SSOT** | **엔티티·Flyway 마이그레이션(V5·V6)·`docs/MiriArt_ERD_v2.md` v2.1** | 테이블·컬럼·인덱스는 miriart-be/.../entity/*.java 및 db/migration/V5*.sql, V6*.sql, docs/MiriArt_ERD_v2.md 기준. ERD v2.1은 실 DB(miriart_prod) 역추출 검증 완료(2026-03-15). 운영 테이블 12개(flyway_schema_history 포함). |
+| **실제 스키마 SSOT** | **엔티티·Flyway 마이그레이션(V5·V6)·`../erd/MiriArt_ERD_v2.md` v2.1** | 테이블·컬럼·인덱스는 miriart-be/.../entity/*.java 및 db/migration/V5*.sql, V6*.sql, ../erd/MiriArt_ERD_v2.md 기준. ERD v2.1은 실 DB(miriart_prod) 역추출 검증 완료(2026-03-15). 운영 테이블 12개(flyway_schema_history 포함). |
 | Cloud Shell 접속(공개 IP) | 공개 IP 활성화 시에만 가능. **승인된 네트워크**에 Cloud Shell egress IP를 `x.x.x.x/32` 형식으로 추가. 해당 IP는 세션마다 다를 수 있으므로 **환경변수로 두지 않음** — 접속 전 `curl -s ifconfig.me` 로 확인 후 GCP 콘솔(SQL → 인스턴스 → 연결 → 승인된 네트워크)에서 추가. | 운영 확인 2026-03-02 |
 
 #### Cloud Shell에서 MySQL 접속 절차
@@ -145,7 +145,7 @@
 ### Secret Manager (주요 Secret ID)
 
 | Secret ID | 용도 | 매핑(서비스 → env) | 소스(파일/라인) |
-|-----------|------|---------------------|------------------|
+|-----------|------|---------------------|------------------|  
 | miriart-db-url | MySQL JDBC URL (소켓 방식) | miriart-be → SPRING_DATASOURCE_URL | application-prod.yml:12, miriart-be/scripts/cloudrun-redeploy.sh --set-secrets (SPRING_DATASOURCE_URL=miriart-db-url:latest) |
 | miriart-db-username | MySQL 사용자명 | miriart-be → SPRING_DATASOURCE_USERNAME | 동일 |
 | miriart-db-password | MySQL 비밀번호 | miriart-be → SPRING_DATASOURCE_PASSWORD | 동일 |
@@ -321,7 +321,7 @@
 
 ### 4.4 API 구현 현황(검증됨)
 
-*코드·설정 기준으로 확인된 API·데이터·에러 정책만 기재. FSD/PRD 상세는 각 문서 참고. 엔드포인트·ErrorCode 전수는 아래 표(실 코드 라인 기준). 상세 계약·엔드포인트별 에러: **docs/MiriArt_API_CONTRACT.md**.*
+*코드·설정 기준으로 확인된 API·데이터·에러 정책만 기재. FSD/PRD 상세는 각 문서 참고. 엔드포인트·ErrorCode 전수는 아래 표(실 코드 라인 기준). 상세 계약·엔드포인트별 에러: **../api/MiriArt_API_CONTRACT.md**.*
 
 #### 구현된 엔드포인트 전수(코드 기준)
 
@@ -406,7 +406,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | 요청 DTO(분석) | InternalAnalyzeRequest (gcsUri, analysisType, problemText) | domain/ai/dto/InternalAnalyzeRequest.java |
 | 응답 DTO(분석) | InternalAnalyzeResponse | domain/ai/dto/InternalAnalyzeResponse.java |
 | 요청 DTO(채팅) | InternalChatRequest (modelType, message, stickyContext, history, imageBase64, imageMimeType) | domain/ai/dto/InternalChatRequest.java, AiProxyService.java:93-100 |
-| 응답 DTO(채팅) | InternalChatResponse (text, groundingUrls, quickReplies) | domain/ai/dto/InternalChatResponse.java |
+| 응답 DTO(채팅) | InternalChatResponse (text, summary?, sections?, groundingUrls, quickReplies) — Structured Chat v1 | domain/ai/dto/InternalChatResponse.java |
 | 에러 매핑 | AiErrorMapper.toErrorCode(statusCode, bodyCode, forAnalyze), AiErrorResponse 파싱 | AiErrorMapper.java, AiProxyService.java parseAiErrorCode(177-186) |
 | 타임아웃 | 60초 | AiProxyService.java:42, 71, 115 |
 
@@ -462,7 +462,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | 서비스 | 배포 방식 | 상태 | 소스(파일/라인) |
 |--------|-----------|------|------------------|
 | miriart-be | Gradle + Dockerfile + docker push(또는 Cloud Build submit) + gcloud run deploy. **스크립트**: `miriart-be/scripts/cloudrun-redeploy.ps1` (PowerShell), cloudrun-redeploy.sh (WSL/배시). 로컬 Docker 빌드 시 gradlew CRLF 처리·JAR 경로는 Dockerfile 참고 (§5.3). | 수동/스크립트 배포. 중기: Cloud Build 이식 예정 (TODO-004). | miriart-be/scripts/cloudrun-redeploy.ps1, miriart-be/Dockerfile |
-| Frontend | Vercel 프로젝트를 통한 Git push 기반 자동 빌드/배포 (추론) | OK (FE 배포 SSOT는 Vercel 설정) | README.md:82–100, 157, docs/SSOT/miriarts_central.md:223 |
+| Frontend | Vercel 프로젝트를 통한 Git push 기반 자동 빌드/배포 (추론) | OK (FE 배포 SSOT는 Vercel 설정) | README.md:82–100, 157, ../central/miriarts_central.md:223 |
 | server | Dockerfile만 존재. 배포 파이프라인/Cloud Run 정의 없음 | **(현재 비활성 / future use)** | server/Dockerfile |
 
 외부 AI 서비스 배포는 별도 레포에서 관리.
@@ -546,11 +546,11 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 **목적**: SSOT 문서를 “변경 전에 반드시 맞춰야 하는 기준선”으로 유지하기 위한 최소 규칙 초안.
 
 - **Cloud Run / Cloud SQL / Redis / Secret Manager / Artifact Registry / 서비스 계정**에 변경이 발생하면, **배포 전에** 이 SSOT 문서의 해당 섹션(§2 리소스 카탈로그, §3 구성·설정, §4 네트워크·보안, §5 배포 파라미터)을 우선 수정한다.
-- **DB 스키마/테이블·엔티티** 변경 시: **스키마 SSOT**는 엔티티 + Flyway + MiriArt_ERD_v2 기준. (mysql_erd_v1.md 생성 시 해당 문서로 전환.) DDL 적용·역추출 후 해당 문서 §1·§2·§4(무결성·정합성 점검)를 갱신한다. 설계 문서 `docs/MiriArt_ERD_v2.md`와 불일치하면 조율(ERD_v2는 설계·미구현 테이블 포함). *Cursor 규칙: `.cursor/rules/infra-ssot.mdc`, `.cursor/INFRA_SSOT_GUIDE.md` §3.*
+- **DB 스키마/테이블·엔티티** 변경 시: **스키마 SSOT**는 엔티티 + Flyway + MiriArt_ERD_v2 기준. (mysql_erd_v1.md 생성 시 해당 문서로 전환.) DDL 적용·역추출 후 해당 문서 §1·§2·§4(무결성·정합성 점검)를 갱신한다. 설계 문서 `../erd/MiriArt_ERD_v2.md`와 불일치하면 조율(ERD_v2는 설계·미구현 테이블 포함). *Cursor 규칙: `.cursor/rules/infra-ssot.mdc`, `.cursor/INFRA_SSOT_GUIDE.md` §3.*
 - **새로운 GCP 리소스**가 추가되면, §2(리소스 카탈로그)와 §3(환경변수·Secret 맵)을 함께 업데이트한다.
 - **CI/CD 파이프라인** 변경 시 §5(배포 & CI/CD)와 §7(개방 이슈/TODO) 상태를 함께 갱신한다.
 - **공개 엔드포인트·인증·CORS** 변경 시 §4(네트워크 & 보안)를 갱신한다.
-- **에이전트가 인프라 관련 수정을 한 경우**: SSOT 해당 섹션 갱신 후 `docs/SSOT/CHANGELOG_infra.md`에 **날짜·에이전트 롤·구체적 수정 내역**을 기록한다. 상세: `.cursor/INFRA_SSOT_GUIDE.md` §5.
+- **에이전트가 인프라 관련 수정을 한 경우**: SSOT 해당 섹션 갱신 후 `../changelog/CHANGELOG_infra.md`에 **날짜·에이전트 롤·구체적 수정 내역**을 기록한다. 상세: `.cursor/INFRA_SSOT_GUIDE.md` §5.
 
 ---
 
@@ -563,7 +563,7 @@ MySQL에는 **chat_sessions** 테이블이 존재하며, Flyway `V5__create_chat
 | 항목 | 현재 상태 | 참고 섹션 / TODO |
 |------|-----------|-------------------|
 | miriart-be 자동 배포 | 수동 배포(로컬 스크립트로 표준화됨). 단기 목표는 표준화된 수동 배포 유지, 중기 목표는 Cloud Build 자동화 (TODO-004) | §5.1. Gradle+Dockerfile+gcloud 기반 수동/스크립트 배포 → **TODO-004** |
-| FE (Vercel 배포) | OK (Vercel 파이프라인에 의해 자동 배포) | FE 배포 세부 설정은 Vercel 프로젝트가 SSOT이며, 이 인프라 문서는 개요만 제공. README.md, docs/SSOT/miriarts_central.md |
+| FE (Vercel 배포) | OK (Vercel 파이프라인에 의해 자동 배포) | FE 배포 세부 설정은 Vercel 프로젝트가 SSOT이며, 이 인프라 문서는 개요만 제공. README.md, ../central/miriarts_central.md |
 | server 배포 파이프라인 | (현재 비활성 / future use) | §5.1. Dockerfile만 존재 |
 | 롤백 전략 문서/절차 | 미흡 | §5. 문서에 롤백 절차 없음. BE 수동 배포 의존 → **TODO-004** 연관 |
 

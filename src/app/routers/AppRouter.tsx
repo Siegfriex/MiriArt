@@ -8,6 +8,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
+import { usePageView } from '../../shared/hooks/usePageView';
 
 // Auth Pages
 import { Splash } from '../../pages/auth/Splash';
@@ -30,6 +31,7 @@ import { ResultDetail } from '../../pages/result-detail/ui/Page';
 
 /** 앱 라우터. @참조 App */
 export const AppRouter: React.FC = () => {
+  usePageView(); // 모든 라우트 변경 시 PAGE_VIEW 자동 기록
   return (
     <Routes>
       <Route path="/" element={<Splash />} />

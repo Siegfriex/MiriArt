@@ -1,5 +1,7 @@
 package com.miriart.api.global.exception;
 
+import com.miriart.api.domain.event.service.EventLoggingService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.nio.file.AccessDeniedException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 전역 예외 처리 핸들러. 컨트롤러/서비스에서 발생한 예외를 일괄 처리해 {@link ErrorResponse} JSON으로 반환.
@@ -31,12 +39,24 @@ import java.nio.file.AccessDeniedException;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
+    private final EventLoggingService eventLoggingService;
+
     @ExceptionHandler(BusinessException.class)
-    protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+    protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e,
+                                                                     HttpServletRequest req) {
         log.warn("BusinessException: {}", e.getMessage());
         ErrorCode errorCode = e.getErrorCode();
+
+        // 이벤트: ERROR_OCCURRED
+        Map<String, Object> extra = new HashMap<>();
+        extra.put("message", e.getMessage());
+        eventLoggingService.publishError(
+                extractUserId(), req.getRequestURI(),
+                errorCode.getCode(), errorCode.getHttpStatus().value(), extra);
+
         ErrorResponse response = ErrorResponse.of(errorCode, e.getMessage());
         return new ResponseEntity<>(response, errorCode.getHttpStatus());
     }
@@ -98,9 +118,26 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleException(Exception e) {
+    protected ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest req) {
         log.error("Unhandled Exception: ", e);
+
+        // 이벤트: ERROR_OCCURRED (미처리 예외)
+        Map<String, Object> extra = new HashMap<>();
+        extra.put("exception", e.getClass().getSimpleName());
+        extra.put("message", e.getMessage() != null ? e.getMessage().substring(0, Math.min(e.getMessage().length(), 200)) : null);
+        eventLoggingService.publishError(
+                extractUserId(), req.getRequestURI(),
+                "INTERNAL", HttpStatus.INTERNAL_SERVER_ERROR.value(), extra);
+
         ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private Long extractUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Long userId) {
+            return userId;
+        }
+        return null;
     }
 }
